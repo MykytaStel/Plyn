@@ -66,7 +66,8 @@
 }
 
 html,
-body {
+body,
+#root {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -85,10 +86,6 @@ textarea {
   color: inherit;
 }
 
-[hidden] {
-  display: none !important;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -98,10 +95,7 @@ textarea {
   white-space: nowrap;
 }
 
-/* ==========================================================================
-   Кнопки та контрол-елементи
-   ========================================================================== */
-
+/* Кнопки */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -193,10 +187,6 @@ textarea {
   border-color: var(--border);
 }
 
-.icon-btn[aria-pressed="true"] svg {
-  fill: currentColor;
-}
-
 .icon-btn-text {
   font-size: 14.5px;
   font-weight: 500;
@@ -218,10 +208,7 @@ textarea {
   letter-spacing: -0.02em;
 }
 
-/* ==========================================================================
-   Екран вводу тексту та бібліотека
-   ========================================================================== */
-
+/* Екран вводу та бібліотеки */
 .view-input {
   min-height: 100dvh;
   display: flex;
@@ -278,7 +265,6 @@ textarea {
   color: var(--text-muted);
 }
 
-/* Поле редактора */
 .editor-box {
   display: flex;
   flex-direction: column;
@@ -355,7 +341,7 @@ textarea {
   color: var(--accent);
 }
 
-/* Бібліотека збережених текстів */
+/* Бібліотека */
 .library-section {
   margin-top: 12px;
   display: flex;
@@ -465,10 +451,7 @@ textarea {
   color: var(--text);
 }
 
-/* ==========================================================================
-   Екран читання (Reels / TikTok Scroll Snap)
-   ========================================================================== */
-
+/* Екран читання */
 .view-reader {
   position: fixed;
   inset: 0;
@@ -489,7 +472,6 @@ textarea {
 
 .progress-fill {
   height: 100%;
-  width: 0%;
   background-color: var(--accent);
   transition: width 0.22s ease;
 }
@@ -538,7 +520,6 @@ textarea {
   gap: 3px;
 }
 
-/* Стрічка карток */
 .cards-feed {
   flex: 1;
   height: 100dvh;
@@ -584,7 +565,6 @@ textarea {
   hyphens: auto;
 }
 
-/* Режим «Якір» */
 .anchor-active .card-text {
   color: var(--text-soft);
 }
@@ -602,7 +582,6 @@ textarea {
   opacity: 0.8;
 }
 
-/* Фінальна картка завершення */
 .card-done {
   text-align: center;
   display: flex;
@@ -642,7 +621,6 @@ textarea {
   margin-top: 8px;
 }
 
-/* Toast-сповіщення у рідері */
 .reader-toast {
   position: fixed;
   left: 50%;
@@ -660,7 +638,6 @@ textarea {
   text-align: center;
 }
 
-/* Кнопки навігації на десктопі */
 .desktop-nav {
   position: fixed;
   right: 20px;
@@ -696,10 +673,7 @@ textarea {
   }
 }
 
-/* ==========================================================================
-   Bottom Sheets (Налаштування та Закладки)
-   ========================================================================== */
-
+/* Bottom Sheets */
 .sheet-backdrop {
   position: fixed;
   inset: 0;
@@ -791,7 +765,6 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
-/* Перемикач (Switch) */
 .switch {
   position: relative;
   display: inline-block;
@@ -837,7 +810,6 @@ textarea {
   background-color: var(--accent-contrast);
 }
 
-/* Сегментовані кнопки */
 .segmented {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -870,7 +842,6 @@ textarea {
   font-weight: 600;
 }
 
-/* Список закладок */
 .bookmarks-list {
   display: flex;
   flex-direction: column;
@@ -917,7 +888,6 @@ textarea {
   text-align: center;
 }
 
-/* Повзунки */
 input[type="range"] {
   width: 100%;
   accent-color: var(--accent);

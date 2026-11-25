@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "keeps Ukrainian abbreviations intact",
+      "lengthPreset": "medium",
+      "input": "Ми приїхали у м. Київ на конференцію. Там були колеги з ін. міст.",
+      "expected": [
+        "Ми приїхали у м. Київ на конференцію. Там були колеги з ін. міст."
+      ]
+    },
+    {
+      "name": "splits paragraphs into separate cards",
+      "lengthPreset": "medium",
+      "input": "Перший абзац.\n\nДругий абзац.",
+      "expected": [
+        "Перший абзац.",
+        "Другий абзац."
+      ]
+    },
+    {
+      "name": "merges at most two short sentences per card",
+      "lengthPreset": "medium",
+      "input": "Раз. Два. Три.",
+      "expected": [
+        "Раз. Два.",
+        "Три."
+      ]
+    },
+    {
+      "name": "splits long sentence at soft punctuation without breaking words",
+      "lengthPreset": "short",
+      "input": "Коли перед очима відкривається довга стіна тексту, мозок втомлюється ще до першого абзацу, і погляд починає зісковзувати на сусідній рядок кожного разу.",
+      "maxCardLength": 130
+    }
+  ]
+}
