@@ -18,8 +18,8 @@
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-  <!-- Екран вводу тексту -->
-  <main id="view-input" class="view view-input" aria-label="Ввід тексту">
+  <!-- Екран вводу тексту та бібліотека -->
+  <main id="view-input" class="view view-input" aria-label="Ввід тексту та бібліотека">
     <header class="input-header">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true"></span>
@@ -36,35 +36,32 @@
     <section class="input-container">
       <div class="hero-copy">
         <h1>Читай у своєму ритмі</h1>
-        <p>Встав текст — Plyn розіб’є його на короткі картки, щоб очі не втомлювались, а фокус не губився.</p>
-      </div>
-
-      <!-- Картка продовження попередньої сесії -->
-      <div id="resume-banner" class="resume-banner" hidden>
-        <div class="resume-info">
-          <span class="resume-label">Незавершене читання</span>
-          <p id="resume-preview" class="resume-preview"></p>
-          <span id="resume-meta" class="resume-meta"></span>
-        </div>
-        <div class="resume-actions">
-          <button id="btn-resume" class="btn btn-primary btn-sm" type="button">Продовжити</button>
-          <button id="btn-clear-session" class="btn btn-ghost btn-sm" type="button" aria-label="Очистити збережену сесію">Скинути</button>
-        </div>
+        <p>Встав текст або імпортуй файл — Plyn розіб’є його на короткі картки й збереже прогрес у твоїй бібліотеці.</p>
       </div>
 
       <div class="editor-box">
+        <label for="title-input" class="sr-only">Назва тексту (необов’язково)</label>
+        <input
+          id="title-input"
+          class="title-input"
+          type="text"
+          placeholder="Назва (необов’язково — згенерується автоматично)"
+          maxlength="120"
+        >
         <label for="text-input" class="sr-only">Текст для читання</label>
         <textarea
           id="text-input"
           class="text-input"
           placeholder="Встав сюди статтю, конспект або розділ книги..."
-          rows="8"
+          rows="7"
           spellcheck="false"
         ></textarea>
         <div class="editor-toolbar">
           <div class="toolbar-left">
-            <button id="btn-paste" class="btn btn-secondary btn-sm" type="button">Вставити з буфера</button>
+            <button id="btn-paste" class="btn btn-secondary btn-sm" type="button">З буфера</button>
+            <button id="btn-import" class="btn btn-secondary btn-sm" type="button">Імпорт .txt / .md</button>
             <button id="btn-sample" class="btn btn-ghost btn-sm" type="button">Приклад</button>
+            <input id="file-import" type="file" accept=".txt,.md,text/plain,text/markdown" hidden>
           </div>
           <span id="char-count" class="char-count">0 символів</span>
         </div>
@@ -75,6 +72,15 @@
       <button id="btn-start" class="btn btn-primary btn-lg" type="button" disabled>
         Почати читання
       </button>
+
+      <!-- Локальна бібліотека текстів (IndexedDB) -->
+      <section id="library-section" class="library-section" hidden aria-label="Моя бібліотека">
+        <div class="library-header">
+          <h2>Моя бібліотека</h2>
+          <span id="library-count" class="library-count">0</span>
+        </div>
+        <div id="library-list" class="library-list"></div>
+      </section>
     </section>
   </main>
 
@@ -87,18 +93,29 @@
 
     <!-- Верхня панель керування -->
     <header class="reader-header">
-      <button id="btn-back" class="icon-btn icon-btn-text" type="button" aria-label="Повернутися до тексту">
+      <button id="btn-back" class="icon-btn icon-btn-text" type="button" aria-label="Повернутися до бібліотеки">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 18l-6-6 6-6"/>
         </svg>
-        <span>Текст</span>
+        <span>Бібліотека</span>
       </button>
 
-      <div class="reader-counter" aria-live="polite">
-        <span id="card-counter">1 / 1</span>
+      <div class="reader-center">
+        <div class="reader-counter" aria-live="polite">
+          <span id="card-counter">1 / 1</span>
+        </div>
+        <span id="timer-pill" class="timer-pill" hidden title="М’який таймер фокусу"></span>
       </div>
 
       <div class="reader-header-right">
+        <button id="btn-bookmark" class="icon-btn" type="button" aria-pressed="false" aria-label="Додати закладку" title="Закладка (клавіша B)">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+        <button id="btn-bookmarks-list" class="icon-btn icon-btn-badge" type="button" aria-label="Список закладок" title="Усі закладки" hidden>
+          <span id="bookmarks-badge" class="badge-count">0</span>
+        </button>
         <button id="btn-anchor-quick" class="icon-btn" type="button" aria-pressed="false" aria-label="Режим Якір" title="Режим Якір (клавіша A)">
           <span class="anchor-icon-glyph"><strong>Я</strong>к</span>
         </button>
@@ -121,6 +138,9 @@
     <!-- Вертикальна стрічка карток (Scroll Snap) -->
     <div id="cards-feed" class="cards-feed" tabindex="0" aria-label="Картки тексту"></div>
 
+    <!-- М'яке сповіщення (Toast) -->
+    <div id="reader-toast" class="reader-toast" role="status" aria-live="polite" hidden></div>
+
     <!-- Навігаційні кнопки для десктопу (MacBook) -->
     <div class="desktop-nav" aria-label="Навігація по картках">
       <button id="btn-prev-card" class="nav-pill" type="button" aria-label="Попередня картка" title="Попередня (↑)">
@@ -137,8 +157,9 @@
   </section>
 
   <!-- Панель налаштувань (Bottom Sheet) -->
-  <div id="settings-backdrop" class="sheet-backdrop" hidden></div>
-  <aside id="settings-sheet" class="settings-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
+
+  <aside id="settings-sheet" class="bottom-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
     <div class="sheet-handle" aria-hidden="true"></div>
     <div class="sheet-header">
       <h2 id="settings-title">Комфорт читання</h2>
@@ -183,6 +204,20 @@
         </div>
       </div>
 
+      <!-- М'який таймер фокусу -->
+      <div class="setting-group">
+        <div class="setting-label-row">
+          <span class="setting-label">Таймер фокусу</span>
+          <span class="setting-hint-inline">без секунд і тиску</span>
+        </div>
+        <div class="segmented segmented-4" role="radiogroup" aria-label="Таймер фокусу">
+          <button type="button" class="seg-btn is-active" data-timer-choice="0">Вимк.</button>
+          <button type="button" class="seg-btn" data-timer-choice="5">5 хв</button>
+          <button type="button" class="seg-btn" data-timer-choice="10">10 хв</button>
+          <button type="button" class="seg-btn" data-timer-choice="15">15 хв</button>
+        </div>
+      </div>
+
       <!-- Розмір шрифту -->
       <div class="setting-group">
         <div class="setting-label-row">
@@ -202,9 +237,24 @@
       </div>
 
       <p class="shortcuts-hint">
-        Клавіатура: <kbd>Space</kbd> / <kbd>↓</kbd> далі · <kbd>↑</kbd> назад · <kbd>A</kbd> якір
+        Клавіатура: <kbd>Space</kbd> / <kbd>↓</kbd> далі · <kbd>↑</kbd> назад · <kbd>A</kbd> якір · <kbd>B</kbd> закладка
       </p>
     </div>
+  </aside>
+
+  <!-- Панель закладок (Bottom Sheet) -->
+  <aside id="bookmarks-sheet" class="bottom-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="bookmarks-title">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-header">
+      <h2 id="bookmarks-title">Закладки</h2>
+      <button id="btn-close-bookmarks" class="icon-btn" type="button" aria-label="Закрити закладки">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div id="bookmarks-list" class="bookmarks-list"></div>
   </aside>
 
   <script type="module" src="./js/app.js"></script>

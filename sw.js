@@ -1,10 +1,11 @@
-const CACHE_NAME = 'plyn-v1';
+const CACHE_NAME = 'plyn-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
   './js/app.js',
+  './js/db.js',
   './js/splitter.js',
   './js/storage.js',
   './icons/icon.svg'
