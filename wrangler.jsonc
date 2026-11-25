@@ -1,8 +1,10 @@
 {
   "name": "plyn",
+  "main": "./worker/index.ts",
   "compatibility_date": "2026-11-25",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   }
 }

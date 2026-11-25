@@ -1,26 +1,35 @@
 import { useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Sun } from 'lucide-react';
+import { Link2, Sun, Trophy } from 'lucide-react';
+import { ACHIEVEMENTS } from '../../core/achievements/achievements';
+import { parseEpubFile } from '../../core/parsers/epub';
 import { cleanMarkdown } from '../../core/parsers/markdown';
-import { db, removeDocument } from '../../services/storage/db';
+import { extractArticleFromUrl } from '../../services/extract/urlExtractor';
+import { db, removeDocument, renameDocument } from '../../services/storage/db';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { AchievementsSheet } from '../achievements/AchievementsSheet';
 import { LibraryCard } from './LibraryCard';
 
 const SAMPLE_TEXT = `Коли перед очима відкривається довга «стіна тексту», мозок часто втомлюється ще до першого абзацу. Погляд зісковзує на сусідній рядок, і доводиться перечитувати одне й те саме речення по три рази.
 
 Plyn прибирає це перевантаження. Замість нескінченного полотна ти бачиш лише одну коротку думку за раз — у спокійній рамці та з чіткими межами.
 
-Свайпай вгору на iPhone або натискай Пробіл чи стрілки на MacBook, щоб рухатися далі. Верхня смужка показує реальний прогрес і дає мозку приємне відчуття завершеності.
+Свайпай вгору на iPhone або натискай Пробіл чи стрілки на MacBook, щоб рухатися далі. Верхня смужка показує реальний прогрес і орієнтовний час до кінця.
 
-Спробуй увімкнути режим «Якір» у верхньому правому куті або натисни клавішу A. Виділений початок кожного слова працює як точка опори — очі перестають «пливти», і читати стає помітно легше.
+Спробуй увімкнути режим «Якір» (клавіша A), шрифт для дислексії в налаштуваннях або озвучку картки (клавіша S), коли очі вже втомилися.
 
-Ти також можеш ставити закладки на важливих картках (іконка прапорця або клавіша B), імпортувати файли .txt / .md та вмикати м’який таймер фокусу в налаштуваннях.`;
+Ти також можеш ставити закладки (клавіша B), імпортувати книги .epub, файли .txt / .md або завантажувати статті прямо за посиланням.`;
 
 export function LibraryView() {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [showUrlBar, setShowUrlBar] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const feedbackTimerRef = useRef<number | undefined>(undefined);
@@ -34,11 +43,12 @@ export function LibraryView() {
     () => db.documents.orderBy('updatedAt').reverse().toArray(),
     []
   );
+  const stats = useLiveQuery(() => db.stats.get('main'), []);
 
   const showFeedback = (msg: string) => {
     setFeedback(msg);
     window.clearTimeout(feedbackTimerRef.current);
-    feedbackTimerRef.current = window.setTimeout(() => setFeedback(''), 3200);
+    feedbackTimerRef.current = window.setTimeout(() => setFeedback(''), 3600);
   };
 
   const handlePaste = async () => {
@@ -65,22 +75,50 @@ export function LibraryView() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const lower = file.name.toLowerCase();
     try {
-      const raw = await file.text();
-      const isMd = file.name.toLowerCase().endsWith('.md');
-      const prepared = isMd ? cleanMarkdown(raw) : raw.trim();
-      if (!prepared) {
-        showFeedback('Файл порожній.');
-        return;
+      if (lower.endsWith('.epub')) {
+        showFeedback('Розпаковую книгу EPUB...');
+        const parsed = await parseEpubFile(file);
+        setTitle(parsed.title);
+        setText(parsed.text);
+        showFeedback(`Книгу «${parsed.title}» завантажено. Натисни «Почати читання».`);
+      } else {
+        const raw = await file.text();
+        const prepared = lower.endsWith('.md') ? cleanMarkdown(raw) : raw.trim();
+        if (!prepared) {
+          showFeedback('Файл порожній.');
+          return;
+        }
+        setTitle(file.name.replace(/\.(txt|md)$/i, ''));
+        setText(prepared);
+        showFeedback(`Імпортовано «${file.name}». Натисни «Почати читання».`);
       }
-
-      setTitle(file.name.replace(/\.(txt|md)$/i, ''));
-      setText(prepared);
-      showFeedback(`Імпортовано «${file.name}». Натисни «Почати читання».`);
-    } catch {
-      showFeedback('Не вдалося прочитати файл.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Не вдалося прочитати файл.';
+      showFeedback(msg);
     } finally {
       e.target.value = '';
+    }
+  };
+
+  const handleUrlExtract = async () => {
+    if (!urlInput.trim() || isExtracting) return;
+    setIsExtracting(true);
+    showFeedback('Завантажую статтю...');
+    try {
+      const article = await extractArticleFromUrl(urlInput);
+      setTitle(article.title);
+      setText(article.text);
+      setUrlInput('');
+      setShowUrlBar(false);
+      showFeedback(`Статтю «${article.title}» завантажено.`);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Не вдалося витягти текст статті.';
+      showFeedback(msg);
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -92,6 +130,7 @@ export function LibraryView() {
   };
 
   const charCount = text.trim().length;
+  const unlockedCount = stats?.unlockedIds?.length ?? 0;
 
   return (
     <main className="view view-input" aria-label="Ввід тексту та бібліотека">
@@ -100,25 +139,62 @@ export function LibraryView() {
           <span className="brand-mark" aria-hidden="true" />
           <span className="brand-name">Plyn</span>
         </div>
-        <button
-          className="icon-btn"
-          type="button"
-          aria-label="Змінити тему"
-          title="Змінити тему"
-          onClick={cycleTheme}
-        >
-          <Sun size={20} />
-        </button>
+        <div className="header-actions">
+          <button
+            className="awards-pill"
+            type="button"
+            aria-label="Прогрес і нагороди"
+            onClick={() => setShowAchievements(true)}
+          >
+            <Trophy size={15} />
+            <span>
+              {unlockedCount} / {ACHIEVEMENTS.length}
+            </span>
+          </button>
+          <button
+            className="icon-btn"
+            type="button"
+            aria-label="Змінити тему"
+            title="Змінити тему"
+            onClick={cycleTheme}
+          >
+            <Sun size={20} />
+          </button>
+        </div>
       </header>
 
       <section className="input-container">
         <div className="hero-copy">
           <h1>Читай у своєму ритмі</h1>
           <p>
-            Встав текст або імпортуй файл — Plyn розіб’є його на короткі картки й
-            збереже прогрес у твоїй бібліотеці.
+            Встав текст, посилання на статтю або книгу .epub — Plyn розіб’є все на
+            короткі картки.
           </p>
         </div>
+
+        {showUrlBar && (
+          <div className="url-import-row">
+            <input
+              type="url"
+              className="url-input"
+              placeholder="https://example.com/article"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void handleUrlExtract();
+              }}
+              disabled={isExtracting}
+            />
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              disabled={!urlInput.trim() || isExtracting}
+              onClick={() => void handleUrlExtract()}
+            >
+              {isExtracting ? '...' : 'Завантажити'}
+            </button>
+          </div>
+        )}
 
         <div className="editor-box">
           <label htmlFor="title-input" className="sr-only">
@@ -160,7 +236,15 @@ export function LibraryView() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
               >
-                Імпорт .txt / .md
+                .txt / .md / .epub
+              </button>
+              <button
+                className="btn btn-secondary btn-sm"
+                type="button"
+                onClick={() => setShowUrlBar((v) => !v)}
+              >
+                <Link2 size={14} />
+                <span>За URL</span>
               </button>
               <button
                 className="btn btn-ghost btn-sm"
@@ -176,7 +260,7 @@ export function LibraryView() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.md,text/plain,text/markdown"
+                accept=".txt,.md,.epub,text/plain,text/markdown,application/epub+zip"
                 hidden
                 onChange={handleFileImport}
               />
@@ -212,6 +296,7 @@ export function LibraryView() {
                   key={doc.id}
                   doc={doc}
                   onOpen={(d) => openDocument(d, cardLength)}
+                  onRename={(id, newTitle) => void renameDocument(id, newTitle)}
                   onDelete={(id) => void removeDocument(id)}
                 />
               ))}
@@ -219,6 +304,20 @@ export function LibraryView() {
           </section>
         )}
       </section>
+
+      {showAchievements && (
+        <>
+          <div
+            className="sheet-backdrop"
+            onClick={() => setShowAchievements(false)}
+            aria-hidden="true"
+          />
+          <AchievementsSheet
+            stats={stats}
+            onClose={() => setShowAchievements(false)}
+          />
+        </>
+      )}
     </main>
   );
 }

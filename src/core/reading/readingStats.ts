@@ -1,0 +1,34 @@
+import type { ReadingCard } from '../models/types';
+
+/** Спокійний темп читання для комфорту очей і РДУГ (слів за хвилину) */
+export const CALM_WORDS_PER_MINUTE = 180;
+
+export function countWords(text: string): number {
+  const matches = (text || '').trim().match(/[A-Za-zА-Яа-яІіЇїЄєҐґ0-9'’ʼ-]+/g);
+  return matches ? matches.length : 0;
+}
+
+/**
+ * Орієнтовний час читання тексту в хвилинах (мінімум 1 хв для непорожнього тексту).
+ */
+export function estimateReadingMinutes(text: string): number {
+  const words = countWords(text);
+  if (words === 0) return 0;
+  return Math.max(1, Math.ceil(words / CALM_WORDS_PER_MINUTE));
+}
+
+/**
+ * Орієнтовний час до кінця тексту починаючи з поточної картки.
+ */
+export function estimateRemainingMinutes(
+  cards: ReadingCard[],
+  currentIndex: number
+): number {
+  if (cards.length === 0 || currentIndex >= cards.length) return 0;
+  const remainingWords = cards
+    .slice(Math.max(0, currentIndex))
+    .reduce((sum, card) => sum + countWords(card.text), 0);
+
+  if (remainingWords === 0) return 0;
+  return Math.max(1, Math.ceil(remainingWords / CALM_WORDS_PER_MINUTE));
+}

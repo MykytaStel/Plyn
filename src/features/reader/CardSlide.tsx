@@ -6,35 +6,43 @@ interface CardSlideProps {
   card: ReadingCard;
   total: number;
   anchorMode: boolean;
+  isWithinWindow: boolean;
 }
 
-export function CardSlide({ card, total, anchorMode }: CardSlideProps) {
+export function CardSlide({
+  card,
+  total,
+  anchorMode,
+  isWithinWindow
+}: CardSlideProps) {
   const tokens = useMemo(
-    () => (anchorMode ? tokenizeWithAnchors(card.text) : null),
-    [anchorMode, card.text]
+    () => (isWithinWindow && anchorMode ? tokenizeWithAnchors(card.text) : null),
+    [isWithinWindow, anchorMode, card.text]
   );
 
   return (
     <article className="card-slide" data-index={card.index}>
-      <div className="card-body">
-        <p className="card-text">
-          {tokens
-            ? tokens.map((token, i) =>
-                token.type === 'word' ? (
-                  <span key={i}>
-                    <span className="anchor-lead">{token.lead}</span>
-                    {token.rest}
-                  </span>
-                ) : (
-                  <span key={i}>{token.value}</span>
+      {isWithinWindow && (
+        <div className="card-body">
+          <p className="card-text">
+            {tokens
+              ? tokens.map((token, i) =>
+                  token.type === 'word' ? (
+                    <span key={i}>
+                      <span className="anchor-lead">{token.lead}</span>
+                      {token.rest}
+                    </span>
+                  ) : (
+                    <span key={i}>{token.value}</span>
+                  )
                 )
-              )
-            : card.text}
-        </p>
-        {card.index === 0 && total > 1 && (
-          <div className="card-hint">Свайпни вгору або натисни Пробіл ↓</div>
-        )}
-      </div>
+              : card.text}
+          </p>
+          {card.index === 0 && total > 1 && (
+            <div className="card-hint">Свайпни вгору або натисни Пробіл ↓</div>
+          )}
+        </div>
+      )}
     </article>
   );
 }

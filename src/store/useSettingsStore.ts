@@ -21,6 +21,7 @@ interface SettingsState extends UserSettings {
 
 function syncDom(settings: UserSettings): void {
   document.documentElement.dataset.theme = settings.theme;
+  document.documentElement.dataset.font = settings.fontFamily;
   document.documentElement.style.setProperty(
     '--reader-font-size',
     `${settings.fontSize}px`
@@ -42,6 +43,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   updateSettings: (patch) => {
     const next: UserSettings = {
       theme: patch.theme ?? get().theme,
+      fontFamily: patch.fontFamily ?? get().fontFamily,
       fontSize: patch.fontSize ?? get().fontSize,
       lineHeight: patch.lineHeight ?? get().lineHeight,
       anchorMode: patch.anchorMode ?? get().anchorMode,
@@ -58,7 +60,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     get().updateSettings({ theme: nextTheme });
   },
   applyToDom: () => {
-    const { theme, fontSize, lineHeight, anchorMode, cardLength } = get();
-    syncDom({ theme, fontSize, lineHeight, anchorMode, cardLength });
+    const { theme, fontFamily, fontSize, lineHeight, anchorMode, cardLength } =
+      get();
+    syncDom({ theme, fontFamily, fontSize, lineHeight, anchorMode, cardLength });
   }
 }));

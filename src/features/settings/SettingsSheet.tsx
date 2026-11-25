@@ -1,7 +1,11 @@
 import { X } from 'lucide-react';
-import type { CardLengthPreset, ThemeMode } from '../../core/models/types';
-import { useSettingsStore } from '../../store/useSettingsStore';
+import type {
+  CardLengthPreset,
+  FontFamilyPreset,
+  ThemeMode
+} from '../../core/models/types';
 import { useReaderStore } from '../../store/useReaderStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface SettingsSheetProps {
   onCardLengthChange: (preset: CardLengthPreset) => void;
@@ -13,6 +17,13 @@ const THEMES: Array<{ value: ThemeMode; label: string }> = [
   { value: 'dark', label: 'Темна' },
   { value: 'paper', label: 'Паперова' },
   { value: 'gray', label: 'Сіра' }
+];
+
+const FONTS: Array<{ value: FontFamilyPreset; label: string }> = [
+  { value: 'sans', label: 'Звичайний' },
+  { value: 'hyperlegible', label: 'Для очей' },
+  { value: 'dyslexic', label: 'Дислексія' },
+  { value: 'serif', label: 'Книжковий' }
 ];
 
 const LENGTHS: Array<{ value: CardLengthPreset; label: string }> = [
@@ -33,8 +44,15 @@ export function SettingsSheet({
   onTimerSelect,
   onClose
 }: SettingsSheetProps) {
-  const { theme, fontSize, lineHeight, anchorMode, cardLength, updateSettings } =
-    useSettingsStore();
+  const {
+    theme,
+    fontFamily,
+    fontSize,
+    lineHeight,
+    anchorMode,
+    cardLength,
+    updateSettings
+  } = useSettingsStore();
   const timerMinutes = useReaderStore((s) => s.timerMinutes);
 
   return (
@@ -76,6 +94,26 @@ export function SettingsSheet({
             />
             <span className="switch-slider" />
           </label>
+        </div>
+
+        <div className="setting-group">
+          <span className="setting-label">Шрифт</span>
+          <div
+            className="segmented segmented-4"
+            role="radiogroup"
+            aria-label="Вибір шрифту"
+          >
+            {FONTS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                className={`seg-btn ${fontFamily === item.value ? 'is-active' : ''}`}
+                onClick={() => updateSettings({ fontFamily: item.value })}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="setting-group">
@@ -176,8 +214,8 @@ export function SettingsSheet({
         </div>
 
         <p className="shortcuts-hint">
-          Клавіатура: <kbd>Space</kbd> / <kbd>↓</kbd> далі · <kbd>↑</kbd> назад ·{' '}
-          <kbd>A</kbd> якір · <kbd>B</kbd> закладка
+          Клавіатура: <kbd>Space</kbd>/<kbd>↓</kbd> далі · <kbd>↑</kbd> назад ·{' '}
+          <kbd>A</kbd> якір · <kbd>B</kbd> закладка · <kbd>S</kbd> озвучка
         </p>
       </div>
     </aside>

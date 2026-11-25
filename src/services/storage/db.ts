@@ -1,14 +1,27 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { PlynDocument } from '../../core/models/types';
+import {
+  DEFAULT_PROGRESS_STATS,
+  evaluateAchievements
+} from '../../core/achievements/achievements';
+import type {
+  AchievementDefinition,
+  PlynDocument,
+  UserProgressStats
+} from '../../core/models/types';
 import { deriveTitle } from '../../core/parsers/markdown';
 
 class PlynDatabase extends Dexie {
   documents!: EntityTable<PlynDocument, 'id'>;
+  stats!: EntityTable<UserProgressStats, 'id'>;
 
   constructor() {
     super('plyn_library_v2');
     this.version(1).stores({
       documents: 'id, updatedAt, createdAt'
+    });
+    this.version(2).stores({
+      documents: 'id, updatedAt, createdAt',
+      stats: 'id'
     });
   }
 }
@@ -37,6 +50,7 @@ export async function createDocument(input: {
     currentIndex: 0,
     totalCards: Math.max(1, input.totalCards),
     bookmarkOffsets: [],
+    completedOnce: false,
     createdAt: now,
     updatedAt: now
   };
@@ -55,8 +69,55 @@ export async function updateDocument(doc: PlynDocument): Promise<PlynDocument> {
   return updated;
 }
 
+export async function renameDocument(id: string, newTitle: string): Promise<void> {
+  const trimmed = newTitle.trim();
+  if (!trimmed) return;
+  await db.documents.update(id, { title: trimmed, updatedAt: Date.now() });
+}
+
 export async function removeDocument(id: string): Promise<void> {
   await db.documents.delete(id);
+}
+
+export async function getProgressStats(): Promise<UserProgressStats> {
+  const existing = await db.stats.get('main');
+  return existing ?? { ...DEFAULT_PROGRESS_STATS };
+}
+
+export interface ProgressDelta {
+  cardsRead?: number;
+  anchorCardsRead?: number;
+  docsCompleted?: number;
+  bookmarksCreated?: number;
+  timerSessionsCompleted?: number;
+}
+
+/**
+ * Атомарно оновлює накопичувальну статистику прогресу і повертає щойно відкриті ачівменти.
+ */
+export async function recordProgressDelta(
+  delta: ProgressDelta
+): Promise<AchievementDefinition[]> {
+  try {
+    const current = await getProgressStats();
+    const updated: UserProgressStats = {
+      ...current,
+      totalCardsRead: current.totalCardsRead + (delta.cardsRead ?? 0),
+      anchorCardsRead: current.anchorCardsRead + (delta.anchorCardsRead ?? 0),
+      totalDocsCompleted:
+        current.totalDocsCompleted + (delta.docsCompleted ?? 0),
+      totalBookmarksCreated:
+        current.totalBookmarksCreated + (delta.bookmarksCreated ?? 0),
+      timerSessionsCompleted:
+        current.timerSessionsCompleted + (delta.timerSessionsCompleted ?? 0)
+    };
+
+    const { nextStats, newlyUnlocked } = evaluateAchievements(updated);
+    await db.stats.put(nextStats);
+    return newlyUnlocked;
+  } catch {
+    return [];
+  }
 }
 
 /**

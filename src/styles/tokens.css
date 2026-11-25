@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Plyn — М'які теми без сліпучого контрасту (для очей і РДУГ)
+   Plyn — М'які теми та офлайн-шрифти для комфорту очей, РДУГ і дислексії
    ========================================================================== */
 
 :root,
@@ -51,12 +51,39 @@
 :root {
   --reader-font-size: 24px;
   --reader-line-height: 1.65;
+  --reader-letter-spacing: 0.005em;
+  --reader-word-spacing: normal;
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  --reader-font-family: var(--font-sans);
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+[data-font="sans"] {
+  --reader-font-family: var(--font-sans);
+  --reader-letter-spacing: 0.005em;
+  --reader-word-spacing: normal;
+}
+
+[data-font="hyperlegible"] {
+  --reader-font-family: "Atkinson Hyperlegible", var(--font-sans);
+  --reader-letter-spacing: 0.015em;
+  --reader-word-spacing: 0.04em;
+}
+
+[data-font="dyslexic"] {
+  --reader-font-family: "OpenDyslexicRegular", "Lexend", var(--font-sans);
+  --reader-letter-spacing: 0.04em;
+  --reader-word-spacing: 0.14em;
+}
+
+[data-font="serif"] {
+  --reader-font-family: "Literata", Georgia, "Times New Roman", serif;
+  --reader-letter-spacing: 0.005em;
+  --reader-word-spacing: normal;
 }
 
 *,
@@ -148,7 +175,7 @@ textarea {
 }
 
 .btn-sm {
-  padding: 8px 13px;
+  padding: 8px 12px;
   font-size: 13.5px;
 }
 
@@ -164,11 +191,11 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 38px;
-  height: 38px;
-  padding: 0 9px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 11px;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -188,23 +215,23 @@ textarea {
 }
 
 .icon-btn-text {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 500;
   padding: 0 10px 0 6px;
 }
 
 .icon-btn-badge {
-  min-width: 30px;
-  padding: 0 8px;
+  min-width: 28px;
+  padding: 0 7px;
   background-color: var(--surface-elevated);
   border-color: var(--border);
   color: var(--accent);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .anchor-icon-glyph {
-  font-size: 15px;
+  font-size: 14.5px;
   letter-spacing: -0.02em;
 }
 
@@ -223,6 +250,33 @@ textarea {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 22px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.awards-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.awards-pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .brand {
@@ -247,7 +301,7 @@ textarea {
 .input-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   flex: 1;
 }
 
@@ -263,6 +317,31 @@ textarea {
   font-size: 15px;
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+/* Імпорт за URL */
+.url-import-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.url-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  font-size: 14px;
+  outline: none;
+}
+
+.url-input:focus {
+  border-color: var(--accent);
 }
 
 .editor-box {
@@ -297,7 +376,7 @@ textarea {
 
 .text-input {
   width: 100%;
-  min-height: 185px;
+  min-height: 175px;
   padding: 14px 16px;
   border: none;
   background: transparent;
@@ -330,12 +409,12 @@ textarea {
 }
 
 .char-count {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-muted);
 }
 
 .input-feedback {
-  margin: -6px 0 0;
+  margin: -4px 0 0;
   min-height: 20px;
   font-size: 13px;
   color: var(--accent);
@@ -343,7 +422,7 @@ textarea {
 
 /* Бібліотека */
 .library-section {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -398,7 +477,7 @@ textarea {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .library-card-title {
@@ -409,11 +488,37 @@ textarea {
   color: var(--text);
 }
 
+.library-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.library-rename-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.library-rename-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background-color: var(--bg);
+  font-size: 14.5px;
+  font-weight: 600;
+  outline: none;
+}
+
 .library-card-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   font-size: 12.5px;
   color: var(--text-muted);
 }
@@ -432,7 +537,7 @@ textarea {
   border-radius: 999px;
 }
 
-.library-delete-btn {
+.library-action-btn {
   flex-shrink: 0;
   width: 30px;
   height: 30px;
@@ -446,7 +551,7 @@ textarea {
   cursor: pointer;
 }
 
-.library-delete-btn:hover {
+.library-action-btn:hover {
   background-color: var(--surface-elevated);
   color: var(--text);
 }
@@ -465,9 +570,10 @@ textarea {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background-color: var(--progress-bg);
   z-index: 30;
+  cursor: pointer;
 }
 
 .progress-fill {
@@ -485,22 +591,42 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: calc(12px + var(--safe-top)) 12px 10px;
-  background: linear-gradient(to bottom, var(--bg) 68%, transparent);
+  gap: 6px;
+  padding: calc(12px + var(--safe-top)) 10px 10px;
+  background: linear-gradient(to bottom, var(--bg) 70%, transparent);
 }
 
 .reader-center {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.reader-counter {
-  font-size: 14px;
+.counter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.counter-btn:hover,
+.counter-btn[aria-expanded="true"] {
+  background-color: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.counter-eta {
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .timer-pill {
@@ -517,7 +643,32 @@ textarea {
 .reader-header-right {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
+}
+
+/* Швидкий повзунок навігації (Scrubber) */
+.scrubber-bar {
+  position: fixed;
+  top: calc(56px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  width: min(460px, calc(100% - 32px));
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scrubber-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--text-muted);
 }
 
 .cards-feed {
@@ -557,10 +708,12 @@ textarea {
 
 .card-text {
   margin: 0;
+  font-family: var(--reader-font-family);
   font-size: var(--reader-font-size);
   line-height: var(--reader-line-height);
+  letter-spacing: var(--reader-letter-spacing);
+  word-spacing: var(--reader-word-spacing);
   color: var(--text);
-  letter-spacing: 0.005em;
   word-wrap: break-word;
   hyphens: auto;
 }
@@ -638,6 +791,11 @@ textarea {
   text-align: center;
 }
 
+.reader-toast.is-achievement {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .desktop-nav {
   position: fixed;
   right: 20px;
@@ -688,7 +846,7 @@ textarea {
   transform: translateX(-50%);
   width: 100%;
   max-width: 520px;
-  max-height: 82dvh;
+  max-height: 85dvh;
   overflow-y: auto;
   background-color: var(--surface);
   border: 1px solid var(--border);
@@ -721,7 +879,7 @@ textarea {
 .sheet-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 15px;
 }
 
 .setting-row-toggle {
@@ -813,7 +971,7 @@ textarea {
 .segmented {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 5px;
   padding: 4px;
   background-color: var(--bg);
   border-radius: 12px;
@@ -825,15 +983,18 @@ textarea {
 }
 
 .seg-btn {
-  padding: 9px 8px;
+  padding: 8px 6px;
   border: none;
   border-radius: 9px;
   background: transparent;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .seg-btn.is-active {
@@ -842,6 +1003,89 @@ textarea {
   font-weight: 600;
 }
 
+/* Ачівменти */
+.stats-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.stat-tile {
+  padding: 12px 10px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.achievements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.achievement-card {
+  padding: 13px 14px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.achievement-card.is-unlocked {
+  border-color: var(--accent);
+}
+
+.achievement-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.achievement-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.achievement-desc {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.achievement-status {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.achievement-card.is-unlocked .achievement-status {
+  color: var(--accent);
+}
+
+/* Список закладок */
 .bookmarks-list {
   display: flex;
   flex-direction: column;
