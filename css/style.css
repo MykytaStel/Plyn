@@ -1,0 +1,754 @@
+/* ==========================================================================
+   Plyn — М'які теми без сліпучого контрасту (для очей і РДУГ)
+   ========================================================================== */
+
+:root,
+[data-theme="dark"] {
+  --bg: #16181D;
+  --surface: #1F2229;
+  --surface-elevated: #272B34;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #E2E4E9;
+  --text-soft: #C6CBD4;
+  --text-muted: #8E95A3;
+  --accent: #7EA8BE;
+  --accent-strong: #93BDD3;
+  --accent-contrast: #11161B;
+  --progress-bg: rgba(255, 255, 255, 0.08);
+  --backdrop: rgba(8, 10, 14, 0.62);
+}
+
+[data-theme="paper"] {
+  --bg: #F4EFE6;
+  --surface: #FAF7F1;
+  --surface-elevated: #EFE9DD;
+  --border: rgba(45, 42, 38, 0.1);
+  --text: #2D2A26;
+  --text-soft: #433E38;
+  --text-muted: #787066;
+  --accent: #5C7C73;
+  --accent-strong: #4A6860;
+  --accent-contrast: #FAF7F1;
+  --progress-bg: rgba(45, 42, 38, 0.1);
+  --backdrop: rgba(34, 30, 25, 0.38);
+}
+
+[data-theme="gray"] {
+  --bg: #2C2F33;
+  --surface: #35393F;
+  --surface-elevated: #3E434A;
+  --border: rgba(255, 255, 255, 0.09);
+  --text: #DCDFE4;
+  --text-soft: #C1C6CE;
+  --text-muted: #949BA6;
+  --accent: #95B4A8;
+  --accent-strong: #A8C5BA;
+  --accent-contrast: #1C211F;
+  --progress-bg: rgba(255, 255, 255, 0.09);
+  --backdrop: rgba(18, 20, 22, 0.56);
+}
+
+:root {
+  --reader-font-size: 24px;
+  --reader-line-height: 1.65;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Базовий скид */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Кнопки та контрол-елементи
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.16s ease, opacity 0.16s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-strong);
+}
+
+.btn-secondary {
+  background-color: var(--surface-elevated);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--text);
+  background-color: var(--surface-elevated);
+}
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.btn-lg {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 16px;
+  border-radius: var(--radius-md);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  background-color: var(--surface-elevated);
+}
+
+.icon-btn[aria-pressed="true"] {
+  color: var(--accent);
+  background-color: var(--surface-elevated);
+  border-color: var(--border);
+}
+
+.icon-btn-text {
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0 12px 0 8px;
+}
+
+.anchor-icon-glyph {
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+/* ==========================================================================
+   Екран вводу тексту
+   ========================================================================== */
+
+.view-input {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: calc(16px + var(--safe-top)) 20px calc(28px + var(--safe-bottom));
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.input-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background-color: var(--accent);
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.hero-copy h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.hero-copy p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Банер продовження сесії */
+.resume-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.resume-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+.resume-preview {
+  margin: 4px 0 4px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.resume-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.resume-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Поле редактора */
+.editor-box {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.16s ease;
+}
+
+.editor-box:focus-within {
+  border-color: var(--accent);
+}
+
+.text-input {
+  width: 100%;
+  min-height: 210px;
+  padding: 16px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+}
+
+.text-input::placeholder {
+  color: var(--text-muted);
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background-color: var(--bg);
+  flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.char-count {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.input-feedback {
+  margin: -6px 0 0;
+  min-height: 20px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+/* ==========================================================================
+   Екран читання (Reels / TikTok Scroll Snap)
+   ========================================================================== */
+
+.view-reader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg);
+}
+
+.progress-track {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--progress-bg);
+  z-index: 30;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background-color: var(--accent);
+  transition: width 0.22s ease;
+}
+
+.reader-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(12px + var(--safe-top)) 14px 10px;
+  background: linear-gradient(to bottom, var(--bg) 65%, transparent);
+}
+
+.reader-counter {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.reader-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Стрічка карток */
+.cards-feed {
+  flex: 1;
+  height: 100dvh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  outline: none;
+  scrollbar-width: none;
+}
+
+.cards-feed::-webkit-scrollbar {
+  display: none;
+}
+
+.card-slide {
+  height: 100dvh;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(76px + var(--safe-top)) 20px calc(52px + var(--safe-bottom));
+}
+
+.card-body {
+  width: 100%;
+  max-width: 580px;
+  padding: 28px 24px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.card-text {
+  margin: 0;
+  font-size: var(--reader-font-size);
+  line-height: var(--reader-line-height);
+  color: var(--text);
+  letter-spacing: 0.005em;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Режим «Якір» */
+.anchor-active .card-text {
+  color: var(--text-soft);
+}
+
+.anchor-lead {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-hint {
+  margin-top: 22px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  opacity: 0.8;
+}
+
+/* Фінальна картка завершення */
+.card-done {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.done-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-elevated);
+  color: var(--accent);
+}
+
+.card-done h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+
+.card-done p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Кнопки навігації на десктопі */
+.desktop-nav {
+  position: fixed;
+  right: 20px;
+  bottom: calc(24px + var(--safe-bottom));
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 20;
+}
+
+.nav-pill {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-pill:hover {
+  background-color: var(--surface-elevated);
+  color: var(--text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .desktop-nav {
+    display: flex;
+  }
+}
+
+/* ==========================================================================
+   Панель налаштувань (Bottom Sheet)
+   ========================================================================== */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--backdrop);
+  z-index: 40;
+}
+
+.settings-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  padding: 10px 20px calc(24px + var(--safe-bottom));
+  z-index: 50;
+}
+
+.sheet-handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 99px;
+  background-color: var(--border);
+  margin: 0 auto 10px;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sheet-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.setting-row-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.setting-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.setting-hint {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.setting-value {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Перемикач (Switch) */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  inset: 0;
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.switch-slider::before {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 2px;
+  top: 2px;
+  border-radius: 50%;
+  background-color: var(--text);
+  transition: transform 0.2s ease;
+}
+
+.switch input:checked + .switch-slider {
+  background-color: var(--accent);
+}
+
+.switch input:checked + .switch-slider::before {
+  transform: translateX(20px);
+  background-color: var(--accent-contrast);
+}
+
+/* Сегментовані кнопки */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 4px;
+  background-color: var(--bg);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.seg-btn {
+  padding: 9px 10px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.seg-btn.is-active {
+  background-color: var(--surface-elevated);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Повзунки */
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.shortcuts-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.shortcuts-hint kbd {
+  padding: 2px 6px;
+  border-radius: 5px;
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 11px;
+}
+
+@media (max-width: 480px) {
+  .card-body {
+    padding: 24px 20px;
+  }
+}
