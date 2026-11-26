@@ -4,7 +4,7 @@ Guidance for AI coding agents (Claude Code, Codex, Cursor, Copilot, etc.) and hu
 
 ## What Plyn is
 
-Plyn is an offline-first PWA that splits long text (pasted text, web articles, `.pdf`, `.epub`) into short cards and shows them one at a time. It is built for readers with ADHD and dyslexia. The UI is Ukrainian-first, and English is planned.
+Plyn is an offline-first PWA that splits long text (pasted text, web articles, `.pdf`, `.epub`) into short cards and shows them one at a time. It is built for readers with ADHD and dyslexia. The UI is Ukrainian-first, with English as a second language.
 
 **Product principle: calm and uncluttered beats feature-rich.** Every new control competes for the attention of a reader who is easily overloaded. Before adding UI, ask whether the feature can live in Settings, be merged with an existing one, or be skipped. Polish over speed. There is no rush to a "v1".
 
@@ -75,7 +75,11 @@ OpenDyslexic, Atkinson Hyperlegible and Lexend have **no Cyrillic glyphs**. They
 
 ## Language and copy
 
-- UI strings are Ukrainian and currently inline in components. There is no i18n layer yet, so don't invent one ad hoc. Discuss it first.
+- The UI is available in Ukrainian (default) and English. All UI strings live in `src/i18n/locales/{uk,en}.ts`. `uk.ts` is the source of truth, and `en.ts` must match its shape (TypeScript enforces this).
+- Every new string needs both languages. Use `useI18n()` in components and `currentI18n()` in handlers and stores. Plurals go through `plural()` (Intl.PluralRules); numbers and dates go through Intl.
+- `src/core/` stays language-free: it returns ids, dates and error codes (`PlynError`), never copy.
+- `noHardcodedCyrillic.test.ts` fails if Cyrillic appears in `src/features/` or `src/core/` outside comments.
+- Reader cards get `lang` from the *content* language, not the UI language (hyphenation and TTS depend on it).
 - Code, identifiers, commit messages and docs: English. Existing Ukrainian code comments are fine to leave as they are.
 - Copy tone: calm, short, second person ("ти"), no pressure or guilt (no streak-shaming).
 - Don't claim scientific effects the evidence doesn't support. "Anchor" (bold word starts) is offered as a comfort option, not as a proven speed-up.
@@ -83,7 +87,7 @@ OpenDyslexic, Atkinson Hyperlegible and Lexend have **no Cyrillic glyphs**. They
 ## Accessibility
 
 - Every interactive element is keyboard-reachable and has an accessible name.
-- The reader supports keyboard control (Space / arrows / j / k, plus single-letter toggles that work in both the Latin and Ukrainian layouts). Keep both layouts working when adding shortcuts.
+- The reader supports keyboard control (Space / arrows / j / k, plus single-letter toggles that work in both the Latin and Ukrainian layouts). Toggles match `KeyboardEvent.code` (physical key), so they work in any layout. Add new ones in `src/features/reader/shortcuts.ts`.
 - Respect user settings for theme, spacing and column width. Don't hard-code font sizes inside reader cards.
 
 ## Tests

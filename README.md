@@ -6,7 +6,7 @@ Plyn takes a long text (pasted text, a web article, a `.pdf` or an `.epub`) and 
 
 Live: <https://plyn.mykytastelmashenko.workers.dev/>
 
-The interface is in Ukrainian. English is planned.
+Interface: Ukrainian and English (Settings → Language).
 
 ## Features
 
