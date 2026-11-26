@@ -7,7 +7,10 @@ import '@fontsource/lexend/700.css';
 import '@fontsource/literata/400.css';
 import '@fontsource/literata/700.css';
 import 'open-dyslexic/open-dyslexic-regular.css';
+import '@fontsource/andika/400.css';
+import '@fontsource/andika/700.css';
 import { App } from './App';
+import './styles/fonts.css';
 import './styles/tokens.css';
 
 createRoot(document.getElementById('root')!).render(

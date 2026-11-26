@@ -69,7 +69,7 @@
   --reader-line-height: 1.65;
   --reader-letter-spacing: 0.005em;
   --reader-word-spacing: normal;
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Fixel Text", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   --reader-font-family: var(--font-sans);
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -83,11 +83,13 @@
 }
 
 [data-font="hyperlegible"] {
-  --reader-font-family: "Atkinson Hyperlegible", var(--font-sans);
+  /* Латиниця — Atkinson, кирилиця — Fixel (у Atkinson кирилиці немає) */
+  --reader-font-family: "Atkinson Hyperlegible", "Fixel Text", var(--font-sans);
 }
 
 [data-font="dyslexic"] {
-  --reader-font-family: "OpenDyslexicRegular", "Lexend", var(--font-sans);
+  /* Латиниця — OpenDyslexic, кирилиця — Andika (в OpenDyslexic кирилиці немає) */
+  --reader-font-family: "OpenDyslexicRegular", "Andika", "Fixel Text", var(--font-sans);
 }
 
 [data-font="serif"] {
