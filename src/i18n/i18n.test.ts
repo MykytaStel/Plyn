@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { format, formatWeekdayShort, getMessages, plural } from './index';
+import { ACHIEVEMENTS } from '../core/achievements/achievements';
+import { READING_PRESETS } from '../core/presets/readingPresets';
 import type { Locale } from './types';
 
 function keyPaths(value: unknown, prefix = ''): string[] {
@@ -70,5 +72,19 @@ describe('dictionaries', () => {
   it('has common.untitled in both locales', () => {
     const locales: Locale[] = ['uk', 'en'];
     for (const l of locales) expect(getMessages(l).common.untitled.length).toBeGreaterThan(0);
+  });
+
+  it('has copy for every achievement and preset in both locales', () => {
+    for (const l of ['uk', 'en'] as Locale[]) {
+      const m = getMessages(l);
+      for (const def of ACHIEVEMENTS) {
+        expect(m.achievements[def.id].title.length, `${l} ${def.id}`).toBeGreaterThan(0);
+        expect(m.achievements[def.id].description.length).toBeGreaterThan(0);
+      }
+      for (const p of READING_PRESETS) {
+        expect(m.presets[p.id].label.length, `${l} ${p.id}`).toBeGreaterThan(0);
+        expect(m.presets[p.id].hint.length).toBeGreaterThan(0);
+      }
+    }
   });
 });

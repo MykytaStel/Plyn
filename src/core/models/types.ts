@@ -73,10 +73,21 @@ export interface UserProgressStats {
   updatedAt: number;
 }
 
+export type AchievementId =
+  | 'first_step'
+  | 'rhythm_50'
+  | 'anchor_25'
+  | 'zen_reader'
+  | 'audio_listener'
+  | 'thought_hunter'
+  | 'no_rush'
+  | 'bookworm_3'
+  | 'rhythm_250'
+  | 'rhythm_1000';
+
+/** Copy (title, description) lives in src/i18n: m.achievements[id]. */
 export interface AchievementDefinition {
-  id: string;
-  title: string;
-  description: string;
+  id: AchievementId;
   target: number;
   getProgress: (stats: UserProgressStats) => number;
 }

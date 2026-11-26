@@ -23,14 +23,10 @@ const ALLOWED_FILES = new Set([
 
 /** Files not migrated yet. This list may only shrink. */
 export const PENDING_FILES: string[] = [
-  'src/core/achievements/achievements.ts',
   'src/core/export/bookmarksMarkdown.ts',
   'src/core/parsers/epub.ts',
   'src/core/parsers/markdown.ts',
   'src/core/parsers/pdf.ts',
-  'src/core/presets/readingPresets.ts',
-  'src/core/reading/weeklyActivity.ts',
-  'src/features/achievements/AchievementsSheet.tsx',
   'src/features/library/LibraryCard.tsx',
   'src/features/library/LibraryView.tsx',
   'src/features/onboarding/OnboardingModal.tsx',

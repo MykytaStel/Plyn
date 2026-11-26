@@ -9,6 +9,7 @@ import type {
 } from '../../core/models/types';
 import { READING_PRESETS } from '../../core/presets/readingPresets';
 import { useReaderStore } from '../../store/useReaderStore';
+import { useI18n } from '../../i18n';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface SettingsSheetProps {
@@ -73,6 +74,7 @@ export function SettingsSheet({
   onPresetApplied,
   onClose
 }: SettingsSheetProps) {
+  const i18n = useI18n();
   const {
     theme,
     fontFamily,
@@ -120,13 +122,15 @@ export function SettingsSheet({
                 key={preset.id}
                 type="button"
                 className="preset-btn"
-                title={preset.hint}
+                title={i18n.m.presets[preset.id].hint}
                 onClick={() => {
                   updateSettings(preset.patch);
-                  onPresetApplied(preset.label);
+                  onPresetApplied(i18n.m.presets[preset.id].label);
                 }}
               >
-                <span className="preset-btn-title">{preset.label}</span>
+                <span className="preset-btn-title">
+                  {i18n.m.presets[preset.id].label}
+                </span>
               </button>
             ))}
           </div>

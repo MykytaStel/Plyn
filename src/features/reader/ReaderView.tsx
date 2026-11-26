@@ -28,6 +28,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { SettingsSheet } from '../settings/SettingsSheet';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { BookmarksSheet } from './BookmarksSheet';
+import { currentI18n } from '../../i18n';
 import { CardSlide } from './CardSlide';
 import { DoneSlide } from './DoneSlide';
 
@@ -119,7 +120,7 @@ export function ReaderView() {
   useEffect(() => {
     if (recentUnlocks.length === 0) return;
     const next = recentUnlocks[0];
-    showToast(`Нова нагорода: «${next.title}»`, true);
+    showToast(`Нова нагорода: «${currentI18n().m.achievements[next.id].title}»`, true);
     shiftRecentUnlock();
   }, [recentUnlocks, shiftRecentUnlock, showToast]);
 
