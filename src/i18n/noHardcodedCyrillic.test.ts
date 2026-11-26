@@ -1,0 +1,138 @@
+import { describe, expect, it } from 'vitest';
+
+/**
+ * Guard: UI copy must live in src/i18n/locales. Any Cyrillic in src/features
+ * or src/core outside comments and regex literals is a hard-coded UI string.
+ */
+
+/** Every source file under src/features and src/core, as raw text, keyed by repo path. */
+const SOURCES: Record<string, string> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>(
+      ['/src/features/**/*.{ts,tsx}', '/src/core/**/*.ts', '!/src/**/*.test.ts'],
+      { query: '?raw', import: 'default', eager: true }
+    )
+  ).map(([path, text]) => [path.slice(1), text])
+);
+
+/** Content logic (sentence splitting), not UI copy. */
+const ALLOWED_FILES = new Set([
+  'src/core/splitter/splitter.ts',
+  'src/core/splitter/sentences.ts'
+]);
+
+/** Files not migrated yet. This list may only shrink. */
+export const PENDING_FILES: string[] = [
+  'src/core/achievements/achievements.ts',
+  'src/core/export/bookmarksMarkdown.ts',
+  'src/core/parsers/epub.ts',
+  'src/core/parsers/markdown.ts',
+  'src/core/parsers/pdf.ts',
+  'src/core/presets/readingPresets.ts',
+  'src/core/reading/weeklyActivity.ts',
+  'src/features/achievements/AchievementsSheet.tsx',
+  'src/features/library/LibraryCard.tsx',
+  'src/features/library/LibraryView.tsx',
+  'src/features/onboarding/OnboardingModal.tsx',
+  'src/features/reader/BookmarksSheet.tsx',
+  'src/features/reader/CardSlide.tsx',
+  'src/features/reader/DoneSlide.tsx',
+  'src/features/reader/ReaderView.tsx',
+  'src/features/settings/SettingsSheet.tsx',
+  'src/features/thoughts/ThoughtsSheet.tsx'
+];
+
+const CYRILLIC = /[А-Яа-яІіЇїЄєҐґ]/;
+
+/** Blanks out comments and regex literals, keeping line numbers. */
+export function stripCommentsAndRegex(source: string): string {
+  let out = '';
+  let i = 0;
+  let lastSignificant = '';
+  const blank = (s: string) => s.replace(/[^\n]/g, ' ');
+
+  while (i < source.length) {
+    const ch = source[i];
+    const next = source[i + 1];
+
+    if (ch === '/' && next === '/') {
+      const end = source.indexOf('\n', i);
+      const stop = end === -1 ? source.length : end;
+      out += blank(source.slice(i, stop));
+      i = stop;
+      continue;
+    }
+    if (ch === '/' && next === '*') {
+      const end = source.indexOf('*/', i + 2);
+      const stop = end === -1 ? source.length : end + 2;
+      out += blank(source.slice(i, stop));
+      i = stop;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') {
+      let j = i + 1;
+      while (j < source.length && source[j] !== ch && !(ch !== '`' && source[j] === '\n')) {
+        j += source[j] === '\\' ? 2 : 1;
+      }
+      out += source.slice(i, j + 1);
+      i = j + 1;
+      lastSignificant = ch;
+      continue;
+    }
+    if (ch === '/' && (lastSignificant === '' || /[(,=:[!&|?{};]/.test(lastSignificant) || /\breturn$/.test(out.trimEnd()))) {
+      let j = i + 1;
+      let inClass = false;
+      while (j < source.length && source[j] !== '\n') {
+        if (source[j] === '\\') { j += 2; continue; }
+        if (source[j] === '[') inClass = true;
+        else if (source[j] === ']') inClass = false;
+        else if (source[j] === '/' && !inClass) break;
+        j += 1;
+      }
+      out += blank(source.slice(i, j + 1));
+      i = j + 1;
+      lastSignificant = '/';
+      continue;
+    }
+    out += ch;
+    if (!/\s/.test(ch)) lastSignificant = ch;
+    i += 1;
+  }
+  return out;
+}
+
+function findHits(file: string): string[] {
+  const stripped = stripCommentsAndRegex(SOURCES[file] ?? '');
+  return stripped
+    .split('\n')
+    .map((line, idx) => (CYRILLIC.test(line) ? `${file}:${idx + 1}: ${line.trim().slice(0, 80)}` : ''))
+    .filter(Boolean);
+}
+
+const files = Object.keys(SOURCES).filter((f) => !ALLOWED_FILES.has(f));
+
+describe('no hard-coded Cyrillic UI strings', () => {
+  it('ignores comments and regex literals but catches strings and JSX text', () => {
+    const src = [
+      '// коментар',
+      'const re = /[А-Я]+/g;',
+      "const s = 'рядок';",
+      '<p>Текст</p>',
+      "const url = 'https://x.y'; // ще коментар"
+    ].join('\n');
+    const lines = stripCommentsAndRegex(src).split('\n');
+    expect(lines.map((l) => CYRILLIC.test(l))).toEqual([false, false, true, true, false]);
+  });
+
+  it('migrated files contain no Cyrillic outside comments and regex', () => {
+    const hits = files
+      .filter((f) => !PENDING_FILES.includes(f))
+      .flatMap((f) => findHits(f));
+    expect(hits).toEqual([]);
+  });
+
+  it('PENDING_FILES only lists files that still need migration', () => {
+    const clean = PENDING_FILES.filter((f) => findHits(f).length === 0);
+    expect(clean).toEqual([]);
+  });
+});
