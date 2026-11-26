@@ -2,6 +2,25 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [0.22.0] — 2026-11-26
+
+Feels like an app.
+
+### Added
+
+- The back gesture on Android (and the browser's back button) closes the open sheet, then returns from the text to the library. It no longer leaves Plyn in the middle of a text.
+- The screen stays on while you read or listen. After 10 minutes without moving on it may turn off again. Settings → "Keep the screen on" turns this off.
+- Proper home-screen icons on iPhone and Android.
+- A new version of Plyn never reloads the page while you read. When one is ready, the library says so quietly, with "Update now"; otherwise it opens next time you come back.
+- When a sheet opens, the keyboard and screen readers move into it, and come back to the button that opened it when it closes.
+
+### Under the hood
+
+- Visual checks: every theme and font is compared with saved screenshots before each change.
+- The reader screen is split into small parts, so new features are safer to add.
+- Newer build tools (Vite 8): the app builds much faster.
+- New browser journeys: the back button, sharing a text into Plyn, keeping the screen on, and an update arriving while you read.
+
 ## [0.21.0] — 2026-11-26
 
 Your library is safe.

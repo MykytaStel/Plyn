@@ -1,10 +1,10 @@
 # Plyn test plan
 
-Status: draft · updated for 0.20.0 · part of the [roadmap](ROADMAP.md)
+Status: draft · updated for 0.22.0 · part of the [roadmap](ROADMAP.md)
 
 **Goal for 0.30:** every layer below exists, runs automatically where it can, and blocks a broken release. Readers trust Plyn with their texts and their progress, so the tests protect those first.
 
-## Where we are (0.20.0)
+## Where we are (0.22.0)
 
 - New in 0.20: L7 and L8. Playwright runs CUJ-1…5, an axe scan of every screen and sheet in all four themes (and the English UI), and a keyboard-only journey, against the production build with its service worker. Projects: Desktop Chromium, Desktop WebKit, Pixel 7 (Chromium), iPhone 14 (WebKit); 56 runs, about 1.5 min locally. Every PR also gets a preview URL ([IMP-13](IMPROVEMENTS.md#imp-13-preview-deployments)).
 - Findings fixed in 0.20: muted text, the paper accent, the first-card hint and achievement toasts were below 4.5:1 contrast in some themes; four buttons had a name that did not contain their visible text; the library card was a `role="button"` with buttons inside it; offline URL import blamed the site; a reload within 250 ms of a swipe lost that card (now journaled in `plyn_progress_journal_v1`).
@@ -12,7 +12,8 @@ Status: draft · updated for 0.20.0 · part of the [roadmap](ROADMAP.md)
 - New in 0.19: L0 (ESLint + typecheck in CI), L2 (EPUB parser, onboarding component), L3 (`db.ts`, backup round trip, reader store with `fake-indexeddb`), L4 (`fast-check` properties for the splitter, sentences, anchor, language detection, backup validation), more L5 fixtures (`spec/anchor-cases.json`, `sentence-cases.json`, `language-cases.json`).
 - Findings fixed in 0.19: lost stats updates under concurrency ([IMP-04](IMPROVEMENTS.md#imp-04-atomic-progress-stats)); splitter offsets drifting when sentences had no space between them, and leading `?` / `…` being dropped (now cards are exact slices of the normalized text).
 - New in 0.21: L5 backup fixtures (`spec/backups/`), CUJ-6 (backup → wipe → restore, download on desktop and share sheet on phones), CUJ-7 (thought parking), CUJ-8 (bookmark note → Markdown) and CUJ-11 (delete → Undo), axe on the Undo toast. Vitest: 33 files, 172 tests; Playwright: 76 runs.
-- Not covered yet: TTS and audio services (stubbed out of the journeys), the error screen in a browser (component test only), Firefox, visual regression (0.22).
+- New in 0.22: L9 visual regression (`e2e/visual.spec.ts`, 48 snapshots on Chromium desktop and Pixel 7), CUJ-9 (back button), CUJ-10 (share target), Screen Wake Lock, a service worker update arriving mid-text, and the manifest icons. Unit tests for the back stack, wake lock and lazy-chunk retry; a component test for sheet focus. Vitest: 38 files, 197 tests; Playwright: 236 runs (visual and some PWA checks on Chromium only).
+- Not covered yet: TTS and audio services (stubbed out of the journeys), the error screen in a browser (component test only), Firefox.
 - CI: `ci.yml` runs `checks` (lint, typecheck, tests with coverage, build) and then `e2e` (Playwright) on every pull request; `deploy.yml` reuses it, so production deploys only after both. `preview.yml` uploads a Worker version per PR and comments its URL.
 - Known lint warnings (not blocking): 7 `jsx-a11y` warnings for pointer-only click targets (progress bar, card feed, words), left for the 0.28 audit.
 
@@ -131,7 +132,9 @@ Status: draft · updated for 0.20.0 · part of the [roadmap](ROADMAP.md)
 - Fixtures are built in memory (`e2e/support/fixtures.ts`): a numbered Ukrainian text, an EPUB zipped with `fflate`, a hand-written one-page PDF. No binary files in the repo.
 - Copy comes from the dictionaries (`uk.library.start`), never literal strings.
 - Run: `npm run test:e2e` (builds and starts `vite preview` on port 4173; reuses a running one locally). One project: `npx playwright test --project=chromium`. Debug: `npx playwright test --ui`. The first time: `npx playwright install chromium webkit`.
-- Files: `e2e/cuj-*.spec.ts` (journeys), `e2e/a11y.spec.ts`, `e2e/keyboard.spec.ts`, helpers in `e2e/support/`.
+- Files: `e2e/cuj-*.spec.ts` (journeys), `e2e/a11y.spec.ts`, `e2e/keyboard.spec.ts`, `e2e/visual.spec.ts`, PWA checks (`sw-update`, `wake-lock`, `pwa-icons`), helpers in `e2e/support/`.
+- `sw-update.spec.ts` simulates a deploy by changing one revision character in `dist/sw.js` (same length) and restores it; `registration.update()` is not routable. It runs on desktop Chromium only, so no other run touches the file at once.
+- Where Playwright cannot download its own browser (a sandbox), `PW_CHROMIUM_EXECUTABLE=/path/to/chromium` runs the Chromium projects on a local one. Pixel output may then differ slightly from CI.
 
 ### L8 Automated accessibility
 
@@ -141,8 +144,8 @@ Status: draft · updated for 0.20.0 · part of the [roadmap](ROADMAP.md)
 
 ### L9 Visual regression
 
-- Playwright `toHaveScreenshot()` for: library (empty, with documents), reader card, every sheet. Matrix: 4 themes × 4 font presets × phone and desktop, trimmed to the combinations that differ.
-- Runs only in the Playwright Linux container in CI, so font rendering is stable. Snapshots update through a manual workflow; updated images are reviewed in the PR like code.
+- Since 0.22: `e2e/visual.spec.ts`, Playwright `toHaveScreenshot()` on Chromium desktop and Pixel 7: the reader card with Ukrainian and English text in 4 themes × 4 font presets, the empty library and the reader settings sheet per theme (48 images). Animations off, caret hidden, `maxDiffPixelRatio: 0.01`; the storage line is masked.
+- Runs on Linux in CI, so font rendering is stable. Snapshots change only on purpose: `npm run test:visual:update` locally, or the manual "Visual baseline" workflow, which renders them on the CI runner and uploads them. Updated images are reviewed in the PR like code.
 - Required before splitting `tokens.css` ([IMP-09](IMPROVEMENTS.md#imp-09-split-tokenscss)).
 
 ### L10 Performance budgets
@@ -206,8 +209,8 @@ E2E (L7) covers these. Each journey is one spec file (`e2e/cuj-<n>-*.spec.ts`). 
 | CUJ-6 | Backup → clear storage → restore → same library, bookmarks, notes and thoughts | 0.21 ✓ |
 | CUJ-7 | Park a thought mid-text → find it in the library → return to the text | 0.21 ✓ |
 | CUJ-8 | Bookmark with a note → export Markdown → file contains the note | 0.21 ✓ |
-| CUJ-9 | Back button: sheet closes → reader closes → library stays | 0.22 |
-| CUJ-10 | Share target: open `/?title=…&text=…` → the text lands in the import box | 0.22 |
+| CUJ-9 | Back button: sheet closes → reader closes → library stays | 0.22 ✓ |
+| CUJ-10 | Share target: open `/?title=…&text=…` → the text lands in the import box | 0.22 ✓ |
 | CUJ-11 | Delete a document → undo → it is back with its progress | 0.21 ✓ |
 | CUJ-12 | Read aloud with auto-advance across three cards (stubbed voice) | 0.26 |
 
@@ -275,3 +278,7 @@ Do it on the PR preview (the "Preview" comment on the PR, `pr-<number>` alias) o
 8. Make a backup, then restore it.
 9. Switch the UI language and back.
 10. Glance at all four themes in the reader.
+11. Android: in the reader, back closes an open sheet, then returns to the library; it never closes the app mid-text. iPhone: the edge swipe does the same.
+12. The home-screen icon is the Plyn card, not a screenshot (iOS) or a cropped square (Android).
+13. Read for two minutes without touching the screen: it does not dim.
+14. With the previous version installed, open Plyn after the deploy: the library offers "Update now"; the reader is never interrupted.

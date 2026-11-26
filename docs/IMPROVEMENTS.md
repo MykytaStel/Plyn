@@ -8,20 +8,20 @@ Things that make Plyn safer, faster or easier to change, without being features.
 |---|---|---|---|
 | [IMP-01](#imp-01-harden-apiextract) | Harden `/api/extract` | security | 0.24 |
 | [IMP-02](#imp-02-security-headers-and-csp) | Security headers and CSP | security | 0.29 |
-| [IMP-03](#imp-03-dependency-hygiene) | Dependency hygiene and major upgrades | security | 0.19 ✓ (Vitest 5, Dependabot, Node pin) → 0.25 (upgrades), 0.29 (audit gate) |
+| [IMP-03](#imp-03-dependency-hygiene) | Dependency hygiene and major upgrades | security | 0.19 ✓ (Vitest 5, Dependabot, Node pin), 0.22 ✓ (Vite 8, PWA 2, lucide 1) → 0.25 (upgrades), 0.29 (audit gate) |
 | [IMP-04](#imp-04-atomic-progress-stats) | Atomic progress stats | data | 0.19 ✓ |
 | [IMP-05](#imp-05-backup-v2) | Backup v2 | data | 0.21 ✓ |
 | [IMP-06](#imp-06-split-metadata-from-text) | Split metadata from text | data, performance | 0.25 |
 | [IMP-07](#imp-07-error-boundary) | Error boundary | data, UX | 0.21 ✓ |
-| [IMP-08](#imp-08-split-readerview) | Split `ReaderView` | code health | 0.22 |
+| [IMP-08](#imp-08-split-readerview) | Split `ReaderView` | code health | 0.22 ✓ |
 | [IMP-09](#imp-09-split-tokenscss) | Split `tokens.css` | code health | 0.25 |
 | [IMP-10](#imp-10-lint-and-typecheck-scripts) | Lint and typecheck scripts | code health | 0.19 ✓ |
 | [IMP-11](#imp-11-remove-expired-compatibility-code) | Remove expired compatibility code | code health | 0.19 ✓ (`error` field); legacy session: 1.0 |
 | [IMP-12](#imp-12-pull-request-workflow) | Pull request workflow | delivery | 0.19 ✓ (CI on PRs; branch protection: owner, in GitHub settings) |
 | [IMP-13](#imp-13-preview-deployments) | Preview deployments | delivery | 0.20 ✓ |
 | [IMP-14](#imp-14-changelog-and-release-notes) | Changelog and release notes | delivery | 0.19 ✓ (file), 0.29 (in app) |
-| [IMP-15](#imp-15-service-worker-updates) | Service worker updates | PWA | 0.22 |
-| [IMP-16](#imp-16-png-and-maskable-icons) | PNG and maskable icons | PWA | 0.22 |
+| [IMP-15](#imp-15-service-worker-updates) | Service worker updates | PWA | 0.22 ✓ |
+| [IMP-16](#imp-16-png-and-maskable-icons) | PNG and maskable icons | PWA | 0.22 ✓ |
 | [IMP-17](#imp-17-shared-spec-fixtures) | Shared spec fixtures | portability | 0.19 ✓ (anchor, sentence, language) → 0.30 |
 
 ## Security
@@ -53,9 +53,9 @@ Things that make Plyn safer, faster or easier to change, without being features.
 | Package | Installed | Latest | Upgrade in | Why then |
 |---|---|---|---|---|
 | `vitest` | 3.2 | 5.1 | 0.19, first step | dev-only; build the new test setup on the current version, not twice |
-| `vite` + `@vitejs/plugin-react` | 6.4 + 4.7 | 8.4 + 6.3 | 0.22 | after E2E exists (0.20); together, one PR |
-| `vite-plugin-pwa` | 0.21 | 2.0 | 0.22 | same release as the service worker update work ([IMP-15](#imp-15-service-worker-updates)) |
-| `lucide-react` | 0.475 | 1.81 | 0.22 | after the visual baseline, which catches changed icons |
+| `vite` + `@vitejs/plugin-react` | 6.4 + 4.7 | 8.4 + 6.3 | 0.22 ✓ | after E2E exists (0.20); together with `vite-plugin-pwa`, which needs Vite ≤ 6 before 2.0 |
+| `vite-plugin-pwa` | 0.21 | 2.0 | 0.22 ✓ | same release as the service worker update work ([IMP-15](#imp-15-service-worker-updates)) |
+| `lucide-react` | 0.577 | 1.81 | 0.22 ✓ | after the visual baseline, which catches changed icons |
 | `dexie-react-hooks` | 1.1 | 4.4 | 0.25 | same release as the Dexie `version(4)` migration |
 | `typescript` | 5.9 | 7.0 | 0.25 | check `tsc -b` and editor support with the new compiler first |
 
@@ -94,6 +94,8 @@ Things that make Plyn safer, faster or easier to change, without being features.
 ### IMP-08 Split ReaderView
 
 **Today:** `src/features/reader/ReaderView.tsx` is 813 lines: keyboard, swipe, TTS auto-advance, timers, eye-break reminder, sheets and rendering in one component.
+
+**Done in 0.22:** `features/reader/hooks/` has `useCardNavigation`, `useSpeech`, `useReaderKeyboard`, `useFocusTimer`, `useReaderNotices`, `useReaderToast` and `useKeepScreenOn`; `ReaderView` is composition and markup (524 lines, most of it JSX).
 
 **Change:** extract hooks (`useReaderKeyboard`, `useSwipe`, `useTtsAutoAdvance`, `useFocusTimer`, `useEyeBreak`) and keep `ReaderView` as composition. Do it after the E2E journeys exist (0.20) and before back-button navigation (0.22), which touches the same code. No behaviour change.
 
@@ -147,11 +149,15 @@ Things that make Plyn safer, faster or easier to change, without being features.
 1. whether an update can reload the page while someone is reading;
 2. whether a long-open tab can still lazy-load an old chunk (for example the PDF parser, `LibraryView.tsx:200`) after a deploy removed it.
 
+**Done in 0.22:** prompt-style updates with a quiet line in the library, `importWithRetry` for lazy chunks, and an E2E journey that simulates a deploy mid-text. See the [0.22 design](superpowers/specs/2026-11-26-v0.22-feels-like-an-app-design.md).
+
 **Change:** test both in E2E (0.22). If either fails: switch to a prompt-style update (a calm "New version ready, applies next time you open Plyn" line, no modal) and retry failed dynamic imports once after reloading the chunk list.
 
 ### IMP-16 PNG and maskable icons
 
 **Today:** `index.html:14` points `apple-touch-icon` at an SVG, which iOS does not use for home-screen icons; the manifest has one SVG icon with `purpose: 'any maskable'`, which mixes two purposes in one image.
+
+**Done in 0.22**, rendered by `scripts/generate-icons.mjs`; no manifest screenshots yet.
 
 **Change:** add PNG icons: `apple-touch-icon` 180×180; manifest 192×192 and 512×512 (`any`) plus a separate 512×512 `maskable` with a safe zone. Optionally manifest `screenshots` for the richer Android install sheet. All match the Workbox `globPatterns` (`png` is already included).
 
