@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { tokenizeWithAnchors } from '../../core/anchor/anchor';
+import { detectContentLanguage } from '../../core/language/detectContentLanguage';
 import type { ReadingCard } from '../../core/models/types';
 import { splitCardIntoSentences } from '../../core/splitter/sentences';
 import { speakSingleWord } from '../../services/speech/tts';
@@ -67,7 +68,11 @@ export function CardSlide({
   );
 
   return (
-    <article className="card-slide" data-index={card.index}>
+    <article
+      className="card-slide"
+      data-index={card.index}
+      lang={detectContentLanguage(card.text)}
+    >
       {isWithinWindow && (
         <div className="card-body">
           {previousSnippet && (
