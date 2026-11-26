@@ -17,6 +17,8 @@ export interface UserSettings {
   anchorMode: boolean;
   sentenceFocus: boolean;
   eyeBreakReminder: boolean;
+  /** Screen Wake Lock while reading or listening (0.22). */
+  keepScreenOn: boolean;
   ttsRate: TtsRatePreset;
   ttsAutoAdvance: boolean;
   cardLength: CardLengthPreset;

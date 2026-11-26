@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlynDocument, ThoughtNote, UserProgressStats, UserSettings } from '../../core/models/types';
 import { importLibraryBackup } from './backup';
 import { db, getProgressStats } from './db';
+import { DEFAULT_SETTINGS } from './settingsStorage';
 
 /**
  * L5 compatibility: every backup any Plyn version ever wrote must restore
@@ -72,6 +73,9 @@ describe('backup fixtures (spec/backups)', () => {
       expect(stats.unlockedIds).toEqual(expect.arrayContaining(fixture.stats.unlockedIds));
     }
 
-    expect(result.appliedSettings).toEqual(fixture.settings ?? null);
+    // A field added after the fixture was written takes its default (0.22: keepScreenOn).
+    expect(result.appliedSettings).toEqual(
+      fixture.settings ? { ...DEFAULT_SETTINGS, ...fixture.settings } : null
+    );
   });
 });

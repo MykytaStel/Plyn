@@ -238,6 +238,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     brownNoiseHint: 'A soft background sound that quiets stray thoughts',
     eyeBreak: 'Eye break (20-20-20)',
     eyeBreakHint: 'A quiet reminder to look away every 25 cards',
+    keepScreenOn: 'Keep the screen on',
+    keepScreenOnHint: 'While you read or listen. After 10 minutes without moving on, the screen may turn off again',
     autoAdvance: 'Keep listening (auto-advance)',
     autoAdvanceHint: 'Read-aloud moves to the next card on its own',
     ttsRate: 'Read-aloud speed',

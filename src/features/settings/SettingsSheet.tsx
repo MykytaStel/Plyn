@@ -14,6 +14,7 @@ import { useI18n } from '../../i18n';
 import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { StorageSection } from './StorageSection';
+import { screenWakeLock } from '../../services/screen/wakeLock';
 import { useDialogFocus } from '../shared/useDialogFocus';
 
 /**
@@ -74,6 +75,7 @@ export function SettingsSheet({
     anchorMode,
     sentenceFocus,
     eyeBreakReminder,
+    keepScreenOn,
     ttsRate,
     ttsAutoAdvance,
     cardLength,
@@ -82,6 +84,7 @@ export function SettingsSheet({
   } = useSettingsStore();
   const timerMinutes = useReaderStore((s) => s.timerMinutes);
   const isReader = Boolean(onTimerSelect);
+  const wakeLockSupported = screenWakeLock().supported;
 
   return (
     <aside
@@ -375,6 +378,25 @@ export function SettingsSheet({
               <span className="switch-slider" />
             </label>
           </div>
+          {wakeLockSupported && (
+            <div className="setting-row-toggle">
+              <div>
+                <label htmlFor="toggle-keep-screen-on" className="setting-label">
+                  {t.keepScreenOn}
+                </label>
+                <p className="setting-hint">{t.keepScreenOnHint}</p>
+              </div>
+              <label className="switch">
+                <input
+                  id="toggle-keep-screen-on"
+                  type="checkbox"
+                  checked={keepScreenOn}
+                  onChange={(e) => updateSettings({ keepScreenOn: e.target.checked })}
+                />
+                <span className="switch-slider" />
+              </label>
+            </div>
+          )}
         </section>
 
         <section className="settings-section">

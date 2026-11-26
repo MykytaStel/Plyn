@@ -34,6 +34,7 @@ import { useReaderKeyboard } from './hooks/useReaderKeyboard';
 import { useReaderNotices } from './hooks/useReaderNotices';
 import { useReaderToast } from './hooks/useReaderToast';
 import { useSpeech } from './hooks/useSpeech';
+import { useKeepScreenOn } from './hooks/useKeepScreenOn';
 import { useBackLayer } from '../shared/useBackLayer';
 
 type ActiveSheet = 'none' | 'settings' | 'bookmarks' | 'thoughts' | 'tools';
@@ -86,6 +87,7 @@ export function ReaderView() {
   const { ttsAvailable, isSpeaking, toggleSpeech: handleToggleSpeech } = useSpeech({
     scrollToCard
   });
+  useKeepScreenOn(isSpeaking);
 
   const leaveReader = useCallback(() => {
     stopBrownNoise();
