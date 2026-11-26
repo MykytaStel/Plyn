@@ -37,27 +37,12 @@ export function LibraryCard({
   };
 
   return (
-    <article
-      className="library-card"
-      tabIndex={isEditing ? -1 : 0}
-      role="button"
-      aria-label={i18n.format(t.open, { title: doc.title })}
-      onClick={() => {
-        if (!isEditing) onOpen(doc);
-      }}
-      onKeyDown={(e) => {
-        if (!isEditing && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          onOpen(doc);
-        }
-      }}
-    >
+    // The title is a real button stretched over the card (CSS ::after), so the
+    // card opens on click anywhere without nesting buttons inside a button.
+    <article className="library-card">
       <div className="library-card-top">
         {isEditing ? (
-          <div
-            className="library-rename-row"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="library-rename-row">
             <input
               className="library-rename-input"
               type="text"
@@ -95,15 +80,23 @@ export function LibraryCard({
           </div>
         ) : (
           <>
-            <h3 className="library-card-title" title={doc.title}>{doc.title}</h3>
+            <h3 className="library-card-title" title={doc.title}>
+              <button
+                type="button"
+                className="library-card-open"
+                aria-label={i18n.format(t.open, { title: doc.title })}
+                onClick={() => onOpen(doc)}
+              >
+                {doc.title}
+              </button>
+            </h3>
             <div className="library-card-actions">
               <button
                 type="button"
                 className="library-action-btn"
                 aria-label={i18n.format(t.rename, { title: doc.title })}
                 title={t.renameHint}
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={() => {
                   setDraftTitle(doc.title);
                   setIsEditing(true);
                 }}
@@ -115,10 +108,7 @@ export function LibraryCard({
                 className="library-action-btn"
                 aria-label={i18n.format(t.delete, { title: doc.title })}
                 title={t.deleteHint}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(doc.id);
-                }}
+                onClick={() => onDelete(doc.id)}
               >
                 <Trash2 size={15} />
               </button>
