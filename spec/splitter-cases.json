@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "description": "Shared splitter behaviour for web and future native apps. Each case: input text, lengthPreset (short|medium|long), and either `expected` (card texts in order) or `maxCardLength`. Optional `expectedOffsets` lists [startOffset, endOffset] per card in the normalized text. For every case, each card must equal normalized.slice(startOffset, endOffset).",
   "cases": [
     {
       "name": "keeps Ukrainian abbreviations intact",
@@ -32,6 +33,61 @@
       "lengthPreset": "short",
       "input": "Коли перед очима відкривається довга стіна тексту, мозок втомлюється ще до першого абзацу, і погляд починає зісковзувати на сусідній рядок кожного разу.",
       "maxCardLength": 130
+    },
+    {
+      "name": "keeps text exactly as written when sentences have no space between them",
+      "lengthPreset": "medium",
+      "input": "Ми зустрілися о 9 год.Потім пішли додому.",
+      "expected": [
+        "Ми зустрілися о 9 год.Потім пішли додому."
+      ],
+      "expectedOffsets": [
+        [
+          0,
+          41
+        ]
+      ]
+    },
+    {
+      "name": "never drops leading punctuation",
+      "lengthPreset": "medium",
+      "input": "? слово",
+      "expected": [
+        "? слово"
+      ],
+      "expectedOffsets": [
+        [
+          0,
+          7
+        ]
+      ]
+    },
+    {
+      "name": "keeps a leading ellipsis with its sentence",
+      "lengthPreset": "short",
+      "input": "… і тоді все почалося. Далі було тихо.",
+      "expected": [
+        "… і тоді все почалося. Далі було тихо."
+      ]
+    },
+    {
+      "name": "offsets point into the normalized text across paragraphs",
+      "lengthPreset": "medium",
+      "input": "  Перший абзац.\r\n\r\n\tДругий   абзац.  ",
+      "expected": [
+        "Перший абзац.",
+        "Другий абзац."
+      ],
+      "expectedOffsets": [
+        [
+          0,
+          13
+        ],
+        [
+          16,
+          29
+        ]
+      ]
     }
   ]
 }
