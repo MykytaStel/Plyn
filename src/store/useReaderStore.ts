@@ -15,6 +15,10 @@ import {
   recordProgressDelta,
   updateDocument
 } from '../services/storage/db';
+import {
+  clearProgressJournal,
+  writeProgressJournal
+} from '../services/storage/progressJournal';
 import { stopSpeaking } from '../services/speech/tts';
 import { currentI18n } from '../i18n';
 
@@ -56,10 +60,23 @@ interface ReaderState {
 let persistTimeout: number | undefined;
 const seenInSession = new Set<number>();
 
+/**
+ * The place is journaled synchronously at once (survives a reload or a closed
+ * app), and written to IndexedDB after a short pause, so fast swiping through
+ * a long book does not rewrite the whole document on every card.
+ */
 function schedulePersist(doc: PlynDocument): void {
+  const at = Date.now();
+  writeProgressJournal({
+    id: doc.id,
+    charOffset: doc.charOffset,
+    currentIndex: doc.currentIndex,
+    totalCards: doc.totalCards,
+    at
+  });
   window.clearTimeout(persistTimeout);
   persistTimeout = window.setTimeout(() => {
-    void updateDocument(doc);
+    void updateDocument(doc).then(() => clearProgressJournal(doc.id, at));
   }, 250);
 }
 
