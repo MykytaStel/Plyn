@@ -53,7 +53,7 @@ describe('formatWeekdayShort', () => {
   it('formats per locale', () => {
     const monday = new Date(2026, 10, 23, 12);
     expect(formatWeekdayShort(monday, 'en')).toBe('Mon');
-    expect(formatWeekdayShort(monday, 'uk').toLowerCase()).toBe('пн');
+    expect(formatWeekdayShort(monday, 'uk')).toBe('Пн');
   });
 });
 

@@ -44,12 +44,14 @@ export function plural(forms: PluralForms, count: number, locale: Locale): strin
   return format(template, { count: formatNumber(count, locale) });
 }
 
+/** Short weekday, capitalized ("Пн", "Mon") to match the original design. */
 export function formatWeekdayShort(date: Date, locale: Locale): string {
-  return cached(
+  const label = cached(
     weekdayFormats,
     locale,
     () => new Intl.DateTimeFormat(locale, { weekday: 'short' })
   ).format(date);
+  return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1);
 }
 
 export interface I18n {
