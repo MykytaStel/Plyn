@@ -6,6 +6,7 @@ import {
 import type {
   AchievementDefinition,
   PlynDocument,
+  ThoughtNote,
   UserProgressStats
 } from '../../core/models/types';
 import { deriveTitle } from '../../core/parsers/markdown';
@@ -14,6 +15,7 @@ import { toLocalDateKey } from '../../core/reading/weeklyActivity';
 class PlynDatabase extends Dexie {
   documents!: EntityTable<PlynDocument, 'id'>;
   stats!: EntityTable<UserProgressStats, 'id'>;
+  thoughts!: EntityTable<ThoughtNote, 'id'>;
 
   constructor() {
     super('plyn_library_v2');
@@ -24,16 +26,21 @@ class PlynDatabase extends Dexie {
       documents: 'id, updatedAt, createdAt',
       stats: 'id'
     });
+    this.version(3).stores({
+      documents: 'id, updatedAt, createdAt',
+      stats: 'id',
+      thoughts: 'id, createdAt'
+    });
   }
 }
 
 export const db = new PlynDatabase();
 
-function generateId(): string {
+function generateId(prefix = 'doc'): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  return `doc_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export async function createDocument(input: {
@@ -43,7 +50,7 @@ export async function createDocument(input: {
 }): Promise<PlynDocument> {
   const now = Date.now();
   const doc: PlynDocument = {
-    id: generateId(),
+    id: generateId('doc'),
     schemaVersion: 1,
     title: input.title?.trim() || deriveTitle(input.text),
     text: input.text,
@@ -79,6 +86,29 @@ export async function renameDocument(id: string, newTitle: string): Promise<void
 
 export async function removeDocument(id: string): Promise<void> {
   await db.documents.delete(id);
+}
+
+/**
+ * «Парковка думок» для РДУГ — збереження сторонньої думки без виходу з читання.
+ */
+export async function addThoughtNote(
+  text: string,
+  docTitle?: string
+): Promise<ThoughtNote | null> {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const note: ThoughtNote = {
+    id: generateId('thought'),
+    text: trimmed,
+    docTitle,
+    createdAt: Date.now()
+  };
+  await db.thoughts.put(note);
+  return note;
+}
+
+export async function removeThoughtNote(id: string): Promise<void> {
+  await db.thoughts.delete(id);
 }
 
 export async function getProgressStats(): Promise<UserProgressStats> {
@@ -136,9 +166,6 @@ export async function recordProgressDelta(
   }
 }
 
-/**
- * Одноразова міграція сесії зі старого MVP localStorage у Dexie.
- */
 export async function migrateLegacyLocalSession(): Promise<void> {
   try {
     const raw = window.localStorage.getItem('plyn_session_v1');

@@ -1,5 +1,5 @@
 /**
- * Легка озвучка поточної картки через вбудований Web Speech API
+ * Легка озвучка поточної картки або окремого слова через Web Speech API
  * з підтримкою швидкості та безпечного авто-переходу.
  */
 
@@ -19,6 +19,20 @@ export function stopSpeaking(): void {
   currentSessionId += 1;
   if (!isTtsSupported()) return;
   window.speechSynthesis.cancel();
+}
+
+/**
+ * Тихо озвучує одне складне слово (для допомоги при дислексії по подвійному тапу).
+ */
+export function speakSingleWord(word: string): void {
+  const clean = word.trim();
+  if (!isTtsSupported() || !clean) return;
+  currentSessionId += 1;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = detectLanguage(clean);
+  utterance.rate = 0.88;
+  window.speechSynthesis.speak(utterance);
 }
 
 export function speakCardText(

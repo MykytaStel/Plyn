@@ -6,10 +6,12 @@ export const DEFAULT_SETTINGS: UserSettings = {
   theme: 'dark',
   fontFamily: 'sans',
   letterSpacing: 'normal',
+  columnWidth: 'standard',
   fontSize: 24,
   lineHeight: 1.65,
   anchorMode: false,
   sentenceFocus: false,
+  eyeBreakReminder: false,
   ttsRate: 1,
   ttsAutoAdvance: false,
   cardLength: 'medium'

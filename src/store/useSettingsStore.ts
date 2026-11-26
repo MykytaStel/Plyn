@@ -24,6 +24,7 @@ function syncDom(settings: UserSettings): void {
   document.documentElement.dataset.theme = settings.theme;
   document.documentElement.dataset.font = settings.fontFamily;
   document.documentElement.dataset.spacing = settings.letterSpacing;
+  document.documentElement.dataset.width = settings.columnWidth;
   document.documentElement.style.setProperty(
     '--reader-font-size',
     `${settings.fontSize}px`
@@ -47,10 +48,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       theme: patch.theme ?? get().theme,
       fontFamily: patch.fontFamily ?? get().fontFamily,
       letterSpacing: patch.letterSpacing ?? get().letterSpacing,
+      columnWidth: patch.columnWidth ?? get().columnWidth,
       fontSize: patch.fontSize ?? get().fontSize,
       lineHeight: patch.lineHeight ?? get().lineHeight,
       anchorMode: patch.anchorMode ?? get().anchorMode,
       sentenceFocus: patch.sentenceFocus ?? get().sentenceFocus,
+      eyeBreakReminder: patch.eyeBreakReminder ?? get().eyeBreakReminder,
       ttsRate: patch.ttsRate ?? get().ttsRate,
       ttsAutoAdvance: patch.ttsAutoAdvance ?? get().ttsAutoAdvance,
       cardLength: patch.cardLength ?? get().cardLength
@@ -70,10 +73,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       theme,
       fontFamily,
       letterSpacing,
+      columnWidth,
       fontSize,
       lineHeight,
       anchorMode,
       sentenceFocus,
+      eyeBreakReminder,
       ttsRate,
       ttsAutoAdvance,
       cardLength
@@ -82,10 +87,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       theme,
       fontFamily,
       letterSpacing,
+      columnWidth,
       fontSize,
       lineHeight,
       anchorMode,
       sentenceFocus,
+      eyeBreakReminder,
       ttsRate,
       ttsAutoAdvance,
       cardLength

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
+  ChevronUp,
   Download,
   HelpCircle,
+  Lightbulb,
   Link2,
+  Plus,
   Search,
   Sparkles,
   Sun,
@@ -26,6 +29,7 @@ import {
   isOnboardingDone,
   OnboardingModal
 } from '../onboarding/OnboardingModal';
+import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { LibraryCard } from './LibraryCard';
 
 type LibraryFilter = 'all' | 'active' | 'completed' | 'bookmarked';
@@ -41,20 +45,22 @@ const SAMPLE_TEXT = `Коли перед очима відкривається �
 
 Plyn прибирає це перевантаження. Замість нескінченного полотна ти бачиш лише одну коротку думку за раз — у спокійній рамці та з чіткими межами.
 
-Свайпай вгору на iPhone або натискай Пробіл чи стрілки на MacBook, щоб рухатися далі. Верхня смужка показує реальний прогрес і орієнтовний час до кінця.
+Свайпай вгору на iPhone або натискай Пробіл чи стрілки на MacBook, щоб рухатися далі. Зверху кожної картки є м’який рядок попереднього контексту, щоб ти не втрачав нитку розповіді.
 
-Спробуй увімкнути режим «Якір» (клавіша A), «Фокус-речення» (клавіша F), тему «М’ята», шрифт і ширший інтервал для дислексії в налаштуваннях або «Чистий екран» (клавіша Z).
+У налаштуваннях спробуй готові пресети в 1 тап («Дислексія», «Втомлені очі», «Книга») та офлайн коричневий шум. А якщо під час читання вирине стороння думка — натисни лампочку (клавіша N), щоб запаркувати її й читати далі.
 
-Ти також можеш ставити закладки з нотатками (клавіша B), слухати озвучку підряд (клавіша S), імпортувати книги .epub, файли .txt / .md або переносити бібліотеку через JSON-бекап.`;
+Подвійний тап по будь-якому складному слову тихо озвучить його вголос. Також можна імпортувати .pdf, .epub, .txt, .md або статті за посиланням.`;
 
 export function LibraryView() {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [showEditor, setShowEditor] = useState(false);
   const [showUrlBar, setShowUrlBar] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showThoughts, setShowThoughts] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone());
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<LibraryFilter>('all');
@@ -74,6 +80,10 @@ export function LibraryView() {
     []
   );
   const stats = useLiveQuery(() => db.stats.get('main'), []);
+  const thoughtsCount = useLiveQuery(() => db.thoughts.count(), []) ?? 0;
+
+  const hasLibrary = Boolean(documents && documents.length > 0);
+  const isEditorVisible = !hasLibrary || showEditor;
 
   const nextUnfinishedDoc = useMemo(
     () => documents?.find((d) => !d.completedOnce) ?? documents?.[0] ?? null,
@@ -113,6 +123,7 @@ export function LibraryView() {
     if (!sharedUrl && !sharedText) return;
 
     window.history.replaceState({}, '', window.location.pathname);
+    setShowEditor(true);
 
     const urlCandidate =
       sharedUrl || (sharedText.match(/https?:\/\/\S+/i)?.[0] ?? '');
@@ -178,6 +189,15 @@ export function LibraryView() {
         setText(parsed.text);
         showFeedback(
           `Книгу «${parsed.title}» завантажено. Натисни «Почати читання».`
+        );
+      } else if (lower.endsWith('.pdf')) {
+        showFeedback('Читаю PDF-документ...');
+        const { parsePdfFile } = await import('../../core/parsers/pdf');
+        const parsed = await parsePdfFile(file);
+        setTitle(parsed.title);
+        setText(parsed.text);
+        showFeedback(
+          `PDF «${parsed.title}» завантажено. Натисни «Почати читання».`
         );
       } else {
         const raw = await file.text();
@@ -258,6 +278,7 @@ export function LibraryView() {
     await startNewDocument(title, text, cardLength);
     setTitle('');
     setText('');
+    setShowEditor(false);
   };
 
   const charCount = text.trim().length;
@@ -271,6 +292,18 @@ export function LibraryView() {
           <span className="brand-name">Plyn</span>
         </div>
         <div className="header-actions">
+          {thoughtsCount > 0 && (
+            <button
+              className="awards-pill"
+              type="button"
+              aria-label="Парковка думок"
+              title="Запарковані думки"
+              onClick={() => setShowThoughts(true)}
+            >
+              <Lightbulb size={15} />
+              <span>{thoughtsCount}</span>
+            </button>
+          )}
           <button
             className="awards-pill"
             type="button"
@@ -304,15 +337,17 @@ export function LibraryView() {
       </header>
 
       <section className="input-container">
-        <div className="hero-copy">
-          <h1>Читай у своєму ритмі</h1>
-          <p>
-            Встав текст, посилання на статтю або книгу .epub — Plyn розіб’є все на
-            короткі картки.
-          </p>
-        </div>
+        {!hasLibrary && (
+          <div className="hero-copy">
+            <h1>Читай у своєму ритмі</h1>
+            <p>
+              Встав текст, посилання на статтю або файл .pdf / .epub — Plyn
+              розіб’є все на короткі картки.
+            </p>
+          </div>
+        )}
 
-        {/* Анти-прокрастинація для РДУГ: м'який старт на 5 карток */}
+        {/* Легкий старт на 5 карток */}
         {nextUnfinishedDoc && (
           <div className="micro-start-banner">
             <div className="micro-start-text">
@@ -331,117 +366,146 @@ export function LibraryView() {
           </div>
         )}
 
-        {showUrlBar && (
-          <div className="url-import-row">
-            <input
-              type="url"
-              className="url-input"
-              placeholder="https://example.com/article"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleUrlExtract();
-              }}
-              disabled={isExtracting}
-            />
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              disabled={!urlInput.trim() || isExtracting}
-              onClick={() => void handleUrlExtract()}
-            >
-              {isExtracting ? '...' : 'Завантажити'}
-            </button>
-          </div>
+        {/* Компактна кнопка відкриття редактора, коли бібліотека вже не порожня */}
+        {hasLibrary && (
+          <button
+            type="button"
+            className={`btn ${isEditorVisible ? 'btn-secondary' : 'btn-primary'} btn-lg`}
+            onClick={() => setShowEditor((v) => !v)}
+          >
+            {isEditorVisible ? (
+              <>
+                <ChevronUp size={18} />
+                <span>Згорнути форму додавання</span>
+              </>
+            ) : (
+              <>
+                <Plus size={18} />
+                <span>Додати текст, .pdf, .epub або URL</span>
+              </>
+            )}
+          </button>
         )}
 
-        <div className="editor-box">
-          <label htmlFor="title-input" className="sr-only">
-            Назва тексту (необов’язково)
-          </label>
-          <input
-            id="title-input"
-            className="title-input"
-            type="text"
-            placeholder="Назва (необов’язково — згенерується автоматично)"
-            maxLength={120}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <label htmlFor="text-input" className="sr-only">
-            Текст для читання
-          </label>
-          <textarea
-            ref={textAreaRef}
-            id="text-input"
-            className="text-input"
-            placeholder="Встав сюди статтю, конспект або розділ книги..."
-            rows={7}
-            spellCheck={false}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <div className="editor-toolbar">
-            <div className="toolbar-left">
-              <button
-                className="btn btn-secondary btn-sm"
-                type="button"
-                onClick={handlePaste}
-              >
-                З буфера
-              </button>
-              <button
-                className="btn btn-secondary btn-sm"
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                .txt / .md / .epub
-              </button>
-              <button
-                className="btn btn-secondary btn-sm"
-                type="button"
-                onClick={() => setShowUrlBar((v) => !v)}
-              >
-                <Link2 size={14} />
-                <span>За URL</span>
-              </button>
-              <button
-                className="btn btn-ghost btn-sm"
-                type="button"
-                onClick={() => {
-                  setTitle('Знайомство з Plyn');
-                  setText(SAMPLE_TEXT);
-                  showFeedback('Приклад завантажено. Натисни «Почати читання».');
-                }}
-              >
-                Приклад
-              </button>
+        {isEditorVisible && (
+          <>
+            {showUrlBar && (
+              <div className="url-import-row">
+                <input
+                  type="url"
+                  className="url-input"
+                  placeholder="https://example.com/article"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleUrlExtract();
+                  }}
+                  disabled={isExtracting}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  disabled={!urlInput.trim() || isExtracting}
+                  onClick={() => void handleUrlExtract()}
+                >
+                  {isExtracting ? '...' : 'Завантажити'}
+                </button>
+              </div>
+            )}
+
+            <div className="editor-box">
+              <label htmlFor="title-input" className="sr-only">
+                Назва тексту (необов’язково)
+              </label>
               <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.md,.epub,text/plain,text/markdown,application/epub+zip"
-                hidden
-                onChange={handleFileImport}
+                id="title-input"
+                className="title-input"
+                type="text"
+                placeholder="Назва (необов’язково — згенерується автоматично)"
+                maxLength={120}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
               />
+              <label htmlFor="text-input" className="sr-only">
+                Текст для читання
+              </label>
+              <textarea
+                ref={textAreaRef}
+                id="text-input"
+                className="text-input"
+                placeholder="Встав сюди статтю, конспект або розділ книги..."
+                rows={7}
+                spellCheck={false}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+              <div className="editor-toolbar">
+                <div className="toolbar-left">
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    type="button"
+                    onClick={handlePaste}
+                  >
+                    З буфера
+                  </button>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    .txt / .md / .epub / .pdf
+                  </button>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    type="button"
+                    onClick={() => setShowUrlBar((v) => !v)}
+                  >
+                    <Link2 size={14} />
+                    <span>За URL</span>
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    type="button"
+                    onClick={() => {
+                      setTitle('Знайомство з Plyn');
+                      setText(SAMPLE_TEXT);
+                      showFeedback(
+                        'Приклад завантажено. Натисни «Почати читання».'
+                      );
+                    }}
+                  >
+                    Приклад
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".txt,.md,.epub,.pdf,text/plain,text/markdown,application/epub+zip,application/pdf"
+                    hidden
+                    onChange={handleFileImport}
+                  />
+                </div>
+                <span className="char-count">
+                  {charCount.toLocaleString('uk-UA')} символів
+                </span>
+              </div>
             </div>
-            <span className="char-count">
-              {charCount.toLocaleString('uk-UA')} символів
-            </span>
-          </div>
-        </div>
 
-        <p className="input-feedback" role="status" aria-live="polite">
-          {feedback}
-        </p>
+            <button
+              className="btn btn-primary btn-lg"
+              type="button"
+              disabled={charCount === 0}
+              onClick={handleStart}
+            >
+              Почати читання
+            </button>
+          </>
+        )}
 
-        <button
-          className="btn btn-primary btn-lg"
-          type="button"
-          disabled={charCount === 0}
-          onClick={handleStart}
-        >
-          Почати читання
-        </button>
+        {feedback && (
+          <p className="input-feedback" role="status" aria-live="polite">
+            {feedback}
+          </p>
+        )}
 
         <section className="library-section" aria-label="Моя бібліотека">
           <div className="library-header">
@@ -484,7 +548,11 @@ export function LibraryView() {
 
           {documents && documents.length >= 2 && (
             <>
-              <div className="library-filters" role="tablist" aria-label="Фільтр бібліотеки">
+              <div
+                className="library-filters"
+                role="tablist"
+                aria-label="Фільтр бібліотеки"
+              >
                 {FILTERS.map((item) => (
                   <button
                     key={item.value}
@@ -545,6 +613,17 @@ export function LibraryView() {
             stats={stats}
             onClose={() => setShowAchievements(false)}
           />
+        </>
+      )}
+
+      {showThoughts && (
+        <>
+          <div
+            className="sheet-backdrop"
+            onClick={() => setShowThoughts(false)}
+            aria-hidden="true"
+          />
+          <ThoughtsSheet onClose={() => setShowThoughts(false)} />
         </>
       )}
 

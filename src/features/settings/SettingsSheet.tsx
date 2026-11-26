@@ -1,17 +1,22 @@
 import { X } from 'lucide-react';
 import type {
   CardLengthPreset,
+  ColumnWidthPreset,
   FontFamilyPreset,
   LetterSpacingPreset,
   ThemeMode,
   TtsRatePreset
 } from '../../core/models/types';
+import { READING_PRESETS } from '../../core/presets/readingPresets';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface SettingsSheetProps {
+  brownNoiseOn: boolean;
+  onToggleBrownNoise: (enabled: boolean) => void;
   onCardLengthChange: (preset: CardLengthPreset) => void;
   onTimerSelect: (minutes: number) => void;
+  onPresetApplied: (label: string) => void;
   onClose: () => void;
 }
 
@@ -35,6 +40,11 @@ const SPACINGS: Array<{ value: LetterSpacingPreset; label: string }> = [
   { value: 'extra', label: 'Дислексія' }
 ];
 
+const WIDTHS: Array<{ value: ColumnWidthPreset; label: string }> = [
+  { value: 'narrow', label: 'Вузька колонка' },
+  { value: 'standard', label: 'Стандартна' }
+];
+
 const LENGTHS: Array<{ value: CardLengthPreset; label: string }> = [
   { value: 'short', label: 'Коротка' },
   { value: 'medium', label: 'Середня' },
@@ -56,18 +66,23 @@ const TIMERS = [
 ];
 
 export function SettingsSheet({
+  brownNoiseOn,
+  onToggleBrownNoise,
   onCardLengthChange,
   onTimerSelect,
+  onPresetApplied,
   onClose
 }: SettingsSheetProps) {
   const {
     theme,
     fontFamily,
     letterSpacing,
+    columnWidth,
     fontSize,
     lineHeight,
     anchorMode,
     sentenceFocus,
+    eyeBreakReminder,
     ttsRate,
     ttsAutoAdvance,
     cardLength,
@@ -96,6 +111,27 @@ export function SettingsSheet({
       </div>
 
       <div className="sheet-body">
+        {/* Швидкі пресети в 1 тап */}
+        <div className="setting-group">
+          <span className="setting-label">Готові режими в 1 тап</span>
+          <div className="presets-grid">
+            {READING_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="preset-btn"
+                title={preset.hint}
+                onClick={() => {
+                  updateSettings(preset.patch);
+                  onPresetApplied(preset.label);
+                }}
+              >
+                <span className="preset-btn-title">{preset.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="setting-row-toggle">
           <div>
             <label htmlFor="toggle-anchor" className="setting-label">
@@ -122,7 +158,7 @@ export function SettingsSheet({
               Фокус-речення
             </label>
             <p className="setting-hint">
-              Підсвічує одне речення за раз — погляд не перестрибує (клавіша F)
+              Підсвічує активне речення м’якою лінійкою (клавіша F)
             </p>
           </div>
           <label className="switch">
@@ -132,6 +168,48 @@ export function SettingsSheet({
               checked={sentenceFocus}
               onChange={(e) =>
                 updateSettings({ sentenceFocus: e.target.checked })
+              }
+            />
+            <span className="switch-slider" />
+          </label>
+        </div>
+
+        <div className="setting-row-toggle">
+          <div>
+            <label htmlFor="toggle-brown-noise" className="setting-label">
+              Коричневий шум (офлайн)
+            </label>
+            <p className="setting-hint">
+              М’який фоновий звук, що приглушує сторонні думки при РДУГ
+            </p>
+          </div>
+          <label className="switch">
+            <input
+              id="toggle-brown-noise"
+              type="checkbox"
+              checked={brownNoiseOn}
+              onChange={(e) => onToggleBrownNoise(e.target.checked)}
+            />
+            <span className="switch-slider" />
+          </label>
+        </div>
+
+        <div className="setting-row-toggle">
+          <div>
+            <label htmlFor="toggle-eye-break" className="setting-label">
+              Пауза для очей (20-20-20)
+            </label>
+            <p className="setting-hint">
+              Тихе нагадування відвести погляд кожні 25 карток
+            </p>
+          </div>
+          <label className="switch">
+            <input
+              id="toggle-eye-break"
+              type="checkbox"
+              checked={eyeBreakReminder}
+              onChange={(e) =>
+                updateSettings({ eyeBreakReminder: e.target.checked })
               }
             />
             <span className="switch-slider" />
@@ -213,6 +291,26 @@ export function SettingsSheet({
                 type="button"
                 className={`seg-btn ${letterSpacing === item.value ? 'is-active' : ''}`}
                 onClick={() => updateSettings({ letterSpacing: item.value })}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="setting-group">
+          <span className="setting-label">Ширина колонки</span>
+          <div
+            className="segmented segmented-2"
+            role="radiogroup"
+            aria-label="Ширина колонки"
+          >
+            {WIDTHS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                className={`seg-btn ${columnWidth === item.value ? 'is-active' : ''}`}
+                onClick={() => updateSettings({ columnWidth: item.value })}
               >
                 {item.label}
               </button>
@@ -323,7 +421,7 @@ export function SettingsSheet({
 
         <p className="shortcuts-hint">
           Клавіатура: <kbd>Space</kbd>/<kbd>↓</kbd> далі · <kbd>A</kbd> якір ·{' '}
-          <kbd>F</kbd> фокус · <kbd>B</kbd> закладка · <kbd>S</kbd> озвучка ·{' '}
+          <kbd>F</kbd> фокус · <kbd>N</kbd> думка · <kbd>S</kbd> озвучка ·{' '}
           <kbd>Z</kbd> чистий екран
         </p>
       </div>

@@ -2,9 +2,11 @@ import { useMemo } from 'react';
 import { tokenizeWithAnchors } from '../../core/anchor/anchor';
 import type { ReadingCard } from '../../core/models/types';
 import { splitCardIntoSentences } from '../../core/splitter/sentences';
+import { speakSingleWord } from '../../services/speech/tts';
 
 interface CardSlideProps {
   card: ReadingCard;
+  previousSnippet?: string;
   total: number;
   anchorMode: boolean;
   sentenceFocus: boolean;
@@ -13,23 +15,38 @@ interface CardSlideProps {
   isWithinWindow: boolean;
 }
 
-function renderAnchorText(text: string, anchorMode: boolean) {
-  if (!anchorMode) return text;
+function renderInteractiveWords(text: string, anchorMode: boolean) {
   const tokens = tokenizeWithAnchors(text);
-  return tokens.map((token, i) =>
-    token.type === 'word' ? (
-      <span key={i}>
-        <span className="anchor-lead">{token.lead}</span>
-        {token.rest}
-      </span>
-    ) : (
-      <span key={i}>{token.value}</span>
-    )
-  );
+  return tokens.map((token, i) => {
+    if (token.type === 'word') {
+      const fullWord = `${token.lead}${token.rest}`;
+      return (
+        <span
+          key={i}
+          className="readable-word"
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            speakSingleWord(fullWord);
+          }}
+        >
+          {anchorMode ? (
+            <>
+              <span className="anchor-lead">{token.lead}</span>
+              {token.rest}
+            </>
+          ) : (
+            fullWord
+          )}
+        </span>
+      );
+    }
+    return <span key={i}>{token.value}</span>;
+  });
 }
 
 export function CardSlide({
   card,
+  previousSnippet,
   total,
   anchorMode,
   sentenceFocus,
@@ -53,6 +70,11 @@ export function CardSlide({
     <article className="card-slide" data-index={card.index}>
       {isWithinWindow && (
         <div className="card-body">
+          {previousSnippet && (
+            <p className="card-context" aria-hidden="true">
+              …{previousSnippet}
+            </p>
+          )}
           <p className="card-text">
             {useSentenceHighlight && sentences
               ? sentences.map((sentence, idx) => (
@@ -62,17 +84,17 @@ export function CardSlide({
                       idx === activeSentenceIndex ? 'is-focused' : 'is-dimmed'
                     }`}
                   >
-                    {renderAnchorText(sentence, anchorMode)}
+                    {renderInteractiveWords(sentence, anchorMode)}
                     {idx < sentences.length - 1 ? ' ' : ''}
                   </span>
                 ))
-              : renderAnchorText(card.text, anchorMode)}
+              : renderInteractiveWords(card.text, anchorMode)}
           </p>
           {card.index === 0 && total > 1 && (
             <div className="card-hint">
               {sentenceFocus
-                ? 'Тапни або натисни Пробіл для наступного речення ↓'
-                : 'Свайпни вгору або натисни Пробіл ↓'}
+                ? 'Тапни або натисни Пробіл для наступного речення · 2× тап по слову — озвучити'
+                : 'Свайпни вгору або натисни Пробіл · 2× тап по слову — озвучити'}
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronUp,
   EyeOff,
+  Lightbulb,
   SlidersHorizontal,
   Square,
   Volume2
@@ -13,6 +14,11 @@ import type { CardLengthPreset } from '../../core/models/types';
 import { estimateRemainingMinutes } from '../../core/reading/readingStats';
 import { splitCardIntoSentences } from '../../core/splitter/sentences';
 import {
+  isBrownNoisePlaying,
+  startBrownNoise,
+  stopBrownNoise
+} from '../../services/audio/brownNoise';
+import {
   isTtsSupported,
   speakCardText,
   stopSpeaking
@@ -20,12 +26,23 @@ import {
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { SettingsSheet } from '../settings/SettingsSheet';
+import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { BookmarksSheet } from './BookmarksSheet';
 import { CardSlide } from './CardSlide';
 import { DoneSlide } from './DoneSlide';
 
-type ActiveSheet = 'none' | 'settings' | 'bookmarks';
+type ActiveSheet = 'none' | 'settings' | 'bookmarks' | 'thoughts';
 const RENDER_WINDOW_RADIUS = 5;
+const EYE_BREAK_INTERVAL = 25;
+
+function getPreviousTailSnippet(prevText?: string): string | undefined {
+  if (!prevText) return undefined;
+  const trimmed = prevText.trim();
+  if (trimmed.length <= 72) return trimmed;
+  const slice = trimmed.slice(-72);
+  const firstSpace = slice.indexOf(' ');
+  return (firstSpace > 0 ? slice.slice(firstSpace + 1) : slice).trim();
+}
 
 export function ReaderView() {
   const activeDoc = useReaderStore((s) => s.activeDoc);
@@ -52,6 +69,7 @@ export function ReaderView() {
 
   const anchorMode = useSettingsStore((s) => s.anchorMode);
   const sentenceFocus = useSettingsStore((s) => s.sentenceFocus);
+  const eyeBreakReminder = useSettingsStore((s) => s.eyeBreakReminder);
   const ttsRate = useSettingsStore((s) => s.ttsRate);
   const ttsAutoAdvance = useSettingsStore((s) => s.ttsAutoAdvance);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
@@ -59,6 +77,7 @@ export function ReaderView() {
   const [sheet, setSheet] = useState<ActiveSheet>('none');
   const [showScrubber, setShowScrubber] = useState(false);
   const [zenMode, setZenMode] = useState(false);
+  const [brownNoiseOn, setBrownNoiseOn] = useState(() => isBrownNoisePlaying());
   const [activeSentenceIndex, setActiveSentenceIndex] = useState(0);
   const [isDoneVisible, setIsDoneVisible] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -72,6 +91,7 @@ export function ReaderView() {
   const toastTimerRef = useRef<number | undefined>(undefined);
   const pendingAutoSpeakRef = useRef(false);
   const microGoalNotifiedRef = useRef(false);
+  const sessionCardsSeenRef = useRef(new Set<number>());
   const ttsAvailable = useMemo(() => isTtsSupported(), []);
 
   const currentSentenceCount = useMemo(() => {
@@ -85,8 +105,15 @@ export function ReaderView() {
     window.clearTimeout(toastTimerRef.current);
     toastTimerRef.current = window.setTimeout(
       () => setToast(null),
-      isAchievement ? 3800 : 2600
+      isAchievement ? 4200 : 2800
     );
+  }, []);
+
+  // Зупиняємо коричневий шум при виході з рідера
+  useEffect(() => {
+    return () => {
+      stopBrownNoise();
+    };
   }, []);
 
   useEffect(() => {
@@ -96,7 +123,6 @@ export function ReaderView() {
     shiftRecentUnlock();
   }, [recentUnlocks, shiftRecentUnlock, showToast]);
 
-  // Спокійне сповіщення при виконанні мікро-цілі (наприклад, 5 карток)
   useEffect(() => {
     if (microGoalTarget && microGoalCompleted && !microGoalNotifiedRef.current) {
       microGoalNotifiedRef.current = true;
@@ -109,6 +135,19 @@ export function ReaderView() {
       microGoalNotifiedRef.current = false;
     }
   }, [microGoalTarget, microGoalCompleted, showToast]);
+
+  // Опційне м'яке нагадування для очей (правило 20-20-20) кожні 25 карток
+  useEffect(() => {
+    if (!eyeBreakReminder) return;
+    sessionCardsSeenRef.current.add(currentIndex);
+    const count = sessionCardsSeenRef.current.size;
+    if (count > 1 && count % EYE_BREAK_INTERVAL === 0) {
+      showToast(
+        'Пауза для очей (20-20-20): відведи погляд у далечінь на 10 секунд',
+        true
+      );
+    }
+  }, [currentIndex, eyeBreakReminder, showToast]);
 
   const scrollToCard = useCallback(
     (index: number, behavior: ScrollBehavior = 'smooth') => {
@@ -192,6 +231,7 @@ export function ReaderView() {
 
   useEffect(() => {
     if (!activeDoc) return;
+    sessionCardsSeenRef.current.clear();
     requestAnimationFrame(() => {
       scrollToCard(currentIndex, 'instant');
       feedRef.current?.focus({ preventScroll: true });
@@ -261,6 +301,21 @@ export function ReaderView() {
     return () => window.clearInterval(id);
   }, [timerEndsAt, completeFocusTimer, showToast]);
 
+  const handleToggleBrownNoise = useCallback(
+    (enabled: boolean) => {
+      if (enabled) {
+        const started = startBrownNoise();
+        setBrownNoiseOn(started);
+        if (started) showToast('М’який коричневий шум увімкнено');
+      } else {
+        stopBrownNoise();
+        setBrownNoiseOn(false);
+        showToast('Коричневий шум вимкнено');
+      }
+    },
+    [showToast]
+  );
+
   const handleToggleZen = useCallback(() => {
     setShowScrubber(false);
     setZenMode((prev) => {
@@ -299,6 +354,7 @@ export function ReaderView() {
         } else if (showScrubber) {
           setShowScrubber(false);
         } else {
+          stopBrownNoise();
           void closeReader();
         }
         return;
@@ -325,9 +381,7 @@ export function ReaderView() {
         e.preventDefault();
         updateSettings({ sentenceFocus: !sentenceFocus });
         showToast(
-          !sentenceFocus
-            ? 'Фокус-речення увімкнено'
-            : 'Фокус-речення вимкнено'
+          !sentenceFocus ? 'Фокус-речення увімкнено' : 'Фокус-речення вимкнено'
         );
       } else if (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'и') {
         e.preventDefault();
@@ -338,6 +392,10 @@ export function ReaderView() {
       } else if (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'я') {
         e.preventDefault();
         handleToggleZen();
+      } else if (e.key.toLowerCase() === 'n' || e.key.toLowerCase() === 'т') {
+        e.preventDefault();
+        setShowScrubber(false);
+        setSheet('thoughts');
       }
     };
 
@@ -421,7 +479,10 @@ export function ReaderView() {
           className="icon-btn icon-btn-text"
           type="button"
           aria-label="Повернутися до бібліотеки"
-          onClick={() => void closeReader()}
+          onClick={() => {
+            stopBrownNoise();
+            void closeReader();
+          }}
         >
           <ChevronLeft size={20} />
           <span>Бібліотека</span>
@@ -455,6 +516,19 @@ export function ReaderView() {
         </div>
 
         <div className="reader-header-right">
+          <button
+            className="icon-btn"
+            type="button"
+            aria-label="Запаркувати думку"
+            title="Парковка думок (клавіша N)"
+            onClick={() => {
+              setShowScrubber(false);
+              setSheet('thoughts');
+            }}
+          >
+            <Lightbulb size={17} />
+          </button>
+
           {ttsAvailable && (
             <button
               className="icon-btn"
@@ -464,7 +538,7 @@ export function ReaderView() {
               title="Озвучити картку (клавіша S)"
               onClick={handleToggleSpeech}
             >
-              {isSpeaking ? <Square size={16} /> : <Volume2 size={18} />}
+              {isSpeaking ? <Square size={15} /> : <Volume2 size={17} />}
             </button>
           )}
 
@@ -479,7 +553,7 @@ export function ReaderView() {
             onClick={() => void handleToggleBookmark()}
           >
             <Bookmark
-              size={18}
+              size={17}
               fill={isCurrentBookmarked ? 'currentColor' : 'none'}
             />
           </button>
@@ -520,7 +594,7 @@ export function ReaderView() {
             title="Чистий екран (клавіша Z)"
             onClick={handleToggleZen}
           >
-            <EyeOff size={17} />
+            <EyeOff size={16} />
           </button>
 
           <button
@@ -533,7 +607,7 @@ export function ReaderView() {
               setSheet('settings');
             }}
           >
-            <SlidersHorizontal size={18} />
+            <SlidersHorizontal size={17} />
           </button>
         </div>
       </header>
@@ -574,10 +648,13 @@ export function ReaderView() {
           }
         }}
       >
-        {cards.map((card) => (
+        {cards.map((card, idx) => (
           <CardSlide
             key={`${card.index}-${card.startOffset}`}
             card={card}
+            previousSnippet={
+              idx > 0 ? getPreviousTailSnippet(cards[idx - 1]?.text) : undefined
+            }
             total={total}
             anchorMode={anchorMode}
             sentenceFocus={sentenceFocus}
@@ -591,7 +668,10 @@ export function ReaderView() {
         <DoneSlide
           total={total}
           onRestart={() => scrollToCard(0)}
-          onBackToLibrary={() => void closeReader()}
+          onBackToLibrary={() => {
+            stopBrownNoise();
+            void closeReader();
+          }}
         />
       </div>
 
@@ -636,8 +716,11 @@ export function ReaderView() {
 
       {sheet === 'settings' && (
         <SettingsSheet
+          brownNoiseOn={brownNoiseOn}
+          onToggleBrownNoise={handleToggleBrownNoise}
           onCardLengthChange={handleCardLengthChange}
           onTimerSelect={handleTimerSelect}
+          onPresetApplied={(label) => showToast(`Увімкнено режим «${label}»`)}
           onClose={() => setSheet('none')}
         />
       )}
@@ -653,6 +736,13 @@ export function ReaderView() {
             setSheet('none');
             scrollToCard(idx);
           }}
+          onClose={() => setSheet('none')}
+        />
+      )}
+
+      {sheet === 'thoughts' && (
+        <ThoughtsSheet
+          currentDocTitle={activeDoc.title}
           onClose={() => setSheet('none')}
         />
       )}

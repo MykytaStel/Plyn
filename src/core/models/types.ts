@@ -2,16 +2,19 @@ export type ThemeMode = 'dark' | 'paper' | 'gray' | 'mint';
 export type CardLengthPreset = 'short' | 'medium' | 'long';
 export type FontFamilyPreset = 'sans' | 'hyperlegible' | 'dyslexic' | 'serif';
 export type LetterSpacingPreset = 'normal' | 'wide' | 'extra';
+export type ColumnWidthPreset = 'narrow' | 'standard';
 export type TtsRatePreset = 0.75 | 1 | 1.25 | 1.5;
 
 export interface UserSettings {
   theme: ThemeMode;
   fontFamily: FontFamilyPreset;
   letterSpacing: LetterSpacingPreset;
+  columnWidth: ColumnWidthPreset;
   fontSize: number;
   lineHeight: number;
   anchorMode: boolean;
   sentenceFocus: boolean;
+  eyeBreakReminder: boolean;
   ttsRate: TtsRatePreset;
   ttsAutoAdvance: boolean;
   cardLength: CardLengthPreset;
@@ -42,6 +45,13 @@ export interface PlynDocument {
   completedOnce?: boolean;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface ThoughtNote {
+  id: string;
+  text: string;
+  docTitle?: string;
+  createdAt: number;
 }
 
 export interface UserProgressStats {
