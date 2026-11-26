@@ -257,6 +257,7 @@ Plyn прибирає це перевантаження. Замість неск
     minutesShort: '{minutes} хв',
     fontSize: 'Розмір шрифту',
     lineHeight: 'Міжрядковий інтервал',
+    version: 'Plyn, версія {version}',
     shortcuts: {
       keyboard: 'Клавіатура:',
       next: 'далі',

@@ -2,6 +2,14 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [Unreleased] — 0.21.0
+
+Your library is safe.
+
+### Added
+
+- Settings now show which version of Plyn you have, at the very bottom.
+
 ## [0.20.0] — 2026-11-26
 
 Safety net II. Plyn is now checked in real browsers (Chrome and Safari, desktop and phone) before every change, including offline and with the keyboard only. Those checks found a few things worth fixing.

@@ -9,6 +9,7 @@ import type {
 } from '../../core/models/types';
 import { READING_PRESETS } from '../../core/presets/readingPresets';
 import { useReaderStore } from '../../store/useReaderStore';
+import { APP_VERSION } from '../../appVersion';
 import { useI18n } from '../../i18n';
 import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -472,6 +473,8 @@ export function SettingsSheet({
           <kbd>N</kbd> {t.shortcuts.thought} · <kbd>S</kbd> {t.shortcuts.speech} ·{' '}
           <kbd>Z</kbd> {t.shortcuts.zen}
         </p>
+
+        <p className="app-version">{i18n.format(t.version, { version: APP_VERSION })}</p>
       </div>
     </aside>
   );

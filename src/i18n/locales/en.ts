@@ -245,6 +245,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     minutesShort: '{minutes} min',
     fontSize: 'Font size',
     lineHeight: 'Line spacing',
+    version: 'Plyn, version {version}',
     shortcuts: {
       keyboard: 'Keyboard:',
       next: 'next',
