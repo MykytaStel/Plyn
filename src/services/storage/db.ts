@@ -5,6 +5,7 @@ import {
 } from '../../core/achievements/achievements';
 import type {
   AchievementDefinition,
+  DocumentChapter,
   PlynDocument,
   ThoughtNote,
   UserProgressStats
@@ -45,6 +46,34 @@ function generateId(prefix = 'doc'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/**
+ * Keeps only well-formed chapters that point inside a text of `textLength`,
+ * in reading order. Returns undefined when fewer than two are left.
+ */
+export function sanitizeChapters(
+  chapters: unknown,
+  textLength: number
+): DocumentChapter[] | undefined {
+  if (!Array.isArray(chapters)) return undefined;
+  const valid = chapters
+    .filter(
+      (c): c is DocumentChapter =>
+        Boolean(c) &&
+        typeof (c as DocumentChapter).title === 'string' &&
+        (c as DocumentChapter).title.trim().length > 0 &&
+        Number.isInteger((c as DocumentChapter).offset) &&
+        (c as DocumentChapter).offset >= 0 &&
+        (c as DocumentChapter).offset < textLength
+    )
+    .map((c) => ({
+      title: c.title.trim().slice(0, 300),
+      offset: c.offset,
+      level: Number.isInteger(c.level) && c.level >= 0 ? Math.min(c.level, 6) : 0
+    }))
+    .sort((a, b) => a.offset - b.offset);
+  return valid.length >= 2 ? valid : undefined;
+}
+
 /** A library document whose text is exactly `text`, if any. */
 export async function findDocumentByText(text: string): Promise<PlynDocument | undefined> {
   return db.documents.filter((doc) => doc.text === text).first();
@@ -56,6 +85,10 @@ export async function createDocument(input: {
   totalCards: number;
   /** Localized title for text whose first line is empty. */
   fallbackTitle: string;
+  /** From a book's metadata (0.23). */
+  author?: string;
+  /** A book's table of contents; offsets into `text` (0.23). */
+  chapters?: DocumentChapter[];
 }): Promise<PlynDocument> {
   const now = Date.now();
   const doc: PlynDocument = {
@@ -72,6 +105,10 @@ export async function createDocument(input: {
     createdAt: now,
     updatedAt: now
   };
+  const author = input.author?.trim();
+  if (author) doc.author = author;
+  const chapters = sanitizeChapters(input.chapters, input.text.length);
+  if (chapters) doc.chapters = chapters;
 
   await db.documents.put(doc);
   // The library now has something worth keeping.

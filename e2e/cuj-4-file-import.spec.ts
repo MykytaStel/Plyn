@@ -6,12 +6,26 @@ import {
   epubFixture,
   PDF_TEXT,
   PDF_FILE_NAME,
-  pdfFixture
+  pdfFixture,
+  specBook
 } from './support/fixtures';
 
 const cases = [
   { kind: 'epub', file: epubFixture, title: EPUB_TITLE, firstCard: EPUB_FIRST_LINE },
-  { kind: 'pdf', file: pdfFixture, title: titleFromFileName(PDF_FILE_NAME), firstCard: PDF_TEXT }
+  { kind: 'pdf', file: pdfFixture, title: titleFromFileName(PDF_FILE_NAME), firstCard: PDF_TEXT },
+  // 0.23: FictionBook in Windows-1251, and an old .txt in Windows-1251.
+  {
+    kind: 'fb2',
+    file: () => specBook('books/fb2-windows-1251.fb2'),
+    title: 'Вечір над річкою',
+    firstCard: 'Вечір над річкою'
+  },
+  {
+    kind: 'txt (Windows-1251)',
+    file: () => specBook('txt/uk-windows-1251.txt'),
+    title: titleFromFileName('uk-windows-1251.txt'),
+    firstCard: 'Ранок у Карпатах'
+  }
 ];
 
 for (const c of cases) {

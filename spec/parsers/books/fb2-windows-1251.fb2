@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+  <description><title-info>
+    <author><first-name>Марта</first-name><last-name>Вигадана</last-name></author>
+    <book-title>Вечір над річкою</book-title>
+    <lang>uk</lang>
+  </title-info></description>
+  <body>
+    <title><p>Вечір над річкою</p></title>
+    <epigraph><p>Тиша теж говорить.</p></epigraph>
+    <section>
+      <title><p>Частина перша</p></title>
+      <section>
+        <title><p>Розділ 1</p><p>Берег</p></title>
+        <p>Вода була теплою.</p>
+        <empty-line/>
+        <poem><stanza><v>Ой, у полі</v><v>вітер віє.</v></stanza></poem>
+      </section>
+      <section>
+        <title><p>Розділ 2</p></title>
+        <p>Їжак  прийшов<a l:href="#n1">1</a> увечері.</p>
+      </section>
+    </section>
+    <section><p>Без назви, але з текстом.</p></section>
+  </body>
+  <body name="notes"><section id="n1"><p>Примітка, яку не читаємо в тексті.</p></section></body>
+</FictionBook>

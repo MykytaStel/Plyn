@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type {
   AchievementDefinition,
   CardLengthPreset,
+  DocumentChapter,
   PlynDocument,
   ReadingCard
 } from '../core/models/types';
@@ -41,7 +42,8 @@ interface ReaderState {
   startNewDocument: (
     title: string,
     text: string,
-    lengthPreset: CardLengthPreset
+    lengthPreset: CardLengthPreset,
+    book?: { author?: string; chapters?: DocumentChapter[] }
   ) => Promise<void>;
   closeReader: () => Promise<void>;
   setCurrentIndex: (index: number, anchorMode: boolean) => void;
@@ -119,7 +121,7 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     });
   },
 
-  startNewDocument: async (title, text, lengthPreset) => {
+  startNewDocument: async (title, text, lengthPreset, book) => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
@@ -141,7 +143,9 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
       title,
       text: trimmed,
       totalCards: cards.length,
-      fallbackTitle: currentI18n().m.common.untitled
+      fallbackTitle: currentI18n().m.common.untitled,
+      author: book?.author,
+      chapters: book?.chapters
     });
 
     set({

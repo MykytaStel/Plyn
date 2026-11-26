@@ -1,8 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { strToU8, zipSync } from 'fflate';
 
 /**
  * Self-written fixtures only (TESTING.md rule 3). Everything is built in
- * memory, so the repo carries no binary or copyrighted files.
+ * memory. Since 0.23 the parser golden files in spec/parsers/ (self-written,
+ * binary) are reused too.
  */
 
 /** A Ukrainian text with numbered, unique sentences: easy to locate on a card. */
@@ -66,4 +69,10 @@ export function pdfFixture(): { name: string; mimeType: string; buffer: Buffer }
   for (const off of offsets) body += `${String(off).padStart(10, '0')} 00000 n \n`;
   body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefAt}\n%%EOF\n`;
   return { name: PDF_FILE_NAME, mimeType: 'application/pdf', buffer: Buffer.from(body, 'latin1') };
+}
+
+/** A golden-file book from spec/parsers (self-written, 0.23). */
+export function specBook(name: string): { name: string; mimeType: string; buffer: Buffer } {
+  const path = fileURLToPath(new URL(`../../spec/parsers/${name}`, import.meta.url));
+  return { name: name.split('/').pop()!, mimeType: 'application/octet-stream', buffer: readFileSync(path) };
 }

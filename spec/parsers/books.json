@@ -1,0 +1,102 @@
+{
+  "header": "Book parsers (0.23). Each file in books/ is a self-written EPUB or FB2 built by scripts/fixtures/build-book-fixtures.mjs. A reader app must turn `file` into exactly this title, author and text, with chapters at these character offsets of the text (UTF-16 code units, like bookmarks). The expected values are written by hand; never edit a published case, add a new one.",
+  "cases": [
+    {
+      "file": "epub3-nav-fragments.epub",
+      "title": "Тиха книга",
+      "author": "Марта Вигадана, Остап Уявний",
+      "text": "Частина перша\n\nРозділ 1\n\nРанок був тихий.\n\nРозділ 2\n\nПішов дощ.\n\nЧастина друга\n\nЦитата.\n\nКінець.",
+      "chapters": [
+        {
+          "title": "Частина перша",
+          "offset": 0,
+          "level": 0
+        },
+        {
+          "title": "Розділ 1",
+          "offset": 15,
+          "level": 1
+        },
+        {
+          "title": "Розділ 2",
+          "offset": 43,
+          "level": 1
+        },
+        {
+          "title": "Частина друга",
+          "offset": 65,
+          "level": 0
+        }
+      ]
+    },
+    {
+      "file": "epub2-ncx.epub",
+      "title": "A Small Book",
+      "author": "Ada Example",
+      "text": "One\n\nThe kettle sang.\n\nLater, the rain.\n\nTwo\n\nFirst thing.\n\nSecond thing.",
+      "chapters": [
+        {
+          "title": "One",
+          "offset": 0,
+          "level": 0
+        },
+        {
+          "title": "One, later",
+          "offset": 23,
+          "level": 1
+        },
+        {
+          "title": "Two",
+          "offset": 41,
+          "level": 0
+        }
+      ]
+    },
+    {
+      "file": "fb2-windows-1251.fb2",
+      "title": "Вечір над річкою",
+      "author": "Марта Вигадана",
+      "text": "Вечір над річкою\n\nТиша теж говорить.\n\nЧастина перша\n\nРозділ 1\n\nБерег\n\nВода була теплою.\n\nОй, у полі\n\nвітер віє.\n\nРозділ 2\n\nЇжак прийшов увечері.\n\nБез назви, але з текстом.",
+      "chapters": [
+        {
+          "title": "Частина перша",
+          "offset": 38,
+          "level": 0
+        },
+        {
+          "title": "Розділ 1. Берег",
+          "offset": 53,
+          "level": 1
+        },
+        {
+          "title": "Розділ 2",
+          "offset": 113,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "file": "fb2-utf8.fb2.zip",
+      "title": "Вечір над річкою",
+      "author": "Марта Вигадана",
+      "text": "Вечір над річкою\n\nТиша теж говорить.\n\nЧастина перша\n\nРозділ 1\n\nБерег\n\nВода була теплою.\n\nОй, у полі\n\nвітер віє.\n\nРозділ 2\n\nЇжак прийшов увечері.\n\nБез назви, але з текстом.",
+      "chapters": [
+        {
+          "title": "Частина перша",
+          "offset": 38,
+          "level": 0
+        },
+        {
+          "title": "Розділ 1. Берег",
+          "offset": 53,
+          "level": 1
+        },
+        {
+          "title": "Розділ 2",
+          "offset": 113,
+          "level": 1
+        }
+      ]
+    }
+  ]
+}

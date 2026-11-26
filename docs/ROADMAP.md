@@ -1,6 +1,6 @@
 # Plyn roadmap: 0.19 → 0.30
 
-Status: draft · 2026-11-26 · current release: **0.22.0**
+Status: draft · 2026-11-26 · current release: **0.23.0**
 
 This is a direction, not a promise. Each release gets its own short design in `docs/superpowers/specs/` before work starts, and the owner can reorder or cut anything.
 
@@ -28,7 +28,7 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 | [0.20](#0200--safety-net-ii-end-to-end-and-accessibility) ✓ | Safety net II: end-to-end & a11y | nothing | E2E, automated a11y, offline | M | 0.19 |
 | [0.21](#0210--your-library-is-safe) ✓ | Your library is safe | yes | backup & migration compat | M | EXP-07 |
 | [0.22](#0220--feels-like-an-app) ✓ | Feels like an app | yes | visual regression | M | 0.20 |
-| [0.23](#0230--books-import-well) | Books import well | yes | parser golden files | M | EXP-04 |
+| [0.23](#0230--books-import-well) ✓ | Books import well | yes | parser golden files | M | EXP-04 |
 | [0.24](#0240--pdfs-and-web-articles-import-well) | PDFs & web articles import well | yes | Worker runtime tests | L | EXP-01 |
 | [0.25](#0250--light-and-fast) | Light and fast | faster | performance budgets | M | 0.22 (visual baseline) |
 | [0.26](#0260--listening-upgraded) | Listening, upgraded | yes | TTS contract tests | M | EXP-02 |
@@ -116,6 +116,8 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 **Done when:** on a real Android phone, back never closes the app from the reader, and visual snapshots are stable in CI.
 
 ## 0.23.0 — Books import well
+
+**Status: shipped.** Design: [specs/2026-11-26-v0.23-books-import-well-design.md](superpowers/specs/2026-11-26-v0.23-books-import-well-design.md). EXP-04 said yes to FB2. "Off the main thread" means decompression in workers and chunked parsing, because `DOMParser` is not available in a Web Worker. Added beyond the plan: the author in the library and in search.
 
 **Goal:** a long book opens fast and keeps its structure.
 

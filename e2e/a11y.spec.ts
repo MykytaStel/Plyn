@@ -9,7 +9,7 @@ import {
   uk
 } from './support/app';
 import { expectNoSeriousA11yIssues } from './support/axe';
-import { numberedText } from './support/fixtures';
+import { numberedText, specBook } from './support/fixtures';
 
 const THEMES = ['dark', 'paper', 'gray', 'mint'] as const;
 
@@ -106,6 +106,24 @@ for (const theme of THEMES) {
     });
   });
 }
+
+test('book contents (0.23)', async ({ page }) => {
+  await page.goto('/');
+  await page
+    .locator('input[type="file"][accept*=".epub"]')
+    .setInputFiles(specBook('books/epub3-nav-fragments.epub'));
+  await page.getByRole('button', { name: uk.library.start }).click();
+  await expect(reader(page)).toBeVisible();
+  const more = page.getByRole('button', { name: uk.reader.tools.more });
+  if (await more.isVisible()) {
+    await more.click();
+    await page.getByRole('button', { name: uk.reader.tools.contents }).click();
+  } else {
+    await page.getByRole('button', { name: uk.reader.contentsList, exact: true }).click();
+  }
+  await expect(page.getByRole('dialog', { name: uk.bookmarks.titleWithContents })).toBeVisible();
+  await expectNoSeriousA11yIssues(page, 'book contents');
+});
 
 test.describe('English interface', () => {
   test.use({ settings: { language: 'en' } });

@@ -2,6 +2,8 @@ export type PlynErrorCode =
   | 'epub_invalid'
   | 'epub_no_manifest'
   | 'epub_no_text'
+  | 'fb2_invalid'
+  | 'fb2_no_text'
   | 'pdf_no_text'
   | 'backup_invalid'
   | 'backup_unsupported'

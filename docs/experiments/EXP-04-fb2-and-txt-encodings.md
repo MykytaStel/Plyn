@@ -1,6 +1,6 @@
 # EXP-04 FB2 and plain-text encodings
 
-Status: not started · Feeds: [0.23](../ROADMAP.md#0230--books-import-well) · Time box: 1 day
+Status: done · 2026-11-26 · Feeds: [0.23](../ROADMAP.md#0230--books-import-well) · Time box: 1 day
 
 ## Question
 
@@ -36,4 +36,10 @@ A reader who drops a book and sees `Ð¿Ñ€Ð¸Ð²Ñ–Ñ‚` or "unsupported
 
 ## Result
 
+- Demand: FB2 is a primary download format in the big Ukrainian free e-book libraries, next to EPUB. No reader survey was run; the decision rests on that availability and on the low cost.
+- Encoding detection (`src/core/parsers/textEncoding.ts`, no dependency): 9/9 fixtures in `spec/parsers/txt/` (UTF-8 with and without BOM, UTF-16 LE/BE with BOM, UTF-16 LE without BOM, Windows-1251, KOI8-U, English), and 400/400 generated Ukrainian texts re-encoded to Windows-1251 and KOI8-U (seeded property test). Unsure files fall back to UTF-8 with a calm hint.
+- FB2 parser (`src/core/parsers/fb2.ts`): title, author, text and titled sections as chapters, in the same shape as EPUB chapters; `.fb2.zip` via fflate; footnote marks and the notes body are left out.
+
 ## Decision
+
+Ship both in 0.23. `.fb2` is one more accepted extension, so the import flow gets no new control.

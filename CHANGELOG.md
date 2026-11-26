@@ -2,6 +2,27 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [0.23.0] — 2026-11-26
+
+Books import well.
+
+### Added
+
+- Books keep their contents. For an EPUB or FB2 with chapters, the bookmarks sheet shows "Contents": tap a chapter to go there. Plyn marks the chapter you are in.
+- The author of a book appears under its title in the library, and search finds books by author.
+- FB2 books (`.fb2` and `.fb2.zip`) import, including old files in Windows-1251.
+- Old `.txt` files in Windows-1251, KOI8-U or UTF-16 open without broken letters. If Plyn is not sure about a file, it says so calmly.
+
+### Changed
+
+- Big books no longer freeze the screen while they import.
+
+### Under the hood
+
+- Golden files for every parser in `spec/parsers/`: one self-written text in nine encodings, and self-written EPUB and FB2 books with hand-written expected text and chapters.
+- New browser journey: open a book's contents and jump to a chapter. Import journeys for FB2 and a Windows-1251 `.txt`.
+- Backups keep the author and the contents of a book. They are still version 2, so older versions can read them.
+
 ## [0.22.0] — 2026-11-26
 
 Feels like an app.

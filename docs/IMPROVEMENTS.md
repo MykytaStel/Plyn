@@ -22,7 +22,7 @@ Things that make Plyn safer, faster or easier to change, without being features.
 | [IMP-14](#imp-14-changelog-and-release-notes) | Changelog and release notes | delivery | 0.19 ✓ (file), 0.29 (in app) |
 | [IMP-15](#imp-15-service-worker-updates) | Service worker updates | PWA | 0.22 ✓ |
 | [IMP-16](#imp-16-png-and-maskable-icons) | PNG and maskable icons | PWA | 0.22 ✓ |
-| [IMP-17](#imp-17-shared-spec-fixtures) | Shared spec fixtures | portability | 0.19 ✓ (anchor, sentence, language) → 0.30 |
+| [IMP-17](#imp-17-shared-spec-fixtures) | Shared spec fixtures | portability | 0.19 ✓ (anchor, sentence, language), 0.23 ✓ (parsers) → 0.30 |
 
 ## Security
 

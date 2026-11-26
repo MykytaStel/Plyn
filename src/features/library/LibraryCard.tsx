@@ -117,6 +117,8 @@ export function LibraryCard({
         )}
       </div>
 
+      {doc.author && <p className="library-card-author">{doc.author}</p>}
+
       <div className="library-card-meta">
         <span>
           {i18n.format(t.progress, {

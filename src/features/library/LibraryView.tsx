@@ -16,7 +16,10 @@ import {
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '../../core/achievements/achievements';
 import { parseEpubFile } from '../../core/parsers/epub';
+import { parseFb2File } from '../../core/parsers/fb2';
+import type { ParsedBook } from '../../core/parsers/bookText';
 import { cleanMarkdown } from '../../core/parsers/markdown';
+import { decodeTextBytes } from '../../core/parsers/textEncoding';
 import { extractArticleFromUrl } from '../../services/extract/urlExtractor';
 import type { PlynDocument } from '../../core/models/types';
 import { importLibraryBackup } from '../../services/storage/backup';
@@ -61,6 +64,11 @@ export function LibraryView() {
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone());
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<LibraryFilter>('all');
+  /**
+   * Author and contents of the book just imported (0.23). Used only if the
+   * text is still exactly what the parser returned: an edit moves offsets.
+   */
+  const [importedBook, setImportedBook] = useState<ParsedBook | null>(null);
   /** The last deleted text, kept in memory while Undo is offered. */
   const [deletedDoc, setDeletedDoc] = useState<PlynDocument | null>(null);
 
@@ -102,6 +110,7 @@ export function LibraryView() {
       if (!q) return true;
       return (
         doc.title.toLowerCase().includes(q) ||
+        (doc.author?.toLowerCase().includes(q) ?? false) ||
         doc.text.toLowerCase().includes(q)
       );
     });
@@ -205,12 +214,15 @@ export function LibraryView() {
     if (!file) return;
 
     const lower = file.name.toLowerCase();
+    setImportedBook(null);
     try {
-      if (lower.endsWith('.epub')) {
-        showFeedback(t.feedback.epubLoading);
-        const parsed = await parseEpubFile(file);
+      const isFb2 = lower.endsWith('.fb2') || lower.endsWith('.zip');
+      if (lower.endsWith('.epub') || isFb2) {
+        showFeedback(isFb2 ? t.feedback.fb2Loading : t.feedback.epubLoading);
+        const parsed = isFb2 ? await parseFb2File(file) : await parseEpubFile(file);
         setTitle(parsed.title);
         setText(parsed.text);
+        setImportedBook(parsed);
         showFeedback(
           i18n.format(t.feedback.epubLoaded, { title: parsed.title })
         );
@@ -224,7 +236,9 @@ export function LibraryView() {
           i18n.format(t.feedback.pdfLoaded, { title: parsed.title })
         );
       } else {
-        const raw = await file.text();
+        // Old .txt files are often Windows-1251, KOI8-U or UTF-16 (0.23).
+        const decoded = decodeTextBytes(new Uint8Array(await file.arrayBuffer()));
+        const raw = decoded.text;
         const prepared = lower.endsWith('.md') ? cleanMarkdown(raw) : raw.trim();
         if (!prepared) {
           showFeedback(t.feedback.fileEmpty);
@@ -232,7 +246,12 @@ export function LibraryView() {
         }
         setTitle(titleFromFileName(file.name));
         setText(prepared);
-        showFeedback(i18n.format(t.feedback.fileImported, { name: file.name }));
+        showFeedback(
+          i18n.format(
+            decoded.confident ? t.feedback.fileImported : t.feedback.encodingUnsure,
+            { name: file.name }
+          )
+        );
       }
     } catch (err) {
       const msg =
@@ -322,9 +341,14 @@ export function LibraryView() {
 
   const handleStart = async () => {
     if (!text.trim()) return;
-    await startNewDocument(title, text, cardLength);
+    const book =
+      importedBook && importedBook.text === text.trim()
+        ? { author: importedBook.author, chapters: importedBook.chapters }
+        : undefined;
+    await startNewDocument(title, text, cardLength, book);
     setTitle('');
     setText('');
+    setImportedBook(null);
     setShowEditor(false);
   };
 
@@ -499,7 +523,7 @@ export function LibraryView() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    .txt / .md / .epub / .pdf
+                    .txt / .md / .epub / .fb2 / .pdf
                   </button>
                   <button
                     className="btn btn-secondary btn-sm"
@@ -523,7 +547,7 @@ export function LibraryView() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".txt,.md,.epub,.pdf,text/plain,text/markdown,application/epub+zip,application/pdf"
+                    accept=".txt,.md,.epub,.fb2,.zip,.pdf,text/plain,text/markdown,application/epub+zip,application/x-fictionbook+xml,application/pdf"
                     hidden
                     onChange={handleFileImport}
                   />

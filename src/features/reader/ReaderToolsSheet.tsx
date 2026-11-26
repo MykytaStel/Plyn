@@ -17,6 +17,8 @@ interface ReaderToolsSheetProps {
   anchorMode: boolean;
   sentenceFocus: boolean;
   bookmarksCount: number;
+  /** The open book has a table of contents (0.23). */
+  hasContents?: boolean;
   onSpeak: () => void;
   onAnchor: () => void;
   onSentenceFocus: () => void;
@@ -36,6 +38,7 @@ export function ReaderToolsSheet({
   anchorMode,
   sentenceFocus,
   bookmarksCount,
+  hasContents = false,
   onSpeak,
   onAnchor,
   onSentenceFocus,
@@ -95,11 +98,11 @@ export function ReaderToolsSheet({
           onClick={onSentenceFocus}
         />
         <ToolRow icon={<EyeOff size={17} />} label={t.zen} onClick={onZen} />
-        {bookmarksCount > 0 && (
+        {(bookmarksCount > 0 || hasContents) && (
           <ToolRow
             icon={<Bookmark size={18} />}
-            label={t.bookmarks}
-            trailing={i18n.number(bookmarksCount)}
+            label={hasContents ? t.contents : t.bookmarks}
+            trailing={bookmarksCount > 0 ? i18n.number(bookmarksCount) : undefined}
             onClick={onBookmarks}
           />
         )}

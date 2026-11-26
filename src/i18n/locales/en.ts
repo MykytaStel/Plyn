@@ -32,7 +32,7 @@ Swipe up on your phone, or press Space or the arrow keys on a computer, to move 
 
 In Settings, try the one-tap presets (Dyslexia, Tired eyes, Book) and offline brown noise. If an unrelated thought pops up while you read, tap the light bulb (or press N) to park it and keep going.
 
-Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epub, .txt and .md files, or articles from a link.`
+Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epub, .fb2, .txt and .md files, or articles from a link.`
   },
   library: {
     update: {
@@ -93,6 +93,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
       pdfLoaded: 'PDF “{title}” loaded. Tap “Start reading”.',
       fileEmpty: 'The file is empty.',
       fileImported: 'Imported “{name}”. Tap “Start reading”.',
+      fb2Loading: 'Opening the FB2 book...',
+      encodingUnsure: 'Imported “{name}”. If some letters look odd, save the file as UTF-8 and try again.',
       backupSaved: 'Library backup saved.',
       backupFailed: 'Couldn’t create a backup.',
       backupImported: 'Imported from backup: {texts}.',
@@ -135,6 +137,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
       sentenceFocus: 'Sentence focus',
       zen: 'Clean screen',
       bookmarks: 'Bookmarks',
+      contents: 'Contents and bookmarks',
       settings: 'Settings'
     },
     hintSentenceFocus: 'Tap or press Space for the next sentence · double-tap a word to hear it',
@@ -158,6 +161,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     bookmarkHint: 'Bookmark (B key)',
     bookmarksList: 'Bookmarks list',
     bookmarksListHint: 'All bookmarks',
+    contentsList: 'Contents and bookmarks',
     anchor: 'Anchor mode',
     anchorHint: 'Anchor mode (A key)',
     anchorButton: { bold: 'A', rest: 'b' },
@@ -207,7 +211,12 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     exportHint: 'Export bookmarks and notes as Markdown',
     close: 'Close bookmarks',
     empty: 'No bookmarks yet. Tap the flag icon or press B while reading.',
-    notePlaceholder: 'Add a short note...'
+    notePlaceholder: 'Add a short note...',
+    contents: 'Contents',
+    titleWithContents: 'Contents and bookmarks',
+    closeWithContents: 'Close contents and bookmarks',
+    view: 'What to show',
+    current: 'You are here'
   },
   thoughts: {
     title: 'Thought Parking',
@@ -321,6 +330,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     epub_invalid: 'This EPUB file looks damaged (container.xml is missing).',
     epub_no_manifest: 'This EPUB has no OPF manifest inside.',
     epub_no_text: 'Couldn’t find any text in this EPUB.',
+    fb2_invalid: 'This FB2 file looks damaged.',
+    fb2_no_text: 'Couldn’t find any text in this FB2.',
     pdf_no_text: 'This PDF has no text layer. It may be scanned images.',
     backup_invalid: 'This isn’t a valid backup file.',
     backup_unsupported: 'Plyn doesn’t support this backup format.',
