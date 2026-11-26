@@ -97,7 +97,7 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 
 ## 0.22.0 — Feels like an app
 
-**Status: shipped.** Design: [specs/2026-11-26-v0.22-feels-like-an-app-design.md](superpowers/specs/2026-11-26-v0.22-feels-like-an-app-design.md). Changed from the plan: Vite and `vite-plugin-pwa` upgraded in one step (the old plugin does not accept Vite 8); `lucide-react` 1.x upgraded too, checked against the visual baseline. Added: CUJ-10 (share target), an update journey and a manifest check. Moved on: the real-Android "back never closes the app" check is in the release checklist; snapshots may need one rebuild on the CI runner ("Visual baseline" workflow).
+**Status: shipped.** Design: [specs/2026-11-26-v0.22-feels-like-an-app-design.md](superpowers/specs/2026-11-26-v0.22-feels-like-an-app-design.md). Changed from the plan: Vite and `vite-plugin-pwa` upgraded in one step (the old plugin does not accept Vite 8); `lucide-react` 1.x upgraded too, checked against the visual baseline. Added: CUJ-10 (share target), an update journey and a manifest check. Moved on: the real-Android "back never closes the app" check is in the release checklist; the visual baseline is rendered on the CI runner (the "Visual baseline" workflow, `[visual-baseline]` in a commit message).
 
 **Goal:** the installed PWA behaves like a native app: the back gesture, the screen, the icon and updates do what a reader expects.
 
