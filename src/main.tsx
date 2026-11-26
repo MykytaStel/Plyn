@@ -10,11 +10,14 @@ import 'open-dyslexic/open-dyslexic-regular.css';
 import '@fontsource/andika/400.css';
 import '@fontsource/andika/700.css';
 import { App } from './App';
+import { AppErrorBoundary } from './features/errors/AppErrorBoundary';
 import './styles/fonts.css';
 import './styles/tokens.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </StrictMode>
 );
