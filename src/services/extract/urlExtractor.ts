@@ -4,6 +4,7 @@ export interface ExtractedArticle {
   title: string;
   text: string;
   sourceUrl: string;
+  truncated?: boolean;
 }
 
 /** Mirrors worker/index.ts (the worker is outside the app's tsconfig). */
@@ -13,6 +14,12 @@ export type ExtractErrorCode =
   | 'invalid_url'
   | 'unsupported_protocol'
   | 'blocked_host'
+  | 'too_many_redirects'
+  | 'timeout'
+  | 'response_too_large'
+  | 'rate_limited'
+  | 'login_required'
+  | 'js_required'
   | 'upstream_error'
   | 'no_article'
   | 'network_error';
@@ -23,6 +30,12 @@ export const EXTRACT_CODES: readonly string[] = [
   'invalid_url',
   'unsupported_protocol',
   'blocked_host',
+  'too_many_redirects',
+  'timeout',
+  'response_too_large',
+  'rate_limited',
+  'login_required',
+  'js_required',
   'upstream_error',
   'no_article',
   'network_error'

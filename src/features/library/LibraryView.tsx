@@ -329,7 +329,12 @@ export function LibraryView() {
       setText(article.text);
       setUrlInput('');
       setShowUrlBar(false);
-      showFeedback(i18n.format(t.feedback.articleLoaded, { title: article.title }));
+      showFeedback(
+        i18n.format(
+          article.truncated ? t.feedback.articleTruncated : t.feedback.articleLoaded,
+          { title: article.title }
+        )
+      );
     } catch (err) {
       const msg =
         errorMessage(err, i18n.m, i18n.m.errors.article_read);

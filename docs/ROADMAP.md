@@ -1,6 +1,6 @@
 # Plyn roadmap: 0.19 → 0.30
 
-Status: draft · 2026-11-26 · current release: **0.23.0**
+Status: draft · 2026-11-27 · current release: **0.24.0**
 
 This is a direction, not a promise. Each release gets its own short design in `docs/superpowers/specs/` before work starts, and the owner can reorder or cut anything.
 
@@ -29,7 +29,7 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 | [0.21](#0210--your-library-is-safe) ✓ | Your library is safe | yes | backup & migration compat | M | EXP-07 |
 | [0.22](#0220--feels-like-an-app) ✓ | Feels like an app | yes | visual regression | M | 0.20 |
 | [0.23](#0230--books-import-well) ✓ | Books import well | yes | parser golden files | M | EXP-04 |
-| [0.24](#0240--pdfs-and-web-articles-import-well) | PDFs & web articles import well | yes | Worker runtime tests | L | EXP-01 |
+| [0.24](#0240--pdfs-and-web-articles-import-well) ✓ | PDFs & web articles import well | yes | Worker & SSRF tests | L | EXP-01 |
 | [0.25](#0250--light-and-fast) | Light and fast | faster | performance budgets | M | 0.22 (visual baseline) |
 | [0.26](#0260--listening-upgraded) | Listening, upgraded | yes | TTS contract tests | M | EXP-02 |
 | [0.27](#0270--reading-comfort-ii) | Reading comfort II | yes | – | M | EXP-03 |
