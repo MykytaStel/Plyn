@@ -10,6 +10,7 @@ import type {
 import { READING_PRESETS } from '../../core/presets/readingPresets';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useI18n } from '../../i18n';
+import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface SettingsSheetProps {
@@ -21,36 +22,11 @@ interface SettingsSheetProps {
   onClose: () => void;
 }
 
-const THEMES: Array<{ value: ThemeMode; label: string }> = [
-  { value: 'dark', label: 'Темна' },
-  { value: 'paper', label: 'Папір' },
-  { value: 'gray', label: 'Сіра' },
-  { value: 'mint', label: 'М’ята' }
-];
-
-const FONTS: Array<{ value: FontFamilyPreset; label: string }> = [
-  { value: 'sans', label: 'Звичайний' },
-  { value: 'hyperlegible', label: 'Для очей' },
-  { value: 'dyslexic', label: 'Дислексія' },
-  { value: 'serif', label: 'Книжковий' }
-];
-
-const SPACINGS: Array<{ value: LetterSpacingPreset; label: string }> = [
-  { value: 'normal', label: 'Звичайний' },
-  { value: 'wide', label: 'Ширший' },
-  { value: 'extra', label: 'Дислексія' }
-];
-
-const WIDTHS: Array<{ value: ColumnWidthPreset; label: string }> = [
-  { value: 'narrow', label: 'Вузька колонка' },
-  { value: 'standard', label: 'Стандартна' }
-];
-
-const LENGTHS: Array<{ value: CardLengthPreset; label: string }> = [
-  { value: 'short', label: 'Коротка' },
-  { value: 'medium', label: 'Середня' },
-  { value: 'long', label: 'Довша' }
-];
+const THEME_VALUES: ThemeMode[] = ['dark', 'paper', 'gray', 'mint'];
+const FONT_VALUES: FontFamilyPreset[] = ['sans', 'hyperlegible', 'dyslexic', 'serif'];
+const SPACING_VALUES: LetterSpacingPreset[] = ['normal', 'wide', 'extra'];
+const WIDTH_VALUES: ColumnWidthPreset[] = ['narrow', 'standard'];
+const LENGTH_VALUES: CardLengthPreset[] = ['short', 'medium', 'long'];
 
 const TTS_RATES: Array<{ value: TtsRatePreset; label: string }> = [
   { value: 0.75, label: '0.75×' },
@@ -59,12 +35,7 @@ const TTS_RATES: Array<{ value: TtsRatePreset; label: string }> = [
   { value: 1.5, label: '1.5×' }
 ];
 
-const TIMERS = [
-  { value: 0, label: 'Вимк.' },
-  { value: 5, label: '5 хв' },
-  { value: 10, label: '10 хв' },
-  { value: 15, label: '15 хв' }
-];
+const TIMER_VALUES = [0, 5, 10, 15];
 
 export function SettingsSheet({
   brownNoiseOn,
@@ -75,6 +46,16 @@ export function SettingsSheet({
   onClose
 }: SettingsSheetProps) {
   const i18n = useI18n();
+  const t = i18n.m.settings;
+  const THEMES = THEME_VALUES.map((value) => ({ value, label: t.themes[value] }));
+  const FONTS = FONT_VALUES.map((value) => ({ value, label: t.fonts[value] }));
+  const SPACINGS = SPACING_VALUES.map((value) => ({ value, label: t.spacings[value] }));
+  const WIDTHS = WIDTH_VALUES.map((value) => ({ value, label: t.widths[value] }));
+  const LENGTHS = LENGTH_VALUES.map((value) => ({ value, label: t.lengths[value] }));
+  const TIMERS = TIMER_VALUES.map((value) => ({
+    value,
+    label: value === 0 ? t.timerOff : i18n.format(t.minutesShort, { minutes: value })
+  }));
   const {
     theme,
     fontFamily,
@@ -88,6 +69,7 @@ export function SettingsSheet({
     ttsRate,
     ttsAutoAdvance,
     cardLength,
+    language,
     updateSettings
   } = useSettingsStore();
   const timerMinutes = useReaderStore((s) => s.timerMinutes);
@@ -101,11 +83,11 @@ export function SettingsSheet({
     >
       <div className="sheet-handle" aria-hidden="true" />
       <div className="sheet-header">
-        <h2 id="settings-title">Комфорт читання</h2>
+        <h2 id="settings-title">{t.title}</h2>
         <button
           className="icon-btn"
           type="button"
-          aria-label="Закрити налаштування"
+          aria-label={t.close}
           onClick={onClose}
         >
           <X size={20} />
@@ -115,7 +97,7 @@ export function SettingsSheet({
       <div className="sheet-body">
         {/* Швидкі пресети в 1 тап */}
         <div className="setting-group">
-          <span className="setting-label">Готові режими в 1 тап</span>
+          <span className="setting-label">{t.presets}</span>
           <div className="presets-grid">
             {READING_PRESETS.map((preset) => (
               <button
@@ -139,10 +121,10 @@ export function SettingsSheet({
         <div className="setting-row-toggle">
           <div>
             <label htmlFor="toggle-anchor" className="setting-label">
-              Режим «Якір»
+              {t.anchor}
             </label>
             <p className="setting-hint">
-              Виділяє початок слів для легкої фіксації погляду
+              {t.anchorHint}
             </p>
           </div>
           <label className="switch">
@@ -159,10 +141,10 @@ export function SettingsSheet({
         <div className="setting-row-toggle">
           <div>
             <label htmlFor="toggle-sentence-focus" className="setting-label">
-              Фокус-речення
+              {t.sentenceFocus}
             </label>
             <p className="setting-hint">
-              Підсвічує активне речення м’якою лінійкою (клавіша F)
+              {t.sentenceFocusHint}
             </p>
           </div>
           <label className="switch">
@@ -181,10 +163,10 @@ export function SettingsSheet({
         <div className="setting-row-toggle">
           <div>
             <label htmlFor="toggle-brown-noise" className="setting-label">
-              Коричневий шум (офлайн)
+              {t.brownNoise}
             </label>
             <p className="setting-hint">
-              М’який фоновий звук, що приглушує сторонні думки при РДУГ
+              {t.brownNoiseHint}
             </p>
           </div>
           <label className="switch">
@@ -201,10 +183,10 @@ export function SettingsSheet({
         <div className="setting-row-toggle">
           <div>
             <label htmlFor="toggle-eye-break" className="setting-label">
-              Пауза для очей (20-20-20)
+              {t.eyeBreak}
             </label>
             <p className="setting-hint">
-              Тихе нагадування відвести погляд кожні 25 карток
+              {t.eyeBreakHint}
             </p>
           </div>
           <label className="switch">
@@ -223,10 +205,10 @@ export function SettingsSheet({
         <div className="setting-row-toggle">
           <div>
             <label htmlFor="toggle-tts-auto" className="setting-label">
-              Слухати підряд (авто-перехід)
+              {t.autoAdvance}
             </label>
             <p className="setting-hint">
-              Озвучка сама перегортає на наступну картку після завершення
+              {t.autoAdvanceHint}
             </p>
           </div>
           <label className="switch">
@@ -243,11 +225,11 @@ export function SettingsSheet({
         </div>
 
         <div className="setting-group">
-          <span className="setting-label">Швидкість озвучки</span>
+          <span className="setting-label">{t.ttsRate}</span>
           <div
             className="segmented segmented-4"
             role="radiogroup"
-            aria-label="Швидкість озвучки"
+            aria-label={t.ttsRate}
           >
             {TTS_RATES.map((item) => (
               <button
@@ -263,11 +245,11 @@ export function SettingsSheet({
         </div>
 
         <div className="setting-group">
-          <span className="setting-label">Шрифт</span>
+          <span className="setting-label">{t.font}</span>
           <div
             className="segmented segmented-4"
             role="radiogroup"
-            aria-label="Вибір шрифту"
+            aria-label={t.fontChoice}
           >
             {FONTS.map((item) => (
               <button
@@ -283,11 +265,11 @@ export function SettingsSheet({
         </div>
 
         <div className="setting-group">
-          <span className="setting-label">Інтервал літер і слів</span>
+          <span className="setting-label">{t.spacing}</span>
           <div
             className="segmented"
             role="radiogroup"
-            aria-label="Інтервал літер і слів"
+            aria-label={t.spacing}
           >
             {SPACINGS.map((item) => (
               <button
@@ -303,11 +285,11 @@ export function SettingsSheet({
         </div>
 
         <div className="setting-group">
-          <span className="setting-label">Ширина колонки</span>
+          <span className="setting-label">{t.width}</span>
           <div
             className="segmented segmented-2"
             role="radiogroup"
-            aria-label="Ширина колонки"
+            aria-label={t.width}
           >
             {WIDTHS.map((item) => (
               <button
@@ -323,11 +305,11 @@ export function SettingsSheet({
         </div>
 
         <div className="setting-group">
-          <span className="setting-label">Тема</span>
+          <span className="setting-label">{t.theme}</span>
           <div
             className="segmented segmented-4"
             role="radiogroup"
-            aria-label="Вибір теми"
+            aria-label={t.themeChoice}
           >
             {THEMES.map((item) => (
               <button
@@ -343,11 +325,11 @@ export function SettingsSheet({
         </div>
 
         <div className="setting-group">
-          <span className="setting-label">Довжина картки</span>
+          <span className="setting-label">{t.cardLength}</span>
           <div
             className="segmented"
             role="radiogroup"
-            aria-label="Довжина картки"
+            aria-label={t.cardLength}
           >
             {LENGTHS.map((item) => (
               <button
@@ -364,13 +346,13 @@ export function SettingsSheet({
 
         <div className="setting-group">
           <div className="setting-label-row">
-            <span className="setting-label">Таймер фокусу</span>
-            <span className="setting-hint-inline">без секунд і тиску</span>
+            <span className="setting-label">{t.timer}</span>
+            <span className="setting-hint-inline">{t.timerHint}</span>
           </div>
           <div
             className="segmented segmented-4"
             role="radiogroup"
-            aria-label="Таймер фокусу"
+            aria-label={t.timer}
           >
             {TIMERS.map((item) => (
               <button
@@ -388,7 +370,7 @@ export function SettingsSheet({
         <div className="setting-group">
           <div className="setting-label-row">
             <label htmlFor="range-font-size" className="setting-label">
-              Розмір шрифту
+              {t.fontSize}
             </label>
             <span className="setting-value">{fontSize} px</span>
           </div>
@@ -406,7 +388,7 @@ export function SettingsSheet({
         <div className="setting-group">
           <div className="setting-label-row">
             <label htmlFor="range-line-height" className="setting-label">
-              Міжрядковий інтервал
+              {t.lineHeight}
             </label>
             <span className="setting-value">{lineHeight.toFixed(2)}</span>
           </div>
@@ -423,10 +405,34 @@ export function SettingsSheet({
           />
         </div>
 
+        <div className="setting-group">
+          <span className="setting-label">{LANGUAGE_LABEL}</span>
+          <div
+            className="segmented segmented-2"
+            role="radiogroup"
+            aria-label={LANGUAGE_LABEL}
+          >
+            {LOCALES.map((locale) => (
+              <button
+                key={locale}
+                type="button"
+                role="radio"
+                lang={locale}
+                className={`seg-btn ${language === locale ? 'is-active' : ''}`}
+                aria-checked={language === locale}
+                onClick={() => updateSettings({ language: locale })}
+              >
+                {LOCALE_NAMES[locale]}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <p className="shortcuts-hint">
-          Клавіатура: <kbd>Space</kbd>/<kbd>↓</kbd> далі · <kbd>A</kbd> якір ·{' '}
-          <kbd>F</kbd> фокус · <kbd>N</kbd> думка · <kbd>S</kbd> озвучка ·{' '}
-          <kbd>Z</kbd> чистий екран
+          {t.shortcuts.keyboard} <kbd>Space</kbd>/<kbd>↓</kbd> {t.shortcuts.next} ·{' '}
+          <kbd>A</kbd> {t.shortcuts.anchor} · <kbd>F</kbd> {t.shortcuts.focus} ·{' '}
+          <kbd>N</kbd> {t.shortcuts.thought} · <kbd>S</kbd> {t.shortcuts.speech} ·{' '}
+          <kbd>Z</kbd> {t.shortcuts.zen}
         </p>
       </div>
     </aside>
