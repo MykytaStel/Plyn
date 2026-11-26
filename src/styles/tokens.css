@@ -848,6 +848,44 @@ textarea {
   text-align: center;
 }
 
+.undo-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + var(--safe-bottom));
+  transform: translateX(-50%);
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100% - 40px);
+  padding: 8px 8px 8px 18px;
+  border-radius: 999px;
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.undo-toast > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.undo-toast-btn {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .reader-toast.is-achievement {
   border-color: var(--accent);
   color: var(--accent-strong);
@@ -1224,6 +1262,51 @@ input[type="range"] {
   font-size: 12px;
   color: var(--text-muted);
   text-align: center;
+}
+
+.storage-status {
+  align-items: flex-start;
+}
+
+.storage-status .setting-hint {
+  margin: 0;
+}
+
+.error-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 100dvh;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.error-screen h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.error-screen p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.error-screen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.error-screen-note {
+  min-height: 20px;
+  font-size: 13px;
 }
 
 .app-version {

@@ -12,6 +12,10 @@ export const en: Messages = {
     texts: {
       one: '{count} text',
       other: '{count} texts'
+    },
+    thoughts: {
+      one: '{count} thought',
+      other: '{count} thoughts'
     }
   },
   meta: {
@@ -57,7 +61,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     start: 'Start reading',
     libraryTitle: 'My library',
     backup: 'Backup',
-    backupHint: 'Export your library and rewards as JSON',
+    backupHint: 'Save texts, bookmarks, thoughts and settings in one file',
     import: 'Import',
     importHint: 'Restore from a JSON backup',
     filterLabel: 'Library filter',
@@ -88,6 +92,10 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
       backupSaved: 'Library backup saved.',
       backupFailed: 'Couldn’t create a backup.',
       backupImported: 'Imported from backup: {texts}.',
+      backupImportedWithThoughts: 'Imported from backup: {texts} and {thoughts}.',
+      deleted: '“{title}” deleted.',
+      undo: 'Undo',
+      restored: '“{title}” is back.',
       sampleLoaded: 'Sample loaded. Tap “Start reading”.'
     }
   },
@@ -211,8 +219,14 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     sections: {
       appearance: 'Text & look',
       reading: 'Reading',
-      sound: 'Sound'
+      sound: 'Sound',
+      library: 'Your library'
     },
+    storageUsage: 'Plyn takes about {size} on this device.',
+    storageProtected: 'The browser promised to keep your library.',
+    storageNotProtected: 'The browser may clear your library if space runs low. A backup keeps everything safe.',
+    storageProtect: 'Ask the browser to keep it',
+    storageDenied: 'The browser said no for now. A backup is always safe.',
     title: 'Reading comfort',
     close: 'Close settings',
     presets: 'One-tap presets',
@@ -320,6 +334,14 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
       no_article: 'Couldn’t find the article text. The site may need JavaScript or a login.',
       network_error: 'Couldn’t reach the site. Try copying the text in by hand.'
     }
+  },
+  errorScreen: {
+    title: 'Something went wrong',
+    body: 'Your texts are safe on this device. You can save a backup or reload Plyn.',
+    saveBackup: 'Save a backup',
+    reload: 'Reload',
+    backupSaved: 'Backup saved.',
+    backupFailed: 'Couldn’t create a backup. Try reloading.'
   },
   export: {
     bookmarks: 'Bookmarks',
