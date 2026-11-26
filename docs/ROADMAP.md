@@ -1,6 +1,6 @@
 # Plyn roadmap: 0.19 → 0.30
 
-Status: draft · 2026-11-26 · current release: **0.18.0**
+Status: draft · 2026-11-26 · current release: **0.19.0**
 
 This is a direction, not a promise. Each release gets its own short design in `docs/superpowers/specs/` before work starts, and the owner can reorder or cut anything.
 
@@ -24,7 +24,7 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 
 | Version | Theme | Readers notice | New test layer | Size | Waits for |
 |---|---|---|---|---|---|
-| [0.19](#0190--safety-net-i-test-foundation) | Safety net I: test foundation | nothing | DOM, storage, property, coverage | M | – |
+| [0.19](#0190--safety-net-i-test-foundation) ✓ | Safety net I: test foundation | nothing | DOM, storage, property, coverage | M | – |
 | [0.20](#0200--safety-net-ii-end-to-end-and-accessibility) | Safety net II: end-to-end & a11y | nothing | E2E, automated a11y, offline | M | 0.19 |
 | [0.21](#0210--your-library-is-safe) | Your library is safe | yes | backup & migration compat | M | EXP-07 |
 | [0.22](#0220--feels-like-an-app) | Feels like an app | yes | visual regression | M | 0.20 |
@@ -40,6 +40,8 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 ---
 
 ## 0.19.0 — Safety net I: test foundation
+
+**Status: shipped.** Design: [specs/2026-11-26-v0.19-safety-net-design.md](superpowers/specs/2026-11-26-v0.19-safety-net-design.md). Moved on: sheet focus tests → 0.22 (with focus management); Settings language-switch component test → 0.20 (CUJ-1); 10 `jsx-a11y` warnings → 0.28.
 
 **Goal:** the code that touches the reader's data (storage, backup, progress) is covered by tests that run on every pull request.
 

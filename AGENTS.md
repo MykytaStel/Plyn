@@ -13,16 +13,19 @@ Plyn is an offline-first PWA that splits long text (pasted text, web articles, `
 ```bash
 npm ci            # install (Node 22, same as CI)
 npm run dev       # Vite dev server
-npm test          # Vitest, unit tests (must pass)
+npm test          # Vitest: node + dom projects (must pass)
+npm run test:coverage  # tests with a coverage report in coverage/
+npm run lint      # ESLint: hooks, a11y, floating promises (must pass)
+npm run typecheck # tsc -b --noEmit
 npm run build     # tsc -b + vite build + PWA service worker (must pass)
 npm run preview   # serve the production build locally
 ```
 
-Run `npm test` and `npm run build` before every commit. CI runs both.
+Run `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` before every commit. CI runs all four on every pull request.
 
 ## Deployment
 
-Every push to `main` triggers `.github/workflows/deploy.yml`: test → build → deploy to Cloudflare Workers (`wrangler.jsonc`). **Pushing to `main` is a production release.** Bump `version` in `package.json` for user-visible changes.
+Every pull request runs `.github/workflows/ci.yml` (lint, typecheck, tests, build). Every push to `main` triggers `.github/workflows/deploy.yml`: the same checks → build → deploy to Cloudflare Workers (`wrangler.jsonc`). **Pushing to `main` is a production release.** Bump `version` in `package.json` for user-visible changes and add an entry to `CHANGELOG.md` (written for readers).
 
 ## Stack
 
@@ -92,9 +95,16 @@ OpenDyslexic, Atkinson Hyperlegible and Lexend have **no Cyrillic glyphs**. They
 
 ## Tests
 
-- Unit tests live next to the code as `*.test.ts` (`src/**/*.test.ts`) and run in Node, without a DOM.
-- Add a test for every change in `src/core/` and in `services/storage/backup.ts`.
-- There are no UI or e2e tests yet. Verify UI changes manually in `npm run dev`.
+- Vitest has two projects (`vitest.config.ts`):
+  - `node`: `src/**/*.test.ts` and `worker/**/*.test.ts`. Pure logic, storage, property-based and `spec/` contract tests.
+  - `dom` (jsdom + Testing Library): `src/**/*.test.tsx` and `src/**/*.dom.test.ts`. Parsers that need a DOM, and components.
+- Storage tests import `fake-indexeddb/auto` and reset `db` in `beforeEach` (see `src/services/storage/db.test.ts`).
+- Property tests use `fast-check` with a fixed `seed`. A failing property is a finding about shared behaviour: fix the code or discuss and update `spec/`, never weaken the property.
+- In component tests, query by role and accessible name, and take copy from the dictionaries (`uk.onboarding.skip`), never literal strings.
+- Add a test for every change in `src/core/`, `src/services/storage/` and `worker/`. A bug fix starts with a failing test.
+- Fixtures are public domain or self-written. No test touches the network.
+- `npm run lint` (bug-catching rules only) and `npm run typecheck` run in CI with the tests. `npm run test:coverage` writes a report to `coverage/` (no threshold yet).
+- There are no e2e tests yet (0.20). Verify UI changes manually in `npm run dev`.
 - The plan for the full test suite (layers, tools, CI gates, release checklist) is in `docs/TESTING.md`. The release plan is in `docs/ROADMAP.md`.
 
 ## Commits

@@ -32,7 +32,9 @@ Each script gets a font that actually has its glyphs:
 ```bash
 npm ci
 npm run dev     # http://localhost:5173
-npm test
+npm test        # unit, storage, property and DOM tests
+npm run lint
+npm run typecheck
 npm run build
 ```
 

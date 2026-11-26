@@ -1,27 +1,41 @@
 # Plyn test plan
 
-Status: draft · 2026-11-26 · part of the [roadmap](ROADMAP.md)
+Status: draft · updated for 0.19.0 · part of the [roadmap](ROADMAP.md)
 
 **Goal for 0.30:** every layer below exists, runs automatically where it can, and blocks a broken release. Readers trust Plyn with their texts and their progress, so the tests protect those first.
 
-## Where we are (0.18.0)
+## Where we are (0.19.0)
 
-- 17 test files, 64 tests, all in Vitest with the Node environment. Run time under 1 s.
-- Covered: splitter, sentences, anchor, presets, achievements, reading stats, weekly activity, Markdown export, file names, language detection, settings storage, backup *validation*, i18n (dictionary shape and the hard-coded Cyrillic guard), keyboard shortcuts, `/api/extract` helpers.
-- Not covered: `db.ts` (IndexedDB), backup *import/export*, the EPUB and PDF parsers, the stores, the TTS and audio services, every React component, the service worker, real browsers.
-- CI runs `npm test` and `npm run build` only on push to `main`, which is also the production deploy. Pull requests get no CI.
+- 25 test files, 132 tests, in two Vitest projects: `node` (core, storage, worker, property, spec) and `dom` (jsdom + Testing Library). Run time about 1.5 s.
+- New in 0.19: L0 (ESLint + typecheck in CI), L2 (EPUB parser, onboarding component), L3 (`db.ts`, backup round trip, reader store with `fake-indexeddb`), L4 (`fast-check` properties for the splitter, sentences, anchor, language detection, backup validation), more L5 fixtures (`spec/anchor-cases.json`, `sentence-cases.json`, `language-cases.json`).
+- Findings fixed in 0.19: lost stats updates under concurrency ([IMP-04](IMPROVEMENTS.md#imp-04-atomic-progress-stats)); splitter offsets drifting when sentences had no space between them, and leading `?` / `…` being dropped (now cards are exact slices of the normalized text).
+- Not covered yet: the PDF parser, TTS and audio services, most components (sheets, reader, library), the service worker, real browsers.
+- CI: `ci.yml` runs lint, typecheck, tests with coverage and the build on every pull request; `deploy.yml` reuses it before deploying.
+- Known lint warnings (not blocking): 10 `jsx-a11y` warnings for pointer-only click targets (progress bar, card feed, library card), left for the 0.28 audit.
 
-Coverage baseline: to be measured in 0.19 and written here.
+### Coverage baseline (0.19.0, v8, lines / branches)
+
+| Area | Lines | Branches |
+|---|---|---|
+| `src/core/` | 98 % | 83 % |
+| `src/services/storage/` | 89 % | 89 % |
+| other `src/services/` | 7 % | 2 % |
+| `src/store/` | 29 % | 12 % |
+| `src/features/` | not measurable yet | – |
+| `worker/` | 37 % | 34 % |
+| **Total** | **63 %** | **61 %** |
+
+`src/features/`: files no test imports are reported with 0 lines by v8, so the number would mislead. It becomes meaningful with component tests (L2) and E2E (L7). Run `npm run test:coverage` for the current numbers.
 
 ## Test layers
 
 | # | Layer | Proves | Tool | Runs | Introduced | Enforced (blocks merge) |
 |---|---|---|---|---|---|---|
-| L0 | Static checks | types, hooks rules, a11y lint, no hard-coded copy | `tsc -b`, ESLint, i18n guard | every PR | guard exists; lint 0.19 | 0.19 |
+| L0 | Static checks | types, hooks rules, a11y lint, no hard-coded copy | `tsc -b`, ESLint, i18n guard | every PR | 0.19 ✓ | 0.19 ✓ |
 | L1 | Core unit | pure logic gives the right answer | Vitest (node) | every PR | exists | exists |
-| L2 | DOM unit and components | parsers that need a DOM, component behaviour | Vitest (jsdom) + Testing Library | every PR | 0.19 | 0.19 |
-| L3 | Storage integration | IndexedDB code saves, reads, migrates | Vitest + `fake-indexeddb` | every PR | 0.19 | 0.19 |
-| L4 | Property-based | invariants hold for any input | `fast-check` | every PR | 0.19 | 0.19 |
+| L2 | DOM unit and components | parsers that need a DOM, component behaviour | Vitest (jsdom) + Testing Library | every PR | 0.19 ✓ | 0.19 ✓ |
+| L3 | Storage integration | IndexedDB code saves, reads, migrates | Vitest + `fake-indexeddb` | every PR | 0.19 ✓ | 0.19 ✓ |
+| L4 | Property-based | invariants hold for any input | `fast-check` | every PR | 0.19 ✓ | 0.19 ✓ |
 | L5 | Contract and compatibility | shared behaviour, old backups, old schemas | Vitest + `spec/` fixtures | every PR | splitter exists; backups 0.21 | 0.21 |
 | L6 | Worker runtime | `/api/extract` in the real Workers runtime | `@cloudflare/vitest-pool-workers` | every PR | 0.24 | 0.24 |
 | L7 | End-to-end and PWA | real journeys in real browsers, offline | Playwright | every PR | 0.20 | 0.20 |
@@ -42,7 +56,8 @@ Coverage baseline: to be measured in 0.19 and written here.
 
 - `npm run typecheck` (`tsc -b --noEmit`) and `npm run lint` in CI from 0.19 ([IMP-10](IMPROVEMENTS.md#imp-10-lint-and-typecheck-scripts)).
 - ESLint with `typescript-eslint`, `eslint-plugin-react-hooks` and `eslint-plugin-jsx-a11y`. Start with errors only for hooks rules and a11y; style is not a goal.
-- The hard-coded Cyrillic guard (`src/i18n/noHardcodedCyrillic.test.ts`) stays. Its glob excludes `*.test.ts` only: extend it to `*.test.tsx` and `*.dom.test.ts` when component tests arrive.
+- The hard-coded Cyrillic guard (`src/i18n/noHardcodedCyrillic.test.ts`) stays. Since 0.19 its glob excludes `*.test.ts` (which also covers `*.dom.test.ts`) and `*.test.tsx`.
+- Two `jsx-a11y` rules are off on purpose (`no-autofocus`: sheets focus their input; `label-has-associated-control`: switches use `htmlFor`), five are warnings until 0.28. Reasons are in `eslint.config.js`.
 
 ### L1 Core unit
 
@@ -56,16 +71,16 @@ Coverage baseline: to be measured in 0.19 and written here.
 - Testing Library with `user-event`. Query by role and accessible name, which also checks accessibility.
 - Assert copy through the dictionaries (`uk.settings.title`), never with literal strings, so a copy change does not break tests and the Cyrillic guard stays meaningful.
 - First targets (0.19):
-  1. EPUB parser with two fixture books (one EPUB 2, one EPUB 3).
-  2. Every sheet: opens with focus inside, closes on Escape, returns focus.
-  3. Segmented controls behave as radio groups (arrow keys change the value).
-  4. Settings: language switch changes the UI without reload.
-  5. Onboarding: shown once, then never again (`plyn_onboarding_done_v1`).
+  1. ✓ EPUB parser with two fixture books (one EPUB 2, one EPUB 3), built in memory with `fflate`.
+  2. Every sheet: opens with focus inside, closes on Escape, returns focus. (Moved to 0.22 with focus management.)
+  3. Segmented controls behave as radio groups. ✓ `role="radio"` and `aria-checked` (onboarding); arrow keys: 0.28.
+  4. Language switch changes the UI without reload. ✓ for onboarding; Settings sheet: 0.20 (CUJ-1).
+  5. ✓ Onboarding: shown once, then never again (`plyn_onboarding_done_v1`).
 
 ### L3 Storage integration
 
 - `fake-indexeddb/auto` in a setup file; a fresh database per test.
-- Targets (0.19):
+- Targets (0.19, all ✓ in `db.test.ts`, `backup.roundtrip.test.ts`, `useReaderStore.test.ts`):
   1. `createDocument`, `updateDocument` (bookmarks deduplicated and sorted), `renameDocument`, `removeDocument`.
   2. `findDocumentByText` and the "reopen instead of duplicate" path in the reader store.
   3. `recordProgressDelta`: totals, daily counts, achievements unlocked once, and concurrent calls not losing updates ([IMP-04](IMPROVEMENTS.md#imp-04-atomic-progress-stats)).
@@ -75,7 +90,7 @@ Coverage baseline: to be measured in 0.19 and written here.
 
 ### L4 Property-based
 
-`fast-check`, with a fixed seed in CI and the seed printed on failure.
+`fast-check`, with a fixed seed in CI and the seed printed on failure. Since 0.19: `splitter.property.test.ts`, `core/properties.test.ts`, and the backup property in `backup.test.ts`. Properties 1–5 below all hold.
 
 1. Splitter: for any text and any card length, `startOffset` never decreases, `endOffset` never passes the end of the normalized text, and every non-whitespace character belongs to exactly one card. Card offsets come from an `indexOf` search with a fallback (`splitter.ts:146`), so a failing property here is a finding about shared behaviour: discuss it and update `spec/splitter-cases.json`, don't weaken the property.
 2. Offsets: for every card, `findCardIndexByOffset(card.startOffset)` returns that card. For any offset, switching card length and back lands on a card containing that offset.
@@ -87,13 +102,13 @@ Coverage baseline: to be measured in 0.19 and written here.
 
 `spec/` holds JSON fixtures that future native apps will reuse. Tests read them, so web and native share one definition of correct.
 
-- Exists: `spec/splitter-cases.json`.
-- Add ([IMP-17](IMPROVEMENTS.md#imp-17-shared-spec-fixtures)): `spec/anchor-cases.json`, `spec/sentence-cases.json`, `spec/language-cases.json`, `spec/backups/v1-*.json` (0.21), `spec/backups/v2-*.json` (0.21), `spec/parsers/` expected outputs (0.23).
+- Exists: `spec/splitter-cases.json` (with `expectedOffsets` since 0.19), `spec/anchor-cases.json`, `spec/sentence-cases.json`, `spec/language-cases.json` (0.19, run by `src/core/spec.test.ts`).
+- Add ([IMP-17](IMPROVEMENTS.md#imp-17-shared-spec-fixtures)): `spec/backups/v1-*.json` (0.21), `spec/backups/v2-*.json` (0.21), `spec/parsers/` expected outputs (0.23).
 - Compatibility matrix (complete by 0.30):
   1. Every backup fixture ever published imports without loss.
   2. Every Dexie version upgrades to the newest.
   3. Every past `plyn_settings_v1` shape loads with defaults merged.
-  4. `/api/extract` responses always carry a `code` the client knows.
+  4. `/api/extract` responses always carry a `code` the client knows. ✓ 0.19 (`worker/extract.test.ts`).
 
 ### L6 Worker runtime
 
@@ -193,8 +208,8 @@ Coverage is a smoke alarm, not a goal. Thresholds rise slowly so tests stay mean
 
 | Area | 0.19 | 0.23 | 0.30 |
 |---|---|---|---|
-| `src/core/` lines / branches | report only | 85 / 80 | 90 / 85 |
-| `src/services/storage/` | report only | 80 / 70 | 90 / 80 |
+| `src/core/` lines / branches | report only (98 / 83) | 85 / 80 | 90 / 85 |
+| `src/services/storage/` | report only (89 / 89) | 80 / 70 | 90 / 80 |
 | other `src/services/` | report only | – | 70 / 60 |
 | `src/store/` | report only | – | 70 / 60 |
 | `src/features/` | report only | – | covered by CUJs and L2, no line threshold |
@@ -227,6 +242,7 @@ Weekly (scheduled): Firefox E2E, full Lighthouse run, mutation testing, `npm aud
 src/**/*.test.ts         L1, L3, L4, L5  (node)
 src/**/*.test.tsx        L2              (jsdom)
 src/**/*.dom.test.ts     L2              (jsdom, no JSX)
+test/setup-dom.ts        jsdom setup (Testing Library cleanup)
 worker/**/*.test.ts      L6
 e2e/*.spec.ts            L7, L8, L9
 e2e/support/             helpers, fixtures loader
