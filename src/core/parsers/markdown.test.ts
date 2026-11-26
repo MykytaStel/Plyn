@@ -10,6 +10,10 @@ describe('markdown parser', () => {
   });
 
   it('derives concise title from first non-empty line', () => {
-    expect(deriveTitle('\n\nКороткий заголовок\nТекст далі')).toBe('Короткий заголовок');
+    expect(deriveTitle('\n\nКороткий заголовок\nТекст далі', 'Untitled')).toBe('Короткий заголовок');
+  });
+
+  it('falls back to the given title for empty text', () => {
+    expect(deriveTitle('  \n ', 'Untitled')).toBe('Untitled');
   });
 });

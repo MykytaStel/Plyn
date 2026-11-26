@@ -1,3 +1,4 @@
+import { PlynError } from '../../core/errors';
 import type { PlynBackupPayload, PlynDocument } from '../../core/models/types';
 import { db, getProgressStats } from './db';
 
@@ -20,11 +21,11 @@ export async function exportLibraryBackup(): Promise<PlynBackupPayload> {
 
 export function validateBackupPayload(raw: unknown): PlynBackupPayload {
   if (!raw || typeof raw !== 'object') {
-    throw new Error('Некоректний файл резервної копії');
+    throw new PlynError('backup_invalid');
   }
   const obj = raw as Partial<PlynBackupPayload>;
   if (obj.schemaVersion !== 1 || !Array.isArray(obj.documents)) {
-    throw new Error('Непідтримуваний формат бекапу Plyn');
+    throw new PlynError('backup_unsupported');
   }
 
   const validDocs: PlynDocument[] = obj.documents.filter(

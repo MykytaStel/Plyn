@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { format, formatWeekdayShort, getMessages, plural } from './index';
 import { ACHIEVEMENTS } from '../core/achievements/achievements';
 import { READING_PRESETS } from '../core/presets/readingPresets';
+import { PlynError } from '../core/errors';
+import { errorMessage } from './errorMessage';
 import type { Locale } from './types';
 
 function keyPaths(value: unknown, prefix = ''): string[] {
@@ -86,5 +88,21 @@ describe('dictionaries', () => {
         expect(m.presets[p.id].hint.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe('errorMessage', () => {
+  it('maps PlynError codes to localized copy', () => {
+    const m = getMessages('en');
+    expect(errorMessage(new PlynError('pdf_no_text'), m)).toBe(m.errors.pdf_no_text);
+  });
+  it('uses the generic message for unknown errors', () => {
+    const m = getMessages('uk');
+    expect(errorMessage(new Error('x'), m)).toBe(m.errors.generic);
+    expect(errorMessage('boom', m)).toBe(m.errors.generic);
+  });
+  it('prefers an explicit fallback over the generic message', () => {
+    const m = getMessages('uk');
+    expect(errorMessage(new Error('x'), m, 'fallback')).toBe('fallback');
   });
 });

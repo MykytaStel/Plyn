@@ -33,5 +33,23 @@ export const en: Messages = {
     dyslexia: { label: 'Dyslexia', hint: 'Dyslexia-friendly font · wider spacing · Mint · Sentence focus' },
     tired_eyes: { label: 'Tired eyes', hint: 'Clear font · Dark · Anchor · 20-20-20' },
     book: { label: 'Book', hint: 'Book font · Paper · relaxed spacing' }
+  },
+  errors: {
+    epub_invalid: 'This EPUB file looks damaged (container.xml is missing).',
+    epub_no_manifest: 'This EPUB has no OPF manifest inside.',
+    epub_no_text: 'Couldn’t find any text in this EPUB.',
+    pdf_no_text: 'This PDF has no text layer. It may be scanned images.',
+    backup_invalid: 'This isn’t a valid backup file.',
+    backup_unsupported: 'Plyn doesn’t support this backup format.',
+    url_invalid: 'Enter the full link, starting with https://',
+    generic: 'Something went wrong. Please try again.',
+    file_read: 'Couldn’t read the file.',
+    backup_read: 'This isn’t a valid backup file.',
+    article_read: 'Couldn’t get the article text.'
+  },
+  export: {
+    bookmarks: 'Bookmarks',
+    card: 'Card {n}',
+    note: 'Note'
   }
 };

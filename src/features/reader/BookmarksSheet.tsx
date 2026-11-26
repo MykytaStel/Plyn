@@ -1,6 +1,7 @@
 import { Download, X } from 'lucide-react';
 import { formatBookmarksAsMarkdown } from '../../core/export/bookmarksMarkdown';
 import type { ReadingCard } from '../../core/models/types';
+import { currentI18n } from '../../i18n';
 import { findCardIndexByOffset } from '../../core/splitter/splitter';
 
 interface BookmarksSheetProps {
@@ -37,7 +38,8 @@ export function BookmarksSheet({
       title: docTitle,
       cards,
       bookmarkOffsets,
-      bookmarkNotes
+      bookmarkNotes,
+      labels: currentI18n().m.export
     });
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);

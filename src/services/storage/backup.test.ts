@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { PlynError } from '../../core/errors';
 import { validateBackupPayload } from './backup';
 
 describe('backup validation', () => {
@@ -28,6 +29,16 @@ describe('backup validation', () => {
   });
 
   it('rejects invalid backup objects', () => {
-    expect(() => validateBackupPayload({ foo: 'bar' })).toThrow();
+    expect(() => validateBackupPayload({ foo: 'bar' })).toThrow(PlynError);
+    try {
+      validateBackupPayload({ foo: 'bar' });
+    } catch (err) {
+      expect((err as PlynError).code).toBe('backup_unsupported');
+    }
+    try {
+      validateBackupPayload(null);
+    } catch (err) {
+      expect((err as PlynError).code).toBe('backup_invalid');
+    }
   });
 });

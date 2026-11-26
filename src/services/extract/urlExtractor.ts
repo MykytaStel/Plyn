@@ -1,3 +1,5 @@
+import { PlynError } from '../../core/errors';
+
 export interface ExtractedArticle {
   title: string;
   text: string;
@@ -12,7 +14,7 @@ export async function extractArticleFromUrl(
 ): Promise<ExtractedArticle> {
   const url = rawUrl.trim();
   if (!/^https?:\/\//i.test(url)) {
-    throw new Error('Введи повне посилання, що починається з https://');
+    throw new PlynError('url_invalid');
   }
 
   const response = await fetch('/api/extract', {

@@ -30,6 +30,8 @@ import {
   OnboardingModal
 } from '../onboarding/OnboardingModal';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
+import { currentI18n } from '../../i18n';
+import { errorMessage } from '../../i18n/errorMessage';
 import { LibraryCard } from './LibraryCard';
 
 type LibraryFilter = 'all' | 'active' | 'completed' | 'bookmarked';
@@ -212,7 +214,7 @@ export function LibraryView() {
       }
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : 'Не вдалося прочитати файл.';
+        errorMessage(err, currentI18n().m, currentI18n().m.errors.file_read);
       showFeedback(msg);
     } finally {
       e.target.value = '';
@@ -246,7 +248,7 @@ export function LibraryView() {
       showFeedback(`Імпортовано з бекапу: ${importedDocs} текстів.`);
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : 'Некоректний файл резервної копії.';
+        errorMessage(err, currentI18n().m, currentI18n().m.errors.backup_read);
       showFeedback(msg);
     } finally {
       e.target.value = '';
@@ -266,7 +268,7 @@ export function LibraryView() {
       showFeedback(`Статтю «${article.title}» завантажено.`);
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : 'Не вдалося витягти текст статті.';
+        errorMessage(err, currentI18n().m, currentI18n().m.errors.article_read);
       showFeedback(msg);
     } finally {
       setIsExtracting(false);
