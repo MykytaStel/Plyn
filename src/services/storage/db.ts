@@ -12,6 +12,7 @@ import type {
 import { deriveTitle } from '../../core/parsers/markdown';
 import { currentI18n } from '../../i18n';
 import { toLocalDateKey } from '../../core/reading/weeklyActivity';
+import { protectLibraryQuietly } from './persistence';
 
 class PlynDatabase extends Dexie {
   documents!: EntityTable<PlynDocument, 'id'>;
@@ -73,6 +74,8 @@ export async function createDocument(input: {
   };
 
   await db.documents.put(doc);
+  // The library now has something worth keeping.
+  void protectLibraryQuietly();
   return doc;
 }
 
@@ -94,6 +97,11 @@ export async function renameDocument(id: string, newTitle: string): Promise<void
 
 export async function removeDocument(id: string): Promise<void> {
   await db.documents.delete(id);
+}
+
+/** Puts a just-deleted document back exactly as it was (Undo). */
+export async function restoreDocument(doc: PlynDocument): Promise<void> {
+  await db.documents.put(doc);
 }
 
 /**

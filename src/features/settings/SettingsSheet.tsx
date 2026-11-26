@@ -13,6 +13,7 @@ import { APP_VERSION } from '../../appVersion';
 import { useI18n } from '../../i18n';
 import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { StorageSection } from './StorageSection';
 
 /**
  * Reader-only props (brown noise, timer, card re-split) are optional: the
@@ -466,6 +467,8 @@ export function SettingsSheet({
             </div>
           </div>
         </section>
+
+        <StorageSection />
 
         <p className="shortcuts-hint">
           {t.shortcuts.keyboard} <kbd>Space</kbd>/<kbd>↓</kbd> {t.shortcuts.next} ·{' '}

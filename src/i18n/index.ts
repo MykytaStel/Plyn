@@ -38,6 +38,24 @@ export function formatNumber(n: number, locale: Locale): string {
   return cached(numberFormats, locale, () => new Intl.NumberFormat(locale)).format(n);
 }
 
+const BYTE_UNITS = ['kilobyte', 'megabyte', 'gigabyte'] as const;
+
+/** "1.2 MB" / "1,2 МБ": the largest unit that keeps the number at 1 or more. */
+export function formatBytes(bytes: number, locale: Locale): string {
+  let value = Math.max(bytes, 0) / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < BYTE_UNITS.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return new Intl.NumberFormat(locale, {
+    style: 'unit',
+    unit: BYTE_UNITS[unit],
+    unitDisplay: 'short',
+    maximumFractionDigits: value < 10 ? 1 : 0
+  }).format(value);
+}
+
 export function plural(forms: PluralForms, count: number, locale: Locale): string {
   const category = cached(pluralRules, locale, () => new Intl.PluralRules(locale)).select(count);
   const template = forms[category as keyof PluralForms] ?? forms.other;
@@ -60,6 +78,7 @@ export interface I18n {
   format: typeof format;
   plural(forms: PluralForms, count: number): string;
   number(n: number): string;
+  bytes(n: number): string;
 }
 
 const instances = new Map<Locale, I18n>();
@@ -70,7 +89,8 @@ export function getI18n(locale: Locale): I18n {
     m: getMessages(locale),
     format,
     plural: (forms, count) => plural(forms, count, locale),
-    number: (n) => formatNumber(n, locale)
+    number: (n) => formatNumber(n, locale),
+    bytes: (n) => formatBytes(n, locale)
   }));
 }
 
