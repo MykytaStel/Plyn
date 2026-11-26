@@ -236,6 +236,33 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
       zen: 'clean screen'
     }
   },
+  onboarding: {
+    stepOf: 'Step {step} of {total}',
+    skipLabel: 'Skip the intro',
+    skip: 'Skip',
+    next: 'Next',
+    ownText: 'Use my own text',
+    trySample: 'Try the sample',
+    demoPreview: 'Anchor mode highlights the start of every word, so your eyes don’t slide off the line.',
+    step1: {
+      kicker: 'Welcome · 1 of 3',
+      title: 'Read without walls of text',
+      before: 'Plyn breaks long articles, notes and',
+      after: 'books into short cards. Your brain sees clear edges and real progress — and your eyes get much less tired.'
+    },
+    step2: {
+      kicker: 'Make it yours · 2 of 3',
+      title: 'Calm themes and Anchor',
+      anchorOn: 'Try Anchor',
+      anchorOff: 'Turn off Anchor'
+    },
+    step3: {
+      kicker: 'Ready to go · 3 of 3',
+      title: 'Swipe or press Space',
+      before: 'On a phone, swipe cards up. On a computer, press',
+      after: 'or the arrow keys. Settings also have a dyslexia font, Sentence focus, read-aloud and Clean screen.'
+    }
+  },
   achievementsSheet: {
     title: 'Progress & rewards',
     close: 'Close rewards',

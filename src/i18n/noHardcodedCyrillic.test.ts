@@ -21,11 +21,6 @@ const ALLOWED_FILES = new Set([
   'src/core/splitter/sentences.ts'
 ]);
 
-/** Files not migrated yet. This list may only shrink. */
-export const PENDING_FILES: string[] = [
-  'src/features/onboarding/OnboardingModal.tsx'
-];
-
 const CYRILLIC = /[А-Яа-яІіЇїЄєҐґ]/;
 
 /** Blanks out comments and regex literals, keeping line numbers. */
@@ -108,15 +103,9 @@ describe('no hard-coded Cyrillic UI strings', () => {
     expect(lines.map((l) => CYRILLIC.test(l))).toEqual([false, false, true, true, false]);
   });
 
-  it('migrated files contain no Cyrillic outside comments and regex', () => {
-    const hits = files
-      .filter((f) => !PENDING_FILES.includes(f))
-      .flatMap((f) => findHits(f));
+  it('UI files contain no Cyrillic outside comments and regex', () => {
+    const hits = files.flatMap((f) => findHits(f));
     expect(hits).toEqual([]);
   });
 
-  it('PENDING_FILES only lists files that still need migration', () => {
-    const clean = PENDING_FILES.filter((f) => findHits(f).length === 0);
-    expect(clean).toEqual([]);
-  });
 });
