@@ -23,8 +23,6 @@ const ALLOWED_FILES = new Set([
 
 /** Files not migrated yet. This list may only shrink. */
 export const PENDING_FILES: string[] = [
-  'src/features/library/LibraryCard.tsx',
-  'src/features/library/LibraryView.tsx',
   'src/features/onboarding/OnboardingModal.tsx',
   'src/features/reader/BookmarksSheet.tsx',
   'src/features/reader/CardSlide.tsx',

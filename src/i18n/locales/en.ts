@@ -3,9 +3,89 @@ import type { Messages } from '../types';
 export const en: Messages = {
   common: {
     untitled: 'Untitled',
+    cancel: 'Cancel',
+    minutesApprox: '~{minutes} min',
     cards: {
       one: '{count} card',
       other: '{count} cards'
+    },
+    texts: {
+      one: '{count} text',
+      other: '{count} texts'
+    }
+  },
+  sample: {
+    title: 'Meet Plyn',
+    text: `When a long wall of text opens up in front of you, your brain often gets tired before the first paragraph is over. Your eyes slip to the next line, and you end up reading the same sentence three times.
+
+Plyn takes that overload away. Instead of an endless page, you see one short thought at a time — in a calm frame, with clear edges.
+
+Swipe up on your phone, or press Space or the arrow keys on a computer, to move on. A soft line from the previous card sits at the top, so you never lose the thread.
+
+In Settings, try the one-tap presets (Dyslexia, Tired eyes, Book) and offline brown noise. If an unrelated thought pops up while you read, tap the light bulb (or press N) to park it and keep going.
+
+Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epub, .txt and .md files, or articles from a link.`
+  },
+  library: {
+    mainLabel: 'Add text and library',
+    thoughtsLabel: 'Thought Parking',
+    thoughtsHint: 'Parked thoughts',
+    helpLabel: 'How to use Plyn',
+    helpHint: 'Quick start',
+    changeTheme: 'Change theme',
+    heroTitle: 'Read at your own pace',
+    heroText: 'Paste text, an article link or a .pdf / .epub file — Plyn turns it into short cards.',
+    microStartLabel: 'Easy start',
+    microStartAction: 'Read 5 cards',
+    collapseEditor: 'Hide the add form',
+    expandEditor: 'Add text, .pdf, .epub or a link',
+    urlLoad: 'Load',
+    titleLabel: 'Title (optional)',
+    titlePlaceholder: 'Title (optional — we’ll make one up)',
+    textLabel: 'Text to read',
+    textPlaceholder: 'Paste an article, your notes or a book chapter...',
+    fromClipboard: 'Paste',
+    fromUrl: 'From link',
+    sample: 'Sample',
+    characters: {
+      one: '{count} character',
+      other: '{count} characters'
+    },
+    start: 'Start reading',
+    libraryTitle: 'My library',
+    backup: 'Backup',
+    backupHint: 'Export your library and rewards as JSON',
+    import: 'Import',
+    importHint: 'Restore from a JSON backup',
+    filterLabel: 'Library filter',
+    filters: {
+      all: 'All',
+      active: 'In progress',
+      bookmarked: 'Bookmarked',
+      completed: 'Finished'
+    },
+    searchPlaceholder: 'Search your library...',
+    filterEmpty: 'Nothing here for this filter yet.',
+    feedback: {
+      sharedArticleLoading: 'Loading the shared article...',
+      articleLoading: 'Loading the article...',
+      articleLoaded: 'Article “{title}” loaded.',
+      sharedArticleFailed: 'Couldn’t get the page — check the link above.',
+      sharedText: 'Text received from Share.',
+      pasteManually: 'Paste the text into the field above (Cmd+V or long-press).',
+      clipboardEmpty: 'The clipboard is empty.',
+      clipboardPasted: 'Text pasted from the clipboard.',
+      clipboardDenied: 'The browser blocked access — paste the text into the field above.',
+      epubLoading: 'Unpacking the EPUB book...',
+      epubLoaded: 'Book “{title}” loaded. Tap “Start reading”.',
+      pdfLoading: 'Reading the PDF...',
+      pdfLoaded: 'PDF “{title}” loaded. Tap “Start reading”.',
+      fileEmpty: 'The file is empty.',
+      fileImported: 'Imported “{name}”. Tap “Start reading”.',
+      backupSaved: 'Library backup saved.',
+      backupFailed: 'Couldn’t create a backup.',
+      backupImported: 'Imported from backup: {texts}.',
+      sampleLoaded: 'Sample loaded. Tap “Start reading”.'
     }
   },
   achievements: {
@@ -19,6 +99,16 @@ export const en: Messages = {
     bookworm_3: { title: 'A shelf of your own', description: 'Finish 3 texts' },
     rhythm_250: { title: 'Steady pace', description: 'Read 250 cards in total' },
     rhythm_1000: { title: 'Deep focus', description: 'Read 1,000 cards in total' }
+  },
+  libraryCard: {
+    open: 'Open {title}',
+    saveTitle: 'Save title',
+    rename: 'Rename {title}',
+    renameHint: 'Rename',
+    delete: 'Delete {title}',
+    deleteHint: 'Remove from library',
+    progress: 'Card {current} of {total} · {percent}%',
+    bookmarks: 'Bookmarks: {count}'
   },
   achievementsSheet: {
     title: 'Progress & rewards',
