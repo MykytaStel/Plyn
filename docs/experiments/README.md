@@ -11,7 +11,7 @@ An experiment answers one question before Plyn commits to a feature. It is time-
 | [EXP-01](EXP-01-pdf-paragraphs.md) | Can we rebuild PDF paragraphs from text positions? | 0.24 | 2 days | not started |
 | [EXP-02](EXP-02-tts-word-highlighting.md) | Which browsers report spoken-word positions reliably? | 0.26 | 1 day | not started |
 | [EXP-03](EXP-03-ukrainian-syllable-hints.md) | Can rule-based Ukrainian syllable hints be accurate and calm? | 0.27 | 2 days | not started |
-| [EXP-04](EXP-04-fb2-and-txt-encodings.md) | Do readers need FB2, and can we decode old `.txt` files? | 0.23 | 1 day | not started |
+| [EXP-04](EXP-04-fb2-and-txt-encodings.md) | Do readers need FB2, and can we decode old `.txt` files? | 0.23 | 1 day | done: yes to both |
 | [EXP-05](EXP-05-ocr-scanned-pdfs.md) | Is offline OCR for scanned PDFs fast and small enough on a phone? | after 0.24 | 2 days | not started |
 | [EXP-06](EXP-06-private-sync.md) | How could two devices share a library without exposing texts? | after 0.30 | 3 days (design only) | not started |
 | [EXP-07](EXP-07-storage-durability.md) | Does the library survive browser storage eviction, especially on iOS? | 0.21 | 1 day + 2-week soak | not started |

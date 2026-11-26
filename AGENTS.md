@@ -59,11 +59,11 @@ Keep `src/core/` free of DOM, React and storage imports so that it stays testabl
 
 ## Invariants (do not break)
 
-1. **Progress is a character offset, not a card index.** `PlynDocument.charOffset` and `bookmarkOffsets` point into the *normalized* text (`normalizeText` in `src/core/splitter/splitter.ts`). Card length can change at any time, so never persist card indices as the source of truth.
+1. **Progress is a character offset, not a card index.** `PlynDocument.charOffset`, `bookmarkOffsets` and `chapters[].offset` point into the *normalized* text (`normalizeText` in `src/core/splitter/splitter.ts`). Card length can change at any time, so never persist card indices as the source of truth.
 2. **The splitter is shared behaviour.** If you change `splitTextIntoCards`, update `spec/splitter-cases.json` and keep every case green.
 3. **Dexie schema changes need a new `this.version(n)`.** Never edit an existing version's stores. Database name: `plyn_library_v2`.
 4. **localStorage keys are versioned**: `plyn_settings_v1`, `plyn_onboarding_done_v1`, `plyn_progress_journal_v1` (last reading place, applied on start if newer than IndexedDB). Adding a field with a default is fine (loaders merge over defaults and ignore unknown fields, as with `keepScreenOn` in 0.22); renaming a field or changing its meaning means a new key plus a migration.
-5. **Backups stay compatible.** `PlynBackupPayload.schemaVersion` must be bumped and handled in `services/storage/backup.ts` when the shape changes (now 2: documents, stats, thoughts, settings). Every version still imports: add a fixture to `spec/backups/` for a new schema and never edit an old one.
+5. **Backups stay compatible.** `PlynBackupPayload.schemaVersion` must be bumped and handled in `services/storage/backup.ts` when the shape changes (now 2: documents, stats, thoughts, settings; optional document fields such as `author` and `chapters` don't bump it, but get a fixture). Every version still imports: add a fixture to `spec/backups/` for a new schema and never edit an old one.
 6. **Everything works offline.** User text never leaves the device, except URL import, which sends only the URL to `/api/extract`. New assets must match the Workbox `globPatterns` in `vite.config.ts`.
 7. **Heavy parsers are lazy-loaded.** `pdfjs-dist` (and any future OCR) must be loaded with dynamic `import()` only when used.
 
@@ -106,6 +106,7 @@ OpenDyslexic, Atkinson Hyperlegible and Lexend have **no Cyrillic glyphs**. They
 - Property tests use `fast-check` with a fixed `seed`. A failing property is a finding about shared behaviour: fix the code or discuss and update `spec/`, never weaken the property.
 - In component tests, query by role and accessible name, and take copy from the dictionaries (`uk.onboarding.skip`), never literal strings.
 - Add a test for every change in `src/core/`, `src/services/storage/` and `worker/`. A bug fix starts with a failing test.
+- Parsers have golden files in `spec/parsers/` (`txt-encodings.json`, `books.json`): bytes in, exact text and chapters out. Book fixtures are built by `scripts/fixtures/build-book-fixtures.mjs`; expectations are written by hand. Never edit a published case, add a new one.
 - Fixtures are public domain or self-written. No test touches the network.
 - `npm run lint` (bug-catching rules only) and `npm run typecheck` run in CI with the tests. `npm run test:coverage` writes a report to `coverage/` (no threshold yet).
 - E2E (Playwright, `e2e/`): critical journeys `cuj-*.spec.ts`, `a11y.spec.ts` (axe, fails on serious/critical), `keyboard.spec.ts`, `visual.spec.ts` (screenshots, Chromium) and PWA checks, against the production build on Chromium, WebKit, Pixel 7 and iPhone 14. Use the fixture in `e2e/support/app.ts` (fresh storage, onboarding skipped, other hosts blocked, `/api/extract` mocked), build files in memory (`e2e/support/fixtures.ts`), and check progress in IndexedDB, not only on screen.
