@@ -36,7 +36,6 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     thoughtsHint: 'Parked thoughts',
     helpLabel: 'How to use Plyn',
     helpHint: 'Quick start',
-    changeTheme: 'Change theme',
     heroTitle: 'Read at your own pace',
     heroText: 'Paste text, an article link or a .pdf / .epub file — Plyn turns it into short cards.',
     microStartLabel: 'Easy start',
@@ -115,6 +114,17 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     bookmarks: 'Bookmarks: {count}'
   },
   reader: {
+    tools: {
+      title: 'Reading tools',
+      more: 'More tools',
+      speak: 'Read aloud',
+      stopSpeech: 'Stop reading aloud',
+      anchor: 'Anchor',
+      sentenceFocus: 'Sentence focus',
+      zen: 'Clean screen',
+      bookmarks: 'Bookmarks',
+      settings: 'Settings'
+    },
     hintSentenceFocus: 'Tap or press Space for the next sentence · double-tap a word to hear it',
     hintSwipe: 'Swipe up or press Space · double-tap a word to hear it',
     mainLabel: 'Reading mode',
@@ -198,6 +208,11 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     delete: 'Delete thought'
   },
   settings: {
+    sections: {
+      appearance: 'Text & look',
+      reading: 'Reading',
+      sound: 'Sound'
+    },
     title: 'Reading comfort',
     close: 'Close settings',
     presets: 'One-tap presets',

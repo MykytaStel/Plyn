@@ -13,11 +13,9 @@ const THEME_META_COLORS: Record<ThemeMode, string> = {
   mint: '#E6EFEA'
 };
 
-const THEME_ORDER: ThemeMode[] = ['dark', 'paper', 'gray', 'mint'];
 
 interface SettingsState extends UserSettings {
   updateSettings: (patch: Partial<UserSettings>) => void;
-  cycleTheme: () => void;
   applyToDom: () => void;
 }
 
@@ -55,12 +53,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     saveUserSettings(next);
     syncDom(next);
     set(next);
-  },
-  cycleTheme: () => {
-    const current = get().theme;
-    const nextTheme =
-      THEME_ORDER[(THEME_ORDER.indexOf(current) + 1) % THEME_ORDER.length];
-    get().updateSettings({ theme: nextTheme });
   },
   applyToDom: () => {
     syncDom(pickSettings(get()));

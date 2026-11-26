@@ -10,7 +10,7 @@ import {
   Plus,
   Search,
   Sparkles,
-  Sun,
+  SlidersHorizontal,
   Trophy,
   Upload
 } from 'lucide-react';
@@ -30,6 +30,7 @@ import {
   isOnboardingDone,
   OnboardingModal
 } from '../onboarding/OnboardingModal';
+import { SettingsSheet } from '../settings/SettingsSheet';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../i18n/errorMessage';
@@ -52,6 +53,7 @@ export function LibraryView() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showThoughts, setShowThoughts] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone());
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<LibraryFilter>('all');
@@ -61,7 +63,6 @@ export function LibraryView() {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const feedbackTimerRef = useRef<number | undefined>(undefined);
 
-  const cycleTheme = useSettingsStore((s) => s.cycleTheme);
   const cardLength = useSettingsStore((s) => s.cardLength);
   const startNewDocument = useReaderStore((s) => s.startNewDocument);
   const openDocument = useReaderStore((s) => s.openDocument);
@@ -107,15 +108,16 @@ export function LibraryView() {
 
   // Escape closes whichever library sheet is open (the reader handles its own).
   useEffect(() => {
-    if (!showAchievements && !showThoughts) return;
+    if (!showAchievements && !showThoughts && !showSettings) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       setShowAchievements(false);
       setShowThoughts(false);
+      setShowSettings(false);
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [showAchievements, showThoughts]);
+  }, [showAchievements, showThoughts, showSettings]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -334,11 +336,11 @@ export function LibraryView() {
           <button
             className="icon-btn"
             type="button"
-            aria-label={t.changeTheme}
-            title={t.changeTheme}
-            onClick={cycleTheme}
+            aria-label={i18n.m.reader.settings}
+            title={i18n.m.reader.settings}
+            onClick={() => setShowSettings(true)}
           >
-            <Sun size={20} />
+            <SlidersHorizontal size={19} />
           </button>
         </div>
       </header>
@@ -626,6 +628,17 @@ export function LibraryView() {
             aria-hidden="true"
           />
           <ThoughtsSheet onClose={() => setShowThoughts(false)} />
+        </>
+      )}
+
+      {showSettings && (
+        <>
+          <div
+            className="sheet-backdrop"
+            onClick={() => setShowSettings(false)}
+            aria-hidden="true"
+          />
+          <SettingsSheet onClose={() => setShowSettings(false)} />
         </>
       )}
 

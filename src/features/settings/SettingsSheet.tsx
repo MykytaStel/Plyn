@@ -13,12 +13,16 @@ import { useI18n } from '../../i18n';
 import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
+/**
+ * Reader-only props (brown noise, timer, card re-split) are optional: the
+ * library opens the same sheet without a reading session, and those rows hide.
+ */
 interface SettingsSheetProps {
-  brownNoiseOn: boolean;
-  onToggleBrownNoise: (enabled: boolean) => void;
-  onCardLengthChange: (preset: CardLengthPreset) => void;
-  onTimerSelect: (minutes: number) => void;
-  onPresetApplied: (label: string) => void;
+  brownNoiseOn?: boolean;
+  onToggleBrownNoise?: (enabled: boolean) => void;
+  onCardLengthChange?: (preset: CardLengthPreset) => void;
+  onTimerSelect?: (minutes: number) => void;
+  onPresetApplied?: (label: string) => void;
   onClose: () => void;
 }
 
@@ -73,6 +77,7 @@ export function SettingsSheet({
     updateSettings
   } = useSettingsStore();
   const timerMinutes = useReaderStore((s) => s.timerMinutes);
+  const isReader = Boolean(onTimerSelect);
 
   return (
     <aside
@@ -107,7 +112,7 @@ export function SettingsSheet({
                 title={i18n.m.presets[preset.id].hint}
                 onClick={() => {
                   updateSettings(preset.patch);
-                  onPresetApplied(i18n.m.presets[preset.id].label);
+                  onPresetApplied?.(i18n.m.presets[preset.id].label);
                 }}
               >
                 <span className="preset-btn-title">
@@ -118,329 +123,348 @@ export function SettingsSheet({
           </div>
         </div>
 
-        <div className="setting-row-toggle">
-          <div>
-            <label htmlFor="toggle-anchor" className="setting-label">
-              {t.anchor}
-            </label>
-            <p className="setting-hint">
-              {t.anchorHint}
-            </p>
+        <section className="settings-section">
+          <h3 className="settings-section-title">{t.sections.appearance}</h3>
+          <div className="setting-group">
+            <span className="setting-label">{t.theme}</span>
+            <div
+              className="segmented segmented-4"
+              role="radiogroup"
+              aria-label={t.themeChoice}
+            >
+              {THEMES.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === item.value}
+                  className={`seg-btn ${theme === item.value ? 'is-active' : ''}`}
+                  onClick={() => updateSettings({ theme: item.value })}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <label className="switch">
-            <input
-              id="toggle-anchor"
-              type="checkbox"
-              checked={anchorMode}
-              onChange={(e) => updateSettings({ anchorMode: e.target.checked })}
-            />
-            <span className="switch-slider" />
-          </label>
-        </div>
 
-        <div className="setting-row-toggle">
-          <div>
-            <label htmlFor="toggle-sentence-focus" className="setting-label">
-              {t.sentenceFocus}
-            </label>
-            <p className="setting-hint">
-              {t.sentenceFocusHint}
-            </p>
+          <div className="setting-group">
+            <span className="setting-label">{t.font}</span>
+            <div
+              className="segmented segmented-4 segmented-wrap"
+              role="radiogroup"
+              aria-label={t.fontChoice}
+            >
+              {FONTS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={fontFamily === item.value}
+                  className={`seg-btn ${fontFamily === item.value ? 'is-active' : ''}`}
+                  onClick={() => updateSettings({ fontFamily: item.value })}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <label className="switch">
+
+          <div className="setting-group">
+            <div className="setting-label-row">
+              <label htmlFor="range-font-size" className="setting-label">
+                {t.fontSize}
+              </label>
+              <span className="setting-value">{fontSize} px</span>
+            </div>
             <input
-              id="toggle-sentence-focus"
-              type="checkbox"
-              checked={sentenceFocus}
+              id="range-font-size"
+              type="range"
+              min={18}
+              max={34}
+              step={1}
+              value={fontSize}
+              onChange={(e) => updateSettings({ fontSize: Number(e.target.value) })}
+            />
+          </div>
+
+          <div className="setting-group">
+            <div className="setting-label-row">
+              <label htmlFor="range-line-height" className="setting-label">
+                {t.lineHeight}
+              </label>
+              <span className="setting-value">{lineHeight.toFixed(2)}</span>
+            </div>
+            <input
+              id="range-line-height"
+              type="range"
+              min={1.4}
+              max={2.2}
+              step={0.05}
+              value={lineHeight}
               onChange={(e) =>
-                updateSettings({ sentenceFocus: e.target.checked })
+                updateSettings({ lineHeight: Number(e.target.value) })
               }
             />
-            <span className="switch-slider" />
-          </label>
-        </div>
+          </div>
 
-        <div className="setting-row-toggle">
-          <div>
-            <label htmlFor="toggle-brown-noise" className="setting-label">
-              {t.brownNoise}
+          <div className="setting-group">
+            <span className="setting-label">{t.spacing}</span>
+            <div
+              className="segmented"
+              role="radiogroup"
+              aria-label={t.spacing}
+            >
+              {SPACINGS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={letterSpacing === item.value}
+                  className={`seg-btn ${letterSpacing === item.value ? 'is-active' : ''}`}
+                  onClick={() => updateSettings({ letterSpacing: item.value })}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="setting-group">
+            <span className="setting-label">{t.width}</span>
+            <div
+              className="segmented segmented-2"
+              role="radiogroup"
+              aria-label={t.width}
+            >
+              {WIDTHS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={columnWidth === item.value}
+                  className={`seg-btn ${columnWidth === item.value ? 'is-active' : ''}`}
+                  onClick={() => updateSettings({ columnWidth: item.value })}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="settings-section">
+          <h3 className="settings-section-title">{t.sections.reading}</h3>
+          <div className="setting-row-toggle">
+            <div>
+              <label htmlFor="toggle-anchor" className="setting-label">
+                {t.anchor}
+              </label>
+              <p className="setting-hint">
+                {t.anchorHint}
+              </p>
+            </div>
+            <label className="switch">
+              <input
+                id="toggle-anchor"
+                type="checkbox"
+                checked={anchorMode}
+                onChange={(e) => updateSettings({ anchorMode: e.target.checked })}
+              />
+              <span className="switch-slider" />
             </label>
-            <p className="setting-hint">
-              {t.brownNoiseHint}
-            </p>
           </div>
-          <label className="switch">
-            <input
-              id="toggle-brown-noise"
-              type="checkbox"
-              checked={brownNoiseOn}
-              onChange={(e) => onToggleBrownNoise(e.target.checked)}
-            />
-            <span className="switch-slider" />
-          </label>
-        </div>
 
-        <div className="setting-row-toggle">
-          <div>
-            <label htmlFor="toggle-eye-break" className="setting-label">
-              {t.eyeBreak}
+          <div className="setting-row-toggle">
+            <div>
+              <label htmlFor="toggle-sentence-focus" className="setting-label">
+                {t.sentenceFocus}
+              </label>
+              <p className="setting-hint">
+                {t.sentenceFocusHint}
+              </p>
+            </div>
+            <label className="switch">
+              <input
+                id="toggle-sentence-focus"
+                type="checkbox"
+                checked={sentenceFocus}
+                onChange={(e) =>
+                  updateSettings({ sentenceFocus: e.target.checked })
+                }
+              />
+              <span className="switch-slider" />
             </label>
-            <p className="setting-hint">
-              {t.eyeBreakHint}
-            </p>
           </div>
-          <label className="switch">
-            <input
-              id="toggle-eye-break"
-              type="checkbox"
-              checked={eyeBreakReminder}
-              onChange={(e) =>
-                updateSettings({ eyeBreakReminder: e.target.checked })
-              }
-            />
-            <span className="switch-slider" />
-          </label>
-        </div>
 
-        <div className="setting-row-toggle">
-          <div>
-            <label htmlFor="toggle-tts-auto" className="setting-label">
-              {t.autoAdvance}
+          <div className="setting-group">
+            <span className="setting-label">{t.cardLength}</span>
+            <div
+              className="segmented"
+              role="radiogroup"
+              aria-label={t.cardLength}
+            >
+              {LENGTHS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={cardLength === item.value}
+                  className={`seg-btn ${cardLength === item.value ? 'is-active' : ''}`}
+                  onClick={() =>
+                    onCardLengthChange
+                      ? onCardLengthChange(item.value)
+                      : updateSettings({ cardLength: item.value })
+                  }
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {isReader && (
+            <div className="setting-group">
+              <div className="setting-label-row">
+                <span className="setting-label">{t.timer}</span>
+                <span className="setting-hint-inline">{t.timerHint}</span>
+              </div>
+              <div
+                className="segmented segmented-4"
+                role="radiogroup"
+                aria-label={t.timer}
+              >
+                {TIMERS.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={timerMinutes === item.value}
+                    className={`seg-btn ${timerMinutes === item.value ? 'is-active' : ''}`}
+                    onClick={() => onTimerSelect?.(item.value)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="setting-row-toggle">
+            <div>
+              <label htmlFor="toggle-eye-break" className="setting-label">
+                {t.eyeBreak}
+              </label>
+              <p className="setting-hint">
+                {t.eyeBreakHint}
+              </p>
+            </div>
+            <label className="switch">
+              <input
+                id="toggle-eye-break"
+                type="checkbox"
+                checked={eyeBreakReminder}
+                onChange={(e) =>
+                  updateSettings({ eyeBreakReminder: e.target.checked })
+                }
+              />
+              <span className="switch-slider" />
             </label>
-            <p className="setting-hint">
-              {t.autoAdvanceHint}
-            </p>
           </div>
-          <label className="switch">
-            <input
-              id="toggle-tts-auto"
-              type="checkbox"
-              checked={ttsAutoAdvance}
-              onChange={(e) =>
-                updateSettings({ ttsAutoAdvance: e.target.checked })
-              }
-            />
-            <span className="switch-slider" />
-          </label>
-        </div>
+        </section>
 
-        <div className="setting-group">
-          <span className="setting-label">{t.ttsRate}</span>
-          <div
-            className="segmented segmented-4"
-            role="radiogroup"
-            aria-label={t.ttsRate}
-          >
-            {TTS_RATES.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                role="radio"
-                aria-checked={ttsRate === item.value}
-                className={`seg-btn ${ttsRate === item.value ? 'is-active' : ''}`}
-                onClick={() => updateSettings({ ttsRate: item.value })}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <section className="settings-section">
+          <h3 className="settings-section-title">{t.sections.sound}</h3>
+          {isReader && (
+            <div className="setting-row-toggle">
+              <div>
+                <label htmlFor="toggle-brown-noise" className="setting-label">
+                  {t.brownNoise}
+                </label>
+                <p className="setting-hint">
+                  {t.brownNoiseHint}
+                </p>
+              </div>
+              <label className="switch">
+                <input
+                  id="toggle-brown-noise"
+                  type="checkbox"
+                  checked={Boolean(brownNoiseOn)}
+                  onChange={(e) => onToggleBrownNoise?.(e.target.checked)}
+                />
+                <span className="switch-slider" />
+              </label>
+            </div>
+          )}
 
-        <div className="setting-group">
-          <span className="setting-label">{t.font}</span>
-          <div
-            className="segmented segmented-4"
-            role="radiogroup"
-            aria-label={t.fontChoice}
-          >
-            {FONTS.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                role="radio"
-                aria-checked={fontFamily === item.value}
-                className={`seg-btn ${fontFamily === item.value ? 'is-active' : ''}`}
-                onClick={() => updateSettings({ fontFamily: item.value })}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="setting-group">
-          <span className="setting-label">{t.spacing}</span>
-          <div
-            className="segmented"
-            role="radiogroup"
-            aria-label={t.spacing}
-          >
-            {SPACINGS.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                role="radio"
-                aria-checked={letterSpacing === item.value}
-                className={`seg-btn ${letterSpacing === item.value ? 'is-active' : ''}`}
-                onClick={() => updateSettings({ letterSpacing: item.value })}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="setting-group">
-          <span className="setting-label">{t.width}</span>
-          <div
-            className="segmented segmented-2"
-            role="radiogroup"
-            aria-label={t.width}
-          >
-            {WIDTHS.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                role="radio"
-                aria-checked={columnWidth === item.value}
-                className={`seg-btn ${columnWidth === item.value ? 'is-active' : ''}`}
-                onClick={() => updateSettings({ columnWidth: item.value })}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="setting-group">
-          <span className="setting-label">{t.theme}</span>
-          <div
-            className="segmented segmented-4"
-            role="radiogroup"
-            aria-label={t.themeChoice}
-          >
-            {THEMES.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                role="radio"
-                aria-checked={theme === item.value}
-                className={`seg-btn ${theme === item.value ? 'is-active' : ''}`}
-                onClick={() => updateSettings({ theme: item.value })}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="setting-group">
-          <span className="setting-label">{t.cardLength}</span>
-          <div
-            className="segmented"
-            role="radiogroup"
-            aria-label={t.cardLength}
-          >
-            {LENGTHS.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                role="radio"
-                aria-checked={cardLength === item.value}
-                className={`seg-btn ${cardLength === item.value ? 'is-active' : ''}`}
-                onClick={() => onCardLengthChange(item.value)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="setting-group">
-          <div className="setting-label-row">
-            <span className="setting-label">{t.timer}</span>
-            <span className="setting-hint-inline">{t.timerHint}</span>
-          </div>
-          <div
-            className="segmented segmented-4"
-            role="radiogroup"
-            aria-label={t.timer}
-          >
-            {TIMERS.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                role="radio"
-                aria-checked={timerMinutes === item.value}
-                className={`seg-btn ${timerMinutes === item.value ? 'is-active' : ''}`}
-                onClick={() => onTimerSelect(item.value)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="setting-group">
-          <div className="setting-label-row">
-            <label htmlFor="range-font-size" className="setting-label">
-              {t.fontSize}
+          <div className="setting-row-toggle">
+            <div>
+              <label htmlFor="toggle-tts-auto" className="setting-label">
+                {t.autoAdvance}
+              </label>
+              <p className="setting-hint">
+                {t.autoAdvanceHint}
+              </p>
+            </div>
+            <label className="switch">
+              <input
+                id="toggle-tts-auto"
+                type="checkbox"
+                checked={ttsAutoAdvance}
+                onChange={(e) =>
+                  updateSettings({ ttsAutoAdvance: e.target.checked })
+                }
+              />
+              <span className="switch-slider" />
             </label>
-            <span className="setting-value">{fontSize} px</span>
           </div>
-          <input
-            id="range-font-size"
-            type="range"
-            min={18}
-            max={34}
-            step={1}
-            value={fontSize}
-            onChange={(e) => updateSettings({ fontSize: Number(e.target.value) })}
-          />
-        </div>
 
-        <div className="setting-group">
-          <div className="setting-label-row">
-            <label htmlFor="range-line-height" className="setting-label">
-              {t.lineHeight}
-            </label>
-            <span className="setting-value">{lineHeight.toFixed(2)}</span>
+          <div className="setting-group">
+            <span className="setting-label">{t.ttsRate}</span>
+            <div
+              className="segmented segmented-4"
+              role="radiogroup"
+              aria-label={t.ttsRate}
+            >
+              {TTS_RATES.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={ttsRate === item.value}
+                  className={`seg-btn ${ttsRate === item.value ? 'is-active' : ''}`}
+                  onClick={() => updateSettings({ ttsRate: item.value })}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <input
-            id="range-line-height"
-            type="range"
-            min={1.4}
-            max={2.2}
-            step={0.05}
-            value={lineHeight}
-            onChange={(e) =>
-              updateSettings({ lineHeight: Number(e.target.value) })
-            }
-          />
-        </div>
+        </section>
 
-        <div className="setting-group">
-          <span className="setting-label">{LANGUAGE_LABEL}</span>
-          <div
-            className="segmented segmented-2"
-            role="radiogroup"
-            aria-label={LANGUAGE_LABEL}
-          >
-            {LOCALES.map((locale) => (
-              <button
-                key={locale}
-                type="button"
-                role="radio"
-                lang={locale}
-                className={`seg-btn ${language === locale ? 'is-active' : ''}`}
-                aria-checked={language === locale}
-                onClick={() => updateSettings({ language: locale })}
-              >
-                {LOCALE_NAMES[locale]}
-              </button>
-            ))}
+        <section className="settings-section">
+          <h3 className="settings-section-title">{LANGUAGE_LABEL}</h3>
+          <div className="setting-group">
+            <div
+              className="segmented segmented-2"
+              role="radiogroup"
+              aria-label={LANGUAGE_LABEL}
+            >
+              {LOCALES.map((locale) => (
+                <button
+                  key={locale}
+                  type="button"
+                  role="radio"
+                  lang={locale}
+                  className={`seg-btn ${language === locale ? 'is-active' : ''}`}
+                  aria-checked={language === locale}
+                  onClick={() => updateSettings({ language: locale })}
+                >
+                  {LOCALE_NAMES[locale]}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
 
         <p className="shortcuts-hint">
           {t.shortcuts.keyboard} <kbd>Space</kbd>/<kbd>↓</kbd> {t.shortcuts.next} ·{' '}
