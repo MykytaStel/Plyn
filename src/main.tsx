@@ -13,6 +13,9 @@ import { App } from './App';
 import { AppErrorBoundary } from './features/errors/AppErrorBoundary';
 import './styles/fonts.css';
 import './styles/tokens.css';
+import { registerAppServiceWorker } from './services/pwa/registerApp';
+
+registerAppServiceWorker();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

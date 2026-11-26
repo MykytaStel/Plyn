@@ -35,6 +35,10 @@ In Settings, try the one-tap presets (Dyslexia, Tired eyes, Book) and offline br
 Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epub, .txt and .md files, or articles from a link.`
   },
   library: {
+    update: {
+      ready: 'A new version of Plyn is ready. It opens next time you come back.',
+      apply: 'Update now'
+    },
     mainLabel: 'Add text and library',
     thoughtsLabel: 'Thought Parking',
     thoughtsHint: 'Parked thoughts',
@@ -238,6 +242,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     brownNoiseHint: 'A soft background sound that quiets stray thoughts',
     eyeBreak: 'Eye break (20-20-20)',
     eyeBreakHint: 'A quiet reminder to look away every 25 cards',
+    keepScreenOn: 'Keep the screen on',
+    keepScreenOnHint: 'While you read or listen. After 10 minutes without moving on, the screen may turn off again',
     autoAdvance: 'Keep listening (auto-advance)',
     autoAdvanceHint: 'Read-aloud moves to the next card on its own',
     ttsRate: 'Read-aloud speed',
@@ -320,6 +326,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     backup_unsupported: 'Plyn doesn’t support this backup format.',
     url_invalid: 'Enter the full link, starting with https://',
     offline: 'You’re offline. Importing from a link needs the internet; reading works without it.',
+    app_updated: 'Plyn has been updated. Reload the page and it will open.',
     generic: 'Something went wrong. Please try again.',
     file_read: 'Couldn’t read the file.',
     backup_read: 'This isn’t a valid backup file.',

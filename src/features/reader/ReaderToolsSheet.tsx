@@ -9,6 +9,7 @@ import {
   X
 } from 'lucide-react';
 import { useI18n } from '../../i18n';
+import { useDialogFocus } from '../shared/useDialogFocus';
 
 interface ReaderToolsSheetProps {
   ttsAvailable: boolean;
@@ -43,11 +44,13 @@ export function ReaderToolsSheet({
   onSettings,
   onClose
 }: ReaderToolsSheetProps) {
+  const dialogRef = useDialogFocus<HTMLElement>();
   const i18n = useI18n();
   const t = i18n.m.reader.tools;
 
   return (
     <aside
+      ref={dialogRef}
       className="bottom-sheet"
       role="dialog"
       aria-modal="true"

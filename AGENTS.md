@@ -15,7 +15,8 @@ npm ci            # install (Node 22, same as CI)
 npm run dev       # Vite dev server
 npm test          # Vitest: node + dom projects (must pass)
 npm run test:coverage  # tests with a coverage report in coverage/
-npm run test:e2e  # Playwright: journeys, axe, keyboard, offline (builds first; must pass)
+npm run test:e2e  # Playwright: journeys, axe, keyboard, offline, visual (builds first; must pass)
+npm run test:visual:update  # rebuild the visual snapshots on purpose, then review the images
 npm run lint      # ESLint: hooks, a11y, floating promises (must pass)
 npm run typecheck # tsc -b --noEmit
 npm run build     # tsc -b + vite build + PWA service worker (must pass)
@@ -30,10 +31,10 @@ Every pull request runs `.github/workflows/ci.yml` (lint, typecheck, tests, buil
 
 ## Stack
 
-- React 19, TypeScript (strict), Vite 6
+- React 19, TypeScript (strict), Vite 8
 - Zustand for state (`src/store/`)
 - Dexie / IndexedDB for the library, stats and thoughts (`src/services/storage/db.ts`)
-- `vite-plugin-pwa` (Workbox `generateSW`) for offline use and the Web Share Target
+- `vite-plugin-pwa` (Workbox `generateSW`, prompt-style updates registered in `src/services/pwa/registerApp.ts`) for offline use and the Web Share Target
 - Cloudflare Worker (`worker/index.ts`): serves static assets and `/api/extract` (URL → article text)
 - Vitest (Node environment) for unit tests
 
@@ -42,9 +43,11 @@ Every pull request runs `.github/workflows/ci.yml` (lint, typecheck, tests, buil
 ```
 src/
   core/        Pure logic, no DOM or React. Splitter, anchor, parsers, presets, achievements, stats.
-  features/    React UI by feature: library, reader, settings, onboarding, thoughts, achievements.
+  features/    React UI by feature: library, reader (hooks in reader/hooks/), settings, onboarding,
+               thoughts, achievements; shared/ holds useBackLayer and useDialogFocus.
   services/    Side effects: storage (Dexie, localStorage, backup), speech (Web Speech TTS),
-               audio (brown noise), extract (URL import client), sync (future contract only).
+               audio (brown noise), extract (URL import client), navigation (back stack over
+               history), screen (Wake Lock), pwa (updates, lazy-chunk retry), sync (future contract only).
   store/       Zustand stores: reader session and settings.
   styles/      tokens.css (themes, CSS variables, all component styles), fonts.css (@font-face).
   assets/      Self-hosted fonts.
@@ -59,7 +62,7 @@ Keep `src/core/` free of DOM, React and storage imports so that it stays testabl
 1. **Progress is a character offset, not a card index.** `PlynDocument.charOffset` and `bookmarkOffsets` point into the *normalized* text (`normalizeText` in `src/core/splitter/splitter.ts`). Card length can change at any time, so never persist card indices as the source of truth.
 2. **The splitter is shared behaviour.** If you change `splitTextIntoCards`, update `spec/splitter-cases.json` and keep every case green.
 3. **Dexie schema changes need a new `this.version(n)`.** Never edit an existing version's stores. Database name: `plyn_library_v2`.
-4. **localStorage keys are versioned**: `plyn_settings_v1`, `plyn_onboarding_done_v1`, `plyn_progress_journal_v1` (last reading place, applied on start if newer than IndexedDB). Changing a stored shape means a new key plus a migration.
+4. **localStorage keys are versioned**: `plyn_settings_v1`, `plyn_onboarding_done_v1`, `plyn_progress_journal_v1` (last reading place, applied on start if newer than IndexedDB). Adding a field with a default is fine (loaders merge over defaults and ignore unknown fields, as with `keepScreenOn` in 0.22); renaming a field or changing its meaning means a new key plus a migration.
 5. **Backups stay compatible.** `PlynBackupPayload.schemaVersion` must be bumped and handled in `services/storage/backup.ts` when the shape changes (now 2: documents, stats, thoughts, settings). Every version still imports: add a fixture to `spec/backups/` for a new schema and never edit an old one.
 6. **Everything works offline.** User text never leaves the device, except URL import, which sends only the URL to `/api/extract`. New assets must match the Workbox `globPatterns` in `vite.config.ts`.
 7. **Heavy parsers are lazy-loaded.** `pdfjs-dist` (and any future OCR) must be loaded with dynamic `import()` only when used.
@@ -105,7 +108,8 @@ OpenDyslexic, Atkinson Hyperlegible and Lexend have **no Cyrillic glyphs**. They
 - Add a test for every change in `src/core/`, `src/services/storage/` and `worker/`. A bug fix starts with a failing test.
 - Fixtures are public domain or self-written. No test touches the network.
 - `npm run lint` (bug-catching rules only) and `npm run typecheck` run in CI with the tests. `npm run test:coverage` writes a report to `coverage/` (no threshold yet).
-- E2E (Playwright, `e2e/`): critical journeys `cuj-*.spec.ts`, `a11y.spec.ts` (axe, fails on serious/critical) and `keyboard.spec.ts`, against the production build on Chromium, WebKit, Pixel 7 and iPhone 14. Use the fixture in `e2e/support/app.ts` (fresh storage, onboarding skipped, other hosts blocked, `/api/extract` mocked), build files in memory (`e2e/support/fixtures.ts`), and check progress in IndexedDB, not only on screen.
+- E2E (Playwright, `e2e/`): critical journeys `cuj-*.spec.ts`, `a11y.spec.ts` (axe, fails on serious/critical), `keyboard.spec.ts`, `visual.spec.ts` (screenshots, Chromium) and PWA checks, against the production build on Chromium, WebKit, Pixel 7 and iPhone 14. Use the fixture in `e2e/support/app.ts` (fresh storage, onboarding skipped, other hosts blocked, `/api/extract` mocked), build files in memory (`e2e/support/fixtures.ts`), and check progress in IndexedDB, not only on screen.
+- New sheets: `role="dialog"` with `useDialogFocus` (focus in, Tab inside, back to the opener) and `useBackLayer` (back closes it). A CSS or icon change that moves pixels updates the visual snapshots in the same PR, on purpose.
 - A UI change keeps every journey green. A new screen or sheet gets an axe scan in `a11y.spec.ts`; a kept a11y finding goes into `e2e/a11y-exceptions.ts` with a reason.
 - Still check UI changes by eye in `npm run dev`, and on a phone with the PR preview before release.
 - The plan for the full test suite (layers, tools, CI gates, release checklist) is in `docs/TESTING.md`. The release plan is in `docs/ROADMAP.md`.

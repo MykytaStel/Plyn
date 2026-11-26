@@ -6,6 +6,7 @@ import {
 import type { UserProgressStats } from '../../core/models/types';
 import { buildLast7DaysActivity } from '../../core/reading/weeklyActivity';
 import { formatWeekdayShort, useI18n } from '../../i18n';
+import { useDialogFocus } from '../shared/useDialogFocus';
 
 interface AchievementsSheetProps {
   stats: UserProgressStats | undefined;
@@ -13,6 +14,7 @@ interface AchievementsSheetProps {
 }
 
 export function AchievementsSheet({ stats, onClose }: AchievementsSheetProps) {
+  const dialogRef = useDialogFocus<HTMLElement>();
   const i18n = useI18n();
   const t = i18n.m.achievementsSheet;
   const safeStats = stats ?? DEFAULT_PROGRESS_STATS;
@@ -23,6 +25,7 @@ export function AchievementsSheet({ stats, onClose }: AchievementsSheetProps) {
 
   return (
     <aside
+      ref={dialogRef}
       className="bottom-sheet"
       role="dialog"
       aria-modal="true"

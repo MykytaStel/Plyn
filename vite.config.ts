@@ -7,8 +7,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg'],
+      // 0.22 (IMP-15): a new version waits instead of taking over open tabs.
+      // src/services/pwa/registerApp.ts registers it and offers "Update now".
+      registerType: 'prompt',
+      injectRegister: false,
       manifest: {
         name: 'Plyn — спокійне читання картками',
         short_name: 'Plyn',
@@ -30,16 +32,22 @@ export default defineConfig({
           }
         },
         icons: [
+          { src: './icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: './icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: './icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           {
-            src: './icons/icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            src: './icons/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}']
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // The first install controls the page at once (offline after the first
+        // visit). A later version still waits: no skipWaiting in prompt mode.
+        clientsClaim: true
       }
     })
   ]

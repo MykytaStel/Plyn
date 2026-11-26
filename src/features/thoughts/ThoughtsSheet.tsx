@@ -7,6 +7,7 @@ import {
   db,
   removeThoughtNote
 } from '../../services/storage/db';
+import { useDialogFocus } from '../shared/useDialogFocus';
 
 interface ThoughtsSheetProps {
   currentDocTitle?: string;
@@ -17,6 +18,7 @@ export function ThoughtsSheet({
   currentDocTitle,
   onClose
 }: ThoughtsSheetProps) {
+  const dialogRef = useDialogFocus<HTMLElement>();
   const t = useI18n().m.thoughts;
   const [draft, setDraft] = useState('');
   const thoughts = useLiveQuery(
@@ -32,6 +34,7 @@ export function ThoughtsSheet({
 
   return (
     <aside
+      ref={dialogRef}
       className="bottom-sheet"
       role="dialog"
       aria-modal="true"
