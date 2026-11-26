@@ -34,3 +34,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # v3 of the action defaults to Wrangler 3.90, which cannot read wrangler.jsonc.
+          wranglerVersion: '4.168.0'
