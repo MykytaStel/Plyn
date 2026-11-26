@@ -2,6 +2,24 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [0.20.0] — 2026-11-26
+
+Safety net II. Plyn is now checked in real browsers (Chrome and Safari, desktop and phone) before every change, including offline and with the keyboard only. Those checks found a few things worth fixing.
+
+### Fixed
+
+- Your place is kept even if you close the app or reload right after swiping to a new card.
+- Importing from a link while offline now says calmly that it needs the internet, instead of blaming the site.
+- Easier to read in the Paper, Gray and Mint themes: secondary text, the first-card hint, the Paper buttons and award messages have stronger contrast.
+- Screen readers hear the same words you see on the "Library", "Anchor", awards, thoughts and bookmark-count buttons.
+- A text in the library opens with one clear button, which screen readers and the keyboard can reach. Rename and delete stay separate.
+
+### Under the hood
+
+- Playwright journeys: first run, coming back to the same card after a reload, changing card length, EPUB and PDF import, offline use, and a keyboard-only session in the Latin and Ukrainian layouts.
+- Automatic accessibility checks (axe) on every screen and sheet, in all four themes.
+- Every pull request gets its own preview link, so changes can be tried on a phone before they reach you.
+
 ## [0.19.0] — 2026-11-26
 
 Safety net I. Almost nothing new to see: this release protects your texts and your place in them with tests that run before every change.
@@ -30,4 +48,5 @@ A short summary of earlier releases (details live in the git tags).
 - **0.8.x** — Sentence focus, onboarding, Web Share Target, mint theme, letter spacing, Zen mode, library search, JSON backup.
 - **0.5 and earlier** — Cards, IndexedDB library, file import (EPUB, URL), bookmarks, focus timer, dyslexia fonts, achievements.
 
+[0.20.0]: https://github.com/MykytaStel/Plyn/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/MykytaStel/Plyn/compare/v0.18.0...v0.19.0
