@@ -14,7 +14,7 @@ export const READING_PRESETS: ReadingPreset[] = [
   {
     id: 'dyslexia',
     label: 'Дислексія',
-    hint: 'OpenDyslexic · ширший інтервал · М’ята · Фокус-речення',
+    hint: 'Шрифт для дислексії · ширший інтервал · М’ята · Фокус-речення',
     patch: {
       theme: 'mint',
       fontFamily: 'dyslexic',
@@ -28,7 +28,7 @@ export const READING_PRESETS: ReadingPreset[] = [
   {
     id: 'tired_eyes',
     label: 'Втомлені очі',
-    hint: 'Atkinson Hyperlegible · Темна · Якір · 20-20-20',
+    hint: 'Чіткий шрифт · Темна · Якір · 20-20-20',
     patch: {
       theme: 'dark',
       fontFamily: 'hyperlegible',
@@ -43,7 +43,7 @@ export const READING_PRESETS: ReadingPreset[] = [
   {
     id: 'book',
     label: 'Книга',
-    hint: 'Literata · Паперова · спокійний інтервал',
+    hint: 'Книжковий шрифт · Паперова · спокійний інтервал',
     patch: {
       theme: 'paper',
       fontFamily: 'serif',
