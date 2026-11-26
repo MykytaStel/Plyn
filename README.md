@@ -39,3 +39,5 @@ npm run build
 Stack: React 19, TypeScript, Vite, Zustand, Dexie (IndexedDB), vite-plugin-pwa, and a Cloudflare Worker for hosting and article extraction. Pushes to `main` deploy automatically through GitHub Actions.
 
 Contributors and AI agents: read [AGENTS.md](AGENTS.md) first.
+
+What's next: [roadmap to 0.30](docs/ROADMAP.md), [test plan](docs/TESTING.md), [experiments](docs/experiments/README.md) and [engineering improvements](docs/IMPROVEMENTS.md).

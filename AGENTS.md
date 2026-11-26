@@ -95,6 +95,7 @@ OpenDyslexic, Atkinson Hyperlegible and Lexend have **no Cyrillic glyphs**. They
 - Unit tests live next to the code as `*.test.ts` (`src/**/*.test.ts`) and run in Node, without a DOM.
 - Add a test for every change in `src/core/` and in `services/storage/backup.ts`.
 - There are no UI or e2e tests yet. Verify UI changes manually in `npm run dev`.
+- The plan for the full test suite (layers, tools, CI gates, release checklist) is in `docs/TESTING.md`. The release plan is in `docs/ROADMAP.md`.
 
 ## Commits
 

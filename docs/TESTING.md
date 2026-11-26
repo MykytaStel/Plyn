@@ -1,0 +1,250 @@
+# Plyn test plan
+
+Status: draft · 2026-11-26 · part of the [roadmap](ROADMAP.md)
+
+**Goal for 0.30:** every layer below exists, runs automatically where it can, and blocks a broken release. Readers trust Plyn with their texts and their progress, so the tests protect those first.
+
+## Where we are (0.18.0)
+
+- 17 test files, 64 tests, all in Vitest with the Node environment. Run time under 1 s.
+- Covered: splitter, sentences, anchor, presets, achievements, reading stats, weekly activity, Markdown export, file names, language detection, settings storage, backup *validation*, i18n (dictionary shape and the hard-coded Cyrillic guard), keyboard shortcuts, `/api/extract` helpers.
+- Not covered: `db.ts` (IndexedDB), backup *import/export*, the EPUB and PDF parsers, the stores, the TTS and audio services, every React component, the service worker, real browsers.
+- CI runs `npm test` and `npm run build` only on push to `main`, which is also the production deploy. Pull requests get no CI.
+
+Coverage baseline: to be measured in 0.19 and written here.
+
+## Test layers
+
+| # | Layer | Proves | Tool | Runs | Introduced | Enforced (blocks merge) |
+|---|---|---|---|---|---|---|
+| L0 | Static checks | types, hooks rules, a11y lint, no hard-coded copy | `tsc -b`, ESLint, i18n guard | every PR | guard exists; lint 0.19 | 0.19 |
+| L1 | Core unit | pure logic gives the right answer | Vitest (node) | every PR | exists | exists |
+| L2 | DOM unit and components | parsers that need a DOM, component behaviour | Vitest (jsdom) + Testing Library | every PR | 0.19 | 0.19 |
+| L3 | Storage integration | IndexedDB code saves, reads, migrates | Vitest + `fake-indexeddb` | every PR | 0.19 | 0.19 |
+| L4 | Property-based | invariants hold for any input | `fast-check` | every PR | 0.19 | 0.19 |
+| L5 | Contract and compatibility | shared behaviour, old backups, old schemas | Vitest + `spec/` fixtures | every PR | splitter exists; backups 0.21 | 0.21 |
+| L6 | Worker runtime | `/api/extract` in the real Workers runtime | `@cloudflare/vitest-pool-workers` | every PR | 0.24 | 0.24 |
+| L7 | End-to-end and PWA | real journeys in real browsers, offline | Playwright | every PR | 0.20 | 0.20 |
+| L8 | Automated accessibility | no detectable a11y violations | `@axe-core/playwright` | every PR | 0.20 | 0.20 (serious+), 0.28 (all) |
+| L9 | Visual regression | themes and fonts don't break by accident | Playwright screenshots (Linux CI) | every PR | 0.22 | 0.22 |
+| L10 | Performance budgets | size and speed stay in budget | bundle-size script, Lighthouse CI | every PR / weekly | 0.25 | 0.25 |
+| L11 | Security checks | SSRF blocked, headers and CSP present, no known-vulnerable deps | Vitest, Playwright, `npm audit` | every PR / weekly | 0.24 | 0.29 |
+| L12 | Mutation testing | the tests actually catch bugs | Stryker (`src/core/`) | weekly | 0.30 ([EXP-09](experiments/EXP-09-mutation-testing.md)) | 0.30 (score floor) |
+| L13 | Manual assistive-tech runs | works with real screen readers | VoiceOver, TalkBack, NVDA | 0.28, then before each minor release | 0.28 | release checklist |
+| L14 | Release checklist on devices | installed PWA works on real phones | people, ~20 min | every release | 0.20 | every release |
+| L15 | Reader sessions | the product actually helps | moderated sessions ([EXP-08](experiments/EXP-08-reader-sessions.md)) | 0.28, then twice a year | 0.28 | – |
+
+"Enforced" means the CI job fails, or for manual layers, the release does not ship until it is done.
+
+## Layers in detail
+
+### L0 Static checks
+
+- `npm run typecheck` (`tsc -b --noEmit`) and `npm run lint` in CI from 0.19 ([IMP-10](IMPROVEMENTS.md#imp-10-lint-and-typecheck-scripts)).
+- ESLint with `typescript-eslint`, `eslint-plugin-react-hooks` and `eslint-plugin-jsx-a11y`. Start with errors only for hooks rules and a11y; style is not a goal.
+- The hard-coded Cyrillic guard (`src/i18n/noHardcodedCyrillic.test.ts`) stays. Its glob excludes `*.test.ts` only: extend it to `*.test.tsx` and `*.dom.test.ts` when component tests arrive.
+
+### L1 Core unit
+
+- Every module in `src/core/` has a `*.test.ts` next to it (existing rule in AGENTS.md).
+- Missing today: `core/parsers/epub.ts` and `core/parsers/pdf.ts` (they need L2 or a pure helper), `core/errors.ts`.
+- When the PDF work lands (0.24), keep the paragraph logic as a pure function over text items in `src/core/`, so it is L1-testable without pdf.js.
+
+### L2 DOM unit and component tests
+
+- Vitest `projects`: `node` keeps `src/**/*.test.ts`; `dom` runs `src/**/*.test.tsx` and `src/**/*.dom.test.ts` in jsdom. jsdom, not happy-dom, because the EPUB parser needs reliable `application/xhtml+xml` parsing.
+- Testing Library with `user-event`. Query by role and accessible name, which also checks accessibility.
+- Assert copy through the dictionaries (`uk.settings.title`), never with literal strings, so a copy change does not break tests and the Cyrillic guard stays meaningful.
+- First targets (0.19):
+  1. EPUB parser with two fixture books (one EPUB 2, one EPUB 3).
+  2. Every sheet: opens with focus inside, closes on Escape, returns focus.
+  3. Segmented controls behave as radio groups (arrow keys change the value).
+  4. Settings: language switch changes the UI without reload.
+  5. Onboarding: shown once, then never again (`plyn_onboarding_done_v1`).
+
+### L3 Storage integration
+
+- `fake-indexeddb/auto` in a setup file; a fresh database per test.
+- Targets (0.19):
+  1. `createDocument`, `updateDocument` (bookmarks deduplicated and sorted), `renameDocument`, `removeDocument`.
+  2. `findDocumentByText` and the "reopen instead of duplicate" path in the reader store.
+  3. `recordProgressDelta`: totals, daily counts, achievements unlocked once, and concurrent calls not losing updates ([IMP-04](IMPROVEMENTS.md#imp-04-atomic-progress-stats)).
+  4. Backup export → import round trip; import never deletes; newer `updatedAt` wins; stats merge takes the maximum.
+  5. `migrateLegacyLocalSession` moves `plyn_session_v1` once and removes it.
+- From 0.25: open a database created at each old `version(n)` and check the upgrade to the newest.
+
+### L4 Property-based
+
+`fast-check`, with a fixed seed in CI and the seed printed on failure.
+
+1. Splitter: for any text and any card length, `startOffset` never decreases, `endOffset` never passes the end of the normalized text, and every non-whitespace character belongs to exactly one card. Card offsets come from an `indexOf` search with a fallback (`splitter.ts:146`), so a failing property here is a finding about shared behaviour: discuss it and update `spec/splitter-cases.json`, don't weaken the property.
+2. Offsets: for every card, `findCardIndexByOffset(card.startOffset)` returns that card. For any offset, switching card length and back lands on a card containing that offset.
+3. Anchor: tokens joined give back the original text.
+4. `validateBackupPayload`: any input either returns a valid payload or throws a `PlynError`, never anything else.
+5. Language detection: never throws, always returns a known id.
+
+### L5 Contract and compatibility
+
+`spec/` holds JSON fixtures that future native apps will reuse. Tests read them, so web and native share one definition of correct.
+
+- Exists: `spec/splitter-cases.json`.
+- Add ([IMP-17](IMPROVEMENTS.md#imp-17-shared-spec-fixtures)): `spec/anchor-cases.json`, `spec/sentence-cases.json`, `spec/language-cases.json`, `spec/backups/v1-*.json` (0.21), `spec/backups/v2-*.json` (0.21), `spec/parsers/` expected outputs (0.23).
+- Compatibility matrix (complete by 0.30):
+  1. Every backup fixture ever published imports without loss.
+  2. Every Dexie version upgrades to the newest.
+  3. Every past `plyn_settings_v1` shape loads with defaults merged.
+  4. `/api/extract` responses always carry a `code` the client knows.
+
+### L6 Worker runtime
+
+- Today `worker/extract.test.ts` runs in Node. From 0.24, run Worker tests in `workerd` with `@cloudflare/vitest-pool-workers`, so `fetch`, `TextDecoder` encodings and streaming behave like production.
+- Outbound `fetch` is mocked with a fixture corpus (`test/fixtures/html/`). No test touches the network.
+- Cases: article detection per fixture site, charsets (UTF-8, Windows-1251), redirects, timeouts, oversized pages, every error `code`.
+
+### L7 End-to-end and PWA
+
+- Playwright against `npm run build && npm run preview`, so the real service worker is tested.
+- Projects: Desktop Chromium, Desktop WebKit, Pixel (Chromium), iPhone (WebKit). Firefox runs weekly, not blocking.
+- `/api/extract` is mocked with `page.route`. Fonts are self-hosted, so no external requests are expected: the test fails on any request to another host.
+- Each test starts with a clean storage state; journeys that need a library load it from a backup fixture.
+- Files: `e2e/*.spec.ts`, helpers in `e2e/support/`.
+
+### L8 Automated accessibility
+
+- `@axe-core/playwright` scans the library, the reader, every sheet and onboarding, in all four themes and both UI languages.
+- 0.20: fail on `serious` and `critical`. 0.28: fail on any violation not listed in `e2e/a11y-exceptions.ts` with a reason.
+- Keyboard journey: reach every control with Tab, use every reader shortcut from `src/features/reader/shortcuts.ts`, in Latin and Ukrainian layouts.
+
+### L9 Visual regression
+
+- Playwright `toHaveScreenshot()` for: library (empty, with documents), reader card, every sheet. Matrix: 4 themes × 4 font presets × phone and desktop, trimmed to the combinations that differ.
+- Runs only in the Playwright Linux container in CI, so font rendering is stable. Snapshots update through a manual workflow; updated images are reviewed in the PR like code.
+- Required before splitting `tokens.css` ([IMP-09](IMPROVEMENTS.md#imp-09-split-tokenscss)).
+
+### L10 Performance budgets
+
+Starting budgets (adjust after measuring in 0.25):
+
+| Budget | Limit |
+|---|---|
+| Initial JS (gzip) | measured in 0.25, then +5 % max per release |
+| `pdfjs-dist` | never in the initial bundle (lazy-load invariant) |
+| Lighthouse performance (mobile) | ≥ 90 |
+| Lighthouse accessibility | 100 |
+| Lighthouse PWA / best practices | ≥ 90 |
+| Split 1 M characters | < 500 ms in a Web Worker on CI hardware |
+| Library with 50 books, first render | < 300 ms on a throttled phone profile |
+
+### L11 Security checks
+
+1. SSRF (0.24): private IPv4 and IPv6, IPv4-mapped IPv6, numeric and decimal hosts, `localhost.` with a trailing dot, and a public URL that redirects to any of these.
+2. Limits (0.24): slow upstream hits the timeout; huge page hits the size limit; both return a calm `code`.
+3. Headers (0.29): CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` present on HTML responses.
+4. CSP (0.29): no CSP violation in the console during any E2E journey.
+5. Dependencies: `npm audit --audit-level=high` weekly, blocking from 0.29.
+
+### L12 Mutation testing
+
+Stryker with the Vitest runner on `src/core/` and `src/services/storage/backup.ts`, weekly. [EXP-09](experiments/EXP-09-mutation-testing.md) decides whether it is worth it and sets the score floor.
+
+### L13 Manual assistive-technology runs
+
+Run with VoiceOver on iPhone, VoiceOver on macOS, TalkBack on Android and NVDA with Firefox or Chrome on Windows. Each run: about 30 minutes. Record results in the release PR.
+
+1. Open the app. The library title and each document's name and progress are announced.
+2. Open a document. The first card's text is read once; the toolbar is not re-read on every card.
+3. Move to the next card (swipe gesture or keyboard). The new card is announced politely.
+4. Add a bookmark with a note. The state change is announced.
+5. Park a thought and return to the same card.
+6. Open Settings, change the font and theme, close. Focus returns to the Settings button.
+7. Start read-aloud. The screen reader and TTS do not talk over each other in a way that blocks use.
+8. At 200 % zoom and with system "larger text": no clipped controls, no horizontal scroll in the reader.
+
+### L14 Release checklist on devices
+
+See [Release checklist](#release-checklist) below.
+
+### L15 Reader sessions
+
+Moderated sessions with readers who have ADHD or dyslexia. Not a pass/fail gate: findings become issues. Method and ethics in [EXP-08](experiments/EXP-08-reader-sessions.md).
+
+## Critical user journeys
+
+E2E (L7) covers these. Each journey is one spec file.
+
+| ID | Journey | From |
+|---|---|---|
+| CUJ-1 | First run: onboarding → sample text → first card; switch UI to English and back | 0.20 |
+| CUJ-2 | Paste text → read 10 cards → reload → the same card is on screen (same `charOffset`) | 0.20 |
+| CUJ-3 | Change card length mid-text → the same sentence stays on screen; bookmarks still point to the same text | 0.20 |
+| CUJ-4 | Import `.epub` and `.pdf` fixtures → right title, right first card | 0.20 |
+| CUJ-5 | Load once, go offline, reload → library and reading work; URL import shows the offline message | 0.20 |
+| CUJ-6 | Backup → clear storage → restore → same library, bookmarks, notes and thoughts | 0.21 |
+| CUJ-7 | Park a thought mid-text → find it in the library → return to the text | 0.21 |
+| CUJ-8 | Bookmark with a note → export Markdown → file contains the note | 0.21 |
+| CUJ-9 | Back button: sheet closes → reader closes → library stays | 0.22 |
+| CUJ-10 | Share target: open `/?title=…&text=…` → the text lands in the import box | 0.22 |
+| CUJ-11 | Delete a document → undo → it is back with its progress | 0.21 |
+| CUJ-12 | Read aloud with auto-advance across three cards (stubbed voice) | 0.26 |
+
+## Coverage targets
+
+Coverage is a smoke alarm, not a goal. Thresholds rise slowly so tests stay meaningful.
+
+| Area | 0.19 | 0.23 | 0.30 |
+|---|---|---|---|
+| `src/core/` lines / branches | report only | 85 / 80 | 90 / 85 |
+| `src/services/storage/` | report only | 80 / 70 | 90 / 80 |
+| other `src/services/` | report only | – | 70 / 60 |
+| `src/store/` | report only | – | 70 / 60 |
+| `src/features/` | report only | – | covered by CUJs and L2, no line threshold |
+| `worker/` | report only | – | 85 / 80 |
+
+## CI pipeline (target for 0.30)
+
+On every pull request:
+
+1. `checks` (≈ 2 min): `npm ci` → lint → typecheck → Vitest (node + dom, with coverage) → build → bundle budget.
+2. `e2e` (≈ 6 min, needs `checks`): Playwright on Chromium and WebKit (desktop and phone), axe, visual snapshots, against the built preview.
+3. Preview deploy to a Workers preview URL, for checking on a real phone ([IMP-13](IMPROVEMENTS.md#imp-13-preview-deployments)).
+
+On push to `main`: the same jobs, then deploy. Deploy needs both jobs green.
+
+Weekly (scheduled): Firefox E2E, full Lighthouse run, mutation testing, `npm audit`, dependency update PRs.
+
+## Rules
+
+1. **A bug fix starts with a failing test** that reproduces it.
+2. **No network in tests.** Mock `/api/extract` in E2E and upstream `fetch` in Worker tests.
+3. **Fixtures are public domain or self-written.** For example, Ukrainian classics (Franko, Lesya Ukrainka, Kotsiubynsky) and Project Gutenberg texts. Never real users' texts.
+4. **Flaky tests are fixed or quarantined within a day.** Quarantined tests (`test.fixme`) get an issue and are fixed or deleted within a week. 0.30 ships with zero quarantined tests.
+5. **Snapshot and golden-file updates are reviewed like code.**
+6. **Test names describe behaviour**, in English: `keeps the reading position when card length changes`.
+
+## File layout (target)
+
+```
+src/**/*.test.ts         L1, L3, L4, L5  (node)
+src/**/*.test.tsx        L2              (jsdom)
+src/**/*.dom.test.ts     L2              (jsdom, no JSX)
+worker/**/*.test.ts      L6
+e2e/*.spec.ts            L7, L8, L9
+e2e/support/             helpers, fixtures loader
+spec/                    shared JSON cases and backup fixtures (also for native apps)
+test/fixtures/           binary and HTML fixtures (epub, pdf, fb2, txt, html)
+```
+
+## Release checklist
+
+About 20 minutes. Do it on the PR preview (or production right after deploy), on one iPhone and one Android phone with the installed PWA. Write "checklist ok" and the devices in the release PR.
+
+1. Update from the previous version: library, progress and bookmarks are still there.
+2. Open a document, read 20 cards with swipes; the counter and progress move.
+3. Change card length and font; the same text stays on screen.
+4. Read one card aloud; double-tap a word to hear it.
+5. Park a thought, add a bookmark with a note.
+6. Import one file (EPUB or PDF) and one URL.
+7. Turn on airplane mode, close and reopen the app: everything except URL import works.
+8. Make a backup, then restore it.
+9. Switch the UI language and back.
+10. Glance at all four themes in the reader.
