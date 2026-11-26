@@ -44,6 +44,11 @@ function generateId(prefix = 'doc'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** A library document whose text is exactly `text`, if any. */
+export async function findDocumentByText(text: string): Promise<PlynDocument | undefined> {
+  return db.documents.filter((doc) => doc.text === text).first();
+}
+
 export async function createDocument(input: {
   title?: string;
   text: string;

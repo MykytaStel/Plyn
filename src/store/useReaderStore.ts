@@ -11,6 +11,7 @@ import {
 } from '../core/splitter/splitter';
 import {
   createDocument,
+  findDocumentByText,
   recordProgressDelta,
   updateDocument
 } from '../services/storage/db';
@@ -100,6 +101,14 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   startNewDocument: async (title, text, lengthPreset) => {
     const trimmed = text.trim();
     if (!trimmed) return;
+
+    // The same text again (the sample, a re-pasted article) opens the copy
+    // already in the library, with its progress, instead of a duplicate.
+    const existing = await findDocumentByText(trimmed);
+    if (existing) {
+      get().openDocument(existing, lengthPreset);
+      return;
+    }
 
     const cards = splitTextIntoCards(trimmed, { lengthPreset });
     if (cards.length === 0) return;
