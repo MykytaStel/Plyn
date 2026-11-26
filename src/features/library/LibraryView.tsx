@@ -32,11 +32,13 @@ import {
 } from '../onboarding/OnboardingModal';
 import { SettingsSheet } from '../settings/SettingsSheet';
 import { useBackLayer } from '../shared/useBackLayer';
+import { importWithRetry } from '../../services/pwa/lazyImport';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../i18n/errorMessage';
 import { LibraryCard } from './LibraryCard';
 import { UndoToast } from './UndoToast';
+import { UpdateNotice } from './UpdateNotice';
 
 type LibraryFilter = 'all' | 'active' | 'completed' | 'bookmarked';
 
@@ -214,7 +216,7 @@ export function LibraryView() {
         );
       } else if (lower.endsWith('.pdf')) {
         showFeedback(t.feedback.pdfLoading);
-        const { parsePdfFile } = await import('../../core/parsers/pdf');
+        const { parsePdfFile } = await importWithRetry(() => import('../../core/parsers/pdf'));
         const parsed = await parsePdfFile(file);
         setTitle(parsed.title);
         setText(parsed.text);
@@ -380,6 +382,8 @@ export function LibraryView() {
           </button>
         </div>
       </header>
+
+      <UpdateNotice />
 
       <section className="input-container">
         {!hasLibrary && (

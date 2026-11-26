@@ -6,7 +6,8 @@ export type PlynErrorCode =
   | 'backup_invalid'
   | 'backup_unsupported'
   | 'url_invalid'
-  | 'offline';
+  | 'offline'
+  | 'app_updated';
 
 /**
  * A user-facing failure with a stable code. Core never carries copy:
