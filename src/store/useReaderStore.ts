@@ -76,7 +76,11 @@ function schedulePersist(doc: PlynDocument): void {
   });
   window.clearTimeout(persistTimeout);
   persistTimeout = window.setTimeout(() => {
-    void updateDocument(doc).then(() => clearProgressJournal(doc.id, at));
+    // Write the document as it is now, not as it was at the swipe: a bookmark,
+    // note or "completed" saved during the pause must not be overwritten.
+    const latest = useReaderStore.getState().activeDoc;
+    const toWrite = latest?.id === doc.id ? latest : doc;
+    void updateDocument(toWrite).then(() => clearProgressJournal(doc.id, at));
   }, 250);
 }
 
