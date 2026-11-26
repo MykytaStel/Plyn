@@ -11,7 +11,7 @@ Status: draft · updated for 0.20.0 · part of the [roadmap](ROADMAP.md)
 - Vitest: 27 test files, 142 tests, in two projects: `node` (core, storage, worker, property, spec) and `dom` (jsdom + Testing Library). Run time about 1.5 s.
 - New in 0.19: L0 (ESLint + typecheck in CI), L2 (EPUB parser, onboarding component), L3 (`db.ts`, backup round trip, reader store with `fake-indexeddb`), L4 (`fast-check` properties for the splitter, sentences, anchor, language detection, backup validation), more L5 fixtures (`spec/anchor-cases.json`, `sentence-cases.json`, `language-cases.json`).
 - Findings fixed in 0.19: lost stats updates under concurrency ([IMP-04](IMPROVEMENTS.md#imp-04-atomic-progress-stats)); splitter offsets drifting when sentences had no space between them, and leading `?` / `…` being dropped (now cards are exact slices of the normalized text).
-- New in 0.21: L5 backup fixtures (`spec/backups/`), CUJ-6 (backup → wipe → restore, download on desktop and share sheet on phones) and CUJ-11 (delete → Undo), axe on the Undo toast. Vitest: 33 files, 172 tests; Playwright: 68 runs.
+- New in 0.21: L5 backup fixtures (`spec/backups/`), CUJ-6 (backup → wipe → restore, download on desktop and share sheet on phones), CUJ-7 (thought parking), CUJ-8 (bookmark note → Markdown) and CUJ-11 (delete → Undo), axe on the Undo toast. Vitest: 33 files, 172 tests; Playwright: 76 runs.
 - Not covered yet: TTS and audio services (stubbed out of the journeys), the error screen in a browser (component test only), Firefox, visual regression (0.22).
 - CI: `ci.yml` runs `checks` (lint, typecheck, tests with coverage, build) and then `e2e` (Playwright) on every pull request; `deploy.yml` reuses it, so production deploys only after both. `preview.yml` uploads a Worker version per PR and comments its URL.
 - Known lint warnings (not blocking): 7 `jsx-a11y` warnings for pointer-only click targets (progress bar, card feed, words), left for the 0.28 audit.
@@ -204,8 +204,8 @@ E2E (L7) covers these. Each journey is one spec file (`e2e/cuj-<n>-*.spec.ts`). 
 | CUJ-4 | Import `.epub` and `.pdf` fixtures → right title, right first card | 0.20 ✓ |
 | CUJ-5 | Load once, go offline, reload → library and reading work; URL import shows the offline message | 0.20 ✓ |
 | CUJ-6 | Backup → clear storage → restore → same library, bookmarks, notes and thoughts | 0.21 ✓ |
-| CUJ-7 | Park a thought mid-text → find it in the library → return to the text | 0.21 |
-| CUJ-8 | Bookmark with a note → export Markdown → file contains the note | 0.21 |
+| CUJ-7 | Park a thought mid-text → find it in the library → return to the text | 0.21 ✓ |
+| CUJ-8 | Bookmark with a note → export Markdown → file contains the note | 0.21 ✓ |
 | CUJ-9 | Back button: sheet closes → reader closes → library stays | 0.22 |
 | CUJ-10 | Share target: open `/?title=…&text=…` → the text lands in the import box | 0.22 |
 | CUJ-11 | Delete a document → undo → it is back with its progress | 0.21 ✓ |

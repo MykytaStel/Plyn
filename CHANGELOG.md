@@ -2,7 +2,7 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [Unreleased] — 0.21.0
+## [0.21.0] — 2026-11-26
 
 Your library is safe.
 
@@ -15,10 +15,14 @@ Your library is safe.
 - If something breaks, a calm screen offers to save a backup and reload, instead of a blank page.
 - Settings now show which version of Plyn you have, at the very bottom.
 
+### Fixed
+
+- A bookmark or a bookmark note added within a quarter of a second after moving to a new card is no longer lost after a reload.
+
 ### Under the hood
 
 - Backup files from every version are kept in `spec/backups/` and imported on every change.
-- New browser journeys: backup → clear the device → restore, and delete → Undo.
+- New browser journeys: backup → clear the device → restore, delete → Undo, parking a thought mid-text, and exporting bookmark notes to Markdown.
 
 ## [0.20.0] — 2026-11-26
 
