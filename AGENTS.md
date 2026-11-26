@@ -15,13 +15,14 @@ npm ci            # install (Node 22, same as CI)
 npm run dev       # Vite dev server
 npm test          # Vitest: node + dom projects (must pass)
 npm run test:coverage  # tests with a coverage report in coverage/
+npm run test:e2e  # Playwright: journeys, axe, keyboard, offline (builds first; must pass)
 npm run lint      # ESLint: hooks, a11y, floating promises (must pass)
 npm run typecheck # tsc -b --noEmit
 npm run build     # tsc -b + vite build + PWA service worker (must pass)
 npm run preview   # serve the production build locally
 ```
 
-Run `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` before every commit. CI runs all four on every pull request.
+Run `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` before every commit, and `npm run test:e2e` before a PR that touches UI. CI runs all five on every pull request (e2e after the others), and every PR gets a preview URL (`.github/workflows/preview.yml`).
 
 ## Deployment
 
@@ -58,7 +59,7 @@ Keep `src/core/` free of DOM, React and storage imports so that it stays testabl
 1. **Progress is a character offset, not a card index.** `PlynDocument.charOffset` and `bookmarkOffsets` point into the *normalized* text (`normalizeText` in `src/core/splitter/splitter.ts`). Card length can change at any time, so never persist card indices as the source of truth.
 2. **The splitter is shared behaviour.** If you change `splitTextIntoCards`, update `spec/splitter-cases.json` and keep every case green.
 3. **Dexie schema changes need a new `this.version(n)`.** Never edit an existing version's stores. Database name: `plyn_library_v2`.
-4. **localStorage keys are versioned**: `plyn_settings_v1`, `plyn_onboarding_done_v1`. Changing a stored shape means a new key plus a migration.
+4. **localStorage keys are versioned**: `plyn_settings_v1`, `plyn_onboarding_done_v1`, `plyn_progress_journal_v1` (last reading place, applied on start if newer than IndexedDB). Changing a stored shape means a new key plus a migration.
 5. **Backups stay compatible.** `PlynBackupPayload.schemaVersion` must be bumped and handled in `services/storage/backup.ts` when the shape changes.
 6. **Everything works offline.** User text never leaves the device, except URL import, which sends only the URL to `/api/extract`. New assets must match the Workbox `globPatterns` in `vite.config.ts`.
 7. **Heavy parsers are lazy-loaded.** `pdfjs-dist` (and any future OCR) must be loaded with dynamic `import()` only when used.
@@ -104,7 +105,9 @@ OpenDyslexic, Atkinson Hyperlegible and Lexend have **no Cyrillic glyphs**. They
 - Add a test for every change in `src/core/`, `src/services/storage/` and `worker/`. A bug fix starts with a failing test.
 - Fixtures are public domain or self-written. No test touches the network.
 - `npm run lint` (bug-catching rules only) and `npm run typecheck` run in CI with the tests. `npm run test:coverage` writes a report to `coverage/` (no threshold yet).
-- There are no e2e tests yet (0.20). Verify UI changes manually in `npm run dev`.
+- E2E (Playwright, `e2e/`): critical journeys `cuj-*.spec.ts`, `a11y.spec.ts` (axe, fails on serious/critical) and `keyboard.spec.ts`, against the production build on Chromium, WebKit, Pixel 7 and iPhone 14. Use the fixture in `e2e/support/app.ts` (fresh storage, onboarding skipped, other hosts blocked, `/api/extract` mocked), build files in memory (`e2e/support/fixtures.ts`), and check progress in IndexedDB, not only on screen.
+- A UI change keeps every journey green. A new screen or sheet gets an axe scan in `a11y.spec.ts`; a kept a11y finding goes into `e2e/a11y-exceptions.ts` with a reason.
+- Still check UI changes by eye in `npm run dev`, and on a phone with the PR preview before release.
 - The plan for the full test suite (layers, tools, CI gates, release checklist) is in `docs/TESTING.md`. The release plan is in `docs/ROADMAP.md`.
 
 ## Commits

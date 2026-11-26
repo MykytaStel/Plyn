@@ -1,6 +1,6 @@
 # Plyn roadmap: 0.19 → 0.30
 
-Status: draft · 2026-11-26 · current release: **0.19.0**
+Status: draft · 2026-11-26 · current release: **0.20.0**
 
 This is a direction, not a promise. Each release gets its own short design in `docs/superpowers/specs/` before work starts, and the owner can reorder or cut anything.
 
@@ -25,7 +25,7 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 | Version | Theme | Readers notice | New test layer | Size | Waits for |
 |---|---|---|---|---|---|
 | [0.19](#0190--safety-net-i-test-foundation) ✓ | Safety net I: test foundation | nothing | DOM, storage, property, coverage | M | – |
-| [0.20](#0200--safety-net-ii-end-to-end-and-accessibility) | Safety net II: end-to-end & a11y | nothing | E2E, automated a11y, offline | M | 0.19 |
+| [0.20](#0200--safety-net-ii-end-to-end-and-accessibility) ✓ | Safety net II: end-to-end & a11y | nothing | E2E, automated a11y, offline | M | 0.19 |
 | [0.21](#0210--your-library-is-safe) | Your library is safe | yes | backup & migration compat | M | EXP-07 |
 | [0.22](#0220--feels-like-an-app) | Feels like an app | yes | visual regression | M | 0.20 |
 | [0.23](#0230--books-import-well) | Books import well | yes | parser golden files | M | EXP-04 |
@@ -58,6 +58,8 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 **Done when:** a PR that breaks `createDocument`, backup import or the splitter fails CI. AGENTS.md "Tests" section describes the new layout.
 
 ## 0.20.0 — Safety net II: end-to-end and accessibility
+
+**Status: shipped.** Design: [specs/2026-11-26-v0.20-safety-net-ii-design.md](superpowers/specs/2026-11-26-v0.20-safety-net-ii-design.md). Added beyond the plan: an iPhone (WebKit) project, an axe pass on the English UI, and the a11y fixes axe found (contrast in three themes, label-in-name, the library card's nested buttons). Kept as a documented exception for 0.28: the faded previous-card echo. Preview URLs need a first real PR to confirm the comment step.
 
 **Goal:** the five journeys that matter most are checked in a real browser before every release, including offline.
 
