@@ -14,6 +14,10 @@ export const en: Messages = {
       other: '{count} texts'
     }
   },
+  meta: {
+    title: 'Plyn — calm reading, one card at a time',
+    description: 'Read long text in short cards, without eye strain or overload.'
+  },
   sample: {
     title: 'Meet Plyn',
     text: `When a long wall of text opens up in front of you, your brain often gets tired before the first paragraph is over. Your eyes slip to the next line, and you end up reading the same sentence three times.
@@ -245,19 +249,19 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     trySample: 'Try the sample',
     demoPreview: 'Anchor mode highlights the start of every word, so your eyes don’t slide off the line.',
     step1: {
-      kicker: 'Welcome · 1 of 3',
+      kicker: 'Welcome',
       title: 'Read without walls of text',
       before: 'Plyn breaks long articles, notes and',
       after: 'books into short cards. Your brain sees clear edges and real progress — and your eyes get much less tired.'
     },
     step2: {
-      kicker: 'Make it yours · 2 of 3',
+      kicker: 'Make it yours',
       title: 'Calm themes and Anchor',
       anchorOn: 'Try Anchor',
       anchorOff: 'Turn off Anchor'
     },
     step3: {
-      kicker: 'Ready to go · 3 of 3',
+      kicker: 'Ready to go',
       title: 'Swipe or press Space',
       before: 'On a phone, swipe cards up. On a computer, press',
       after: 'or the arrow keys. Settings also have a dyslexia font, Sentence focus, read-aloud and Clean screen.'
