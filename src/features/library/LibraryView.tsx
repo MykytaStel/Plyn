@@ -27,9 +27,11 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { AchievementsSheet } from '../achievements/AchievementsSheet';
 import {
   isOnboardingDone,
+  markOnboardingDone,
   OnboardingModal
 } from '../onboarding/OnboardingModal';
 import { SettingsSheet } from '../settings/SettingsSheet';
+import { useBackLayer } from '../shared/useBackLayer';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../i18n/errorMessage';
@@ -108,6 +110,18 @@ export function LibraryView() {
     window.clearTimeout(feedbackTimerRef.current);
     feedbackTimerRef.current = window.setTimeout(() => setFeedback(''), 3600);
   };
+
+  const closeLibrarySheets = () => {
+    setShowAchievements(false);
+    setShowThoughts(false);
+    setShowSettings(false);
+  };
+  // Back closes an open sheet or the onboarding instead of leaving Plyn (0.22).
+  useBackLayer(showAchievements || showThoughts || showSettings, closeLibrarySheets);
+  useBackLayer(showOnboarding, () => {
+    markOnboardingDone();
+    setShowOnboarding(false);
+  });
 
   // Escape closes whichever library sheet is open (the reader handles its own).
   useEffect(() => {

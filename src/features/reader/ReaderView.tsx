@@ -34,6 +34,7 @@ import { useReaderKeyboard } from './hooks/useReaderKeyboard';
 import { useReaderNotices } from './hooks/useReaderNotices';
 import { useReaderToast } from './hooks/useReaderToast';
 import { useSpeech } from './hooks/useSpeech';
+import { useBackLayer } from '../shared/useBackLayer';
 
 type ActiveSheet = 'none' | 'settings' | 'bookmarks' | 'thoughts' | 'tools';
 const RENDER_WINDOW_RADIUS = 5;
@@ -90,6 +91,10 @@ export function ReaderView() {
     stopBrownNoise();
     void closeReader();
   }, [closeReader]);
+
+  // Back closes an open sheet first, then returns to the library (0.22).
+  useBackLayer(true, leaveReader);
+  useBackLayer(sheet !== 'none', () => setSheet('none'));
 
   const handleToggleBrownNoise = useCallback(
     (enabled: boolean) => {

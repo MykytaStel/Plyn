@@ -3,6 +3,7 @@ import { formatBookmarksAsMarkdown } from '../../core/export/bookmarksMarkdown';
 import type { ReadingCard } from '../../core/models/types';
 import { useI18n } from '../../i18n';
 import { findCardIndexByOffset } from '../../core/splitter/splitter';
+import { useDialogFocus } from '../shared/useDialogFocus';
 
 interface BookmarksSheetProps {
   docTitle: string;
@@ -23,6 +24,7 @@ export function BookmarksSheet({
   onSelectCard,
   onClose
 }: BookmarksSheetProps) {
+  const dialogRef = useDialogFocus<HTMLElement>();
   const i18n = useI18n();
   const t = i18n.m.bookmarks;
   const seenCards = new Set<number>();
@@ -54,6 +56,7 @@ export function BookmarksSheet({
 
   return (
     <aside
+      ref={dialogRef}
       className="bottom-sheet"
       role="dialog"
       aria-modal="true"

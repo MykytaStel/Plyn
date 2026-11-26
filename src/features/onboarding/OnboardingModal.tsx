@@ -4,6 +4,7 @@ import { tokenizeWithAnchors } from '../../core/anchor/anchor';
 import type { ThemeMode } from '../../core/models/types';
 import { useI18n } from '../../i18n';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { useDialogFocus } from '../shared/useDialogFocus';
 
 const ONBOARDING_KEY = 'plyn_onboarding_done_v1';
 
@@ -37,6 +38,7 @@ export function OnboardingModal({
   const i18n = useI18n();
   const t = i18n.m.onboarding;
   const [step, setStep] = useState(0);
+  const dialogRef = useDialogFocus<HTMLElement>();
   const { theme, anchorMode, updateSettings } = useSettingsStore();
 
   const finish = (startSample = false) => {
@@ -66,6 +68,7 @@ export function OnboardingModal({
         aria-hidden="true"
       />
       <aside
+        ref={dialogRef}
         className="onboarding-modal"
         role="dialog"
         aria-modal="true"

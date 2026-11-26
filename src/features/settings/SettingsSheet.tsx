@@ -14,6 +14,7 @@ import { useI18n } from '../../i18n';
 import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { StorageSection } from './StorageSection';
+import { useDialogFocus } from '../shared/useDialogFocus';
 
 /**
  * Reader-only props (brown noise, timer, card re-split) are optional: the
@@ -51,6 +52,7 @@ export function SettingsSheet({
   onPresetApplied,
   onClose
 }: SettingsSheetProps) {
+  const dialogRef = useDialogFocus<HTMLElement>();
   const i18n = useI18n();
   const t = i18n.m.settings;
   const THEMES = THEME_VALUES.map((value) => ({ value, label: t.themes[value] }));
@@ -83,6 +85,7 @@ export function SettingsSheet({
 
   return (
     <aside
+      ref={dialogRef}
       className="bottom-sheet"
       role="dialog"
       aria-modal="true"
