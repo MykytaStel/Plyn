@@ -5,3 +5,8 @@ dist
 *.tsbuildinfo
 .env
 .env.*
+
+# Local tool state
+.wrangler/
+.claude/launch.json
+.claude/settings.local.json
