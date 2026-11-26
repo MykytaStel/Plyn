@@ -1,0 +1,32 @@
+name: Visual baseline
+
+# Run by hand when the visual snapshots must change on purpose (or were made on
+# another machine). Builds the snapshots on the same runner as CI and uploads
+# them; download the artifact, review the images and commit them.
+on:
+  workflow_dispatch:
+
+jobs:
+  snapshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Update snapshots
+        run: npm run test:visual:update
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots
+          path: e2e/visual.spec.ts-snapshots/
+          retention-days: 7

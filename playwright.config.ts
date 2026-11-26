@@ -6,6 +6,11 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const PORT = 4173;
 const isCI = Boolean(process.env.CI);
+// Optional: a Chromium already on this machine, when Playwright can't download
+// its own (sandboxed setups). CI leaves it unset.
+const chromiumLaunch = process.env.PW_CHROMIUM_EXECUTABLE
+  ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_EXECUTABLE } }
+  : {};
 
 export default defineConfig({
   testDir: './e2e',
@@ -15,7 +20,12 @@ export default defineConfig({
   workers: isCI ? 2 : undefined,
   reporter: isCI ? [['github'], ['html', { open: 'never' }]] : [['list']],
   timeout: 30_000,
-  expect: { timeout: 7_000 },
+  expect: {
+    timeout: 7_000,
+    // Visual baseline (e2e/visual.spec.ts): still frames, small tolerance for
+    // anti-aliasing differences between machines.
+    toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.01 }
+  },
   use: {
     baseURL: `http://localhost:${PORT}`,
     locale: 'uk-UA',
@@ -25,9 +35,9 @@ export default defineConfig({
     serviceWorkers: 'block'
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], ...chromiumLaunch } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-    { name: 'phone', use: { ...devices['Pixel 7'] } },
+    { name: 'phone', use: { ...devices['Pixel 7'], ...chromiumLaunch } },
     { name: 'iphone', use: { ...devices['iPhone 14'] } }
   ],
   webServer: {

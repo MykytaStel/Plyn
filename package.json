@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:visual:update": "playwright test e2e/visual.spec.ts --project=chromium --project=phone --update-snapshots --trace off",
     "typecheck": "tsc -b --noEmit && tsc -p e2e/tsconfig.json",
     "lint": "eslint ."
   },
