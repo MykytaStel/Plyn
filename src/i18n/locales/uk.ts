@@ -49,7 +49,17 @@ export const uk = {
     generic: 'Щось пішло не так. Спробуй ще раз.',
     file_read: 'Не вдалося прочитати файл.',
     backup_read: 'Некоректний файл резервної копії.',
-    article_read: 'Не вдалося витягти текст статті.'
+    article_read: 'Не вдалося витягти текст статті.',
+    extract: {
+      method_not_allowed: 'Метод не підтримується',
+      invalid_request: 'Некоректний JSON-запит',
+      invalid_url: 'Некоректний формат посилання',
+      unsupported_protocol: 'Дозволені лише http/https посилання',
+      blocked_host: 'Ця адреса недоступна для імпорту',
+      upstream_error: 'Сайт відповів помилкою ({status})',
+      no_article: 'Не вдалося знайти текст статті (можливо, сайт вимагає JavaScript або вхід).',
+      network_error: 'Не вдалося з’єднатися із сайтом. Спробуй скопіювати текст вручну.'
+    }
   },
   export: {
     bookmarks: 'Закладки',

@@ -3,6 +3,7 @@ import { format, formatWeekdayShort, getMessages, plural } from './index';
 import { ACHIEVEMENTS } from '../core/achievements/achievements';
 import { READING_PRESETS } from '../core/presets/readingPresets';
 import { PlynError } from '../core/errors';
+import { ExtractError } from '../services/extract/urlExtractor';
 import { errorMessage } from './errorMessage';
 import type { Locale } from './types';
 
@@ -104,5 +105,16 @@ describe('errorMessage', () => {
   it('prefers an explicit fallback over the generic message', () => {
     const m = getMessages('uk');
     expect(errorMessage(new Error('x'), m, 'fallback')).toBe('fallback');
+  });
+
+  it('maps ExtractError codes, interpolating the upstream status', () => {
+    const m = getMessages('en');
+    expect(errorMessage(new ExtractError('no_article'), m)).toBe(m.errors.extract.no_article);
+    expect(errorMessage(new ExtractError('upstream_error', { status: 503 }), m)).toContain('503');
+  });
+  it('shows the server message for unknown extract codes', () => {
+    const m = getMessages('en');
+    expect(errorMessage(new ExtractError('unknown', { serverMessage: 'Сервер' }), m)).toBe('Сервер');
+    expect(errorMessage(new ExtractError('unknown'), m)).toBe(m.errors.generic);
   });
 });

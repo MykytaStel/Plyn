@@ -45,7 +45,17 @@ export const en: Messages = {
     generic: 'Something went wrong. Please try again.',
     file_read: 'Couldn’t read the file.',
     backup_read: 'This isn’t a valid backup file.',
-    article_read: 'Couldn’t get the article text.'
+    article_read: 'Couldn’t get the article text.',
+    extract: {
+      method_not_allowed: 'This request method isn’t supported.',
+      invalid_request: 'The request was malformed.',
+      invalid_url: 'That doesn’t look like a valid link.',
+      unsupported_protocol: 'Only http and https links are supported.',
+      blocked_host: 'This address can’t be imported.',
+      upstream_error: 'The site responded with an error ({status}).',
+      no_article: 'Couldn’t find the article text. The site may need JavaScript or a login.',
+      network_error: 'Couldn’t reach the site. Try copying the text in by hand.'
+    }
   },
   export: {
     bookmarks: 'Bookmarks',
