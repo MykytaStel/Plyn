@@ -10,9 +10,9 @@ Things that make Plyn safer, faster or easier to change, without being features.
 | [IMP-02](#imp-02-security-headers-and-csp) | Security headers and CSP | security | 0.29 |
 | [IMP-03](#imp-03-dependency-hygiene) | Dependency hygiene and major upgrades | security | 0.19 ✓ (Vitest 5, Dependabot, Node pin) → 0.25 (upgrades), 0.29 (audit gate) |
 | [IMP-04](#imp-04-atomic-progress-stats) | Atomic progress stats | data | 0.19 ✓ |
-| [IMP-05](#imp-05-backup-v2) | Backup v2 | data | 0.21 |
+| [IMP-05](#imp-05-backup-v2) | Backup v2 | data | 0.21 ✓ |
 | [IMP-06](#imp-06-split-metadata-from-text) | Split metadata from text | data, performance | 0.25 |
-| [IMP-07](#imp-07-error-boundary) | Error boundary | data, UX | 0.21 |
+| [IMP-07](#imp-07-error-boundary) | Error boundary | data, UX | 0.21 ✓ |
 | [IMP-08](#imp-08-split-readerview) | Split `ReaderView` | code health | 0.22 |
 | [IMP-09](#imp-09-split-tokenscss) | Split `tokens.css` | code health | 0.25 |
 | [IMP-10](#imp-10-lint-and-typecheck-scripts) | Lint and typecheck scripts | code health | 0.19 ✓ |

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { format, formatWeekdayShort, getMessages, plural } from './index';
+import { format, formatBytes, formatWeekdayShort, getMessages, plural } from './index';
 import { ACHIEVEMENTS } from '../core/achievements/achievements';
 import { READING_PRESETS } from '../core/presets/readingPresets';
 import { PlynError } from '../core/errors';
@@ -46,6 +46,15 @@ describe('plural', () => {
 describe('format', () => {
   it('interpolates and keeps unknown placeholders', () => {
     expect(format('{a} і {b}', { a: 1 })).toBe('1 і {b}');
+  });
+});
+
+describe('formatBytes', () => {
+  it('picks a readable unit per locale', () => {
+    expect(formatBytes(3_590_000, 'en')).toBe('3.4 MB');
+    expect(formatBytes(3_590_000, 'uk')).toBe('3,4 МБ');
+    expect(formatBytes(512_000, 'en')).toBe('500 kB');
+    expect(formatBytes(5 * 1024 ** 3, 'en')).toBe('5 GB');
   });
 });
 

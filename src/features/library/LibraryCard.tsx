@@ -39,7 +39,7 @@ export function LibraryCard({
   return (
     // The title is a real button stretched over the card (CSS ::after), so the
     // card opens on click anywhere without nesting buttons inside a button.
-    <article className="library-card">
+    <article className="library-card" data-doc-id={doc.id}>
       <div className="library-card-top">
         {isEditing ? (
           <div className="library-rename-row">

@@ -9,9 +9,11 @@ import type {
 } from '../../core/models/types';
 import { READING_PRESETS } from '../../core/presets/readingPresets';
 import { useReaderStore } from '../../store/useReaderStore';
+import { APP_VERSION } from '../../appVersion';
 import { useI18n } from '../../i18n';
 import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { StorageSection } from './StorageSection';
 
 /**
  * Reader-only props (brown noise, timer, card re-split) are optional: the
@@ -466,12 +468,16 @@ export function SettingsSheet({
           </div>
         </section>
 
+        <StorageSection />
+
         <p className="shortcuts-hint">
           {t.shortcuts.keyboard} <kbd>Space</kbd>/<kbd>↓</kbd> {t.shortcuts.next} ·{' '}
           <kbd>A</kbd> {t.shortcuts.anchor} · <kbd>F</kbd> {t.shortcuts.focus} ·{' '}
           <kbd>N</kbd> {t.shortcuts.thought} · <kbd>S</kbd> {t.shortcuts.speech} ·{' '}
           <kbd>Z</kbd> {t.shortcuts.zen}
         </p>
+
+        <p className="app-version">{i18n.format(t.version, { version: APP_VERSION })}</p>
       </div>
     </aside>
   );

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "exportedAt": 1795700000000,
+  "documents": [
+    {
+      "id": "8c0e5d7a-6b1f-4a3c-8e2d-9f0a1b2c3d4e",
+      "schemaVersion": 1,
+      "title": "Лист другові",
+      "text": "Привіт! Пишу тобі з маленького міста біля моря. Тут спокійно, і я нарешті читаю.\n\nНапиши, як ти.",
+      "charOffset": 48,
+      "currentIndex": 1,
+      "totalCards": 2,
+      "bookmarkOffsets": [48],
+      "bookmarkNotes": { "48": "відповісти" },
+      "completedOnce": true,
+      "createdAt": 1795600000000,
+      "updatedAt": 1795690000000
+    }
+  ],
+  "stats": {
+    "id": "main",
+    "totalCardsRead": 7,
+    "totalDocsCompleted": 1,
+    "anchorCardsRead": 0,
+    "totalBookmarksCreated": 1,
+    "timerSessionsCompleted": 0,
+    "ttsCardsListened": 3,
+    "zenModeUsed": 1,
+    "dailyCardsRead": { "2026-11-25": 7 },
+    "unlockedIds": ["first_step", "thought_hunter"],
+    "unlockedAt": { "first_step": 1795600000000, "thought_hunter": 1795650000000 },
+    "updatedAt": 1795690000000
+  },
+  "thoughts": [
+    {
+      "id": "b7e1f0c2-3d4a-4b5c-9e6f-0a1b2c3d4e5f",
+      "text": "Купити марки",
+      "docTitle": "Лист другові",
+      "createdAt": 1795650000000
+    }
+  ],
+  "settings": {
+    "theme": "paper",
+    "fontFamily": "dyslexic",
+    "letterSpacing": "wide",
+    "columnWidth": "narrow",
+    "fontSize": 26,
+    "lineHeight": 1.8,
+    "anchorMode": true,
+    "sentenceFocus": false,
+    "eyeBreakReminder": true,
+    "ttsRate": 0.75,
+    "ttsAutoAdvance": false,
+    "cardLength": "short",
+    "language": "uk"
+  }
+}

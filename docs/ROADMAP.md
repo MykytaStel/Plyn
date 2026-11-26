@@ -77,6 +77,8 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 
 ## 0.21.0 — Your library is safe
 
+**Status: shipped.** Design: [specs/2026-11-26-v0.21-library-safe-design.md](superpowers/specs/2026-11-26-v0.21-library-safe-design.md). Added beyond the plan: the app version at the bottom of Settings, and CUJ-11 (undo delete). Moved on: the EXP-07 two-week soak on real devices (interim decision in the experiment); the error screen has a component test only.
+
 **Goal:** a reader never loses their texts, bookmarks or thoughts, even on iOS Safari.
 
 **Experiment first:** [EXP-07 Storage durability](experiments/EXP-07-storage-durability.md).

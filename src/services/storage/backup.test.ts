@@ -47,18 +47,35 @@ describe('backup validation', () => {
 describe('backup validation (property)', () => {
   it('backup validation returns a valid payload or throws PlynError, nothing else', () => {
     fc.assert(
-      fc.property(fc.oneof(fc.anything(), fc.record({ schemaVersion: fc.constant(1), documents: fc.array(fc.anything()) })), (raw) => {
+      fc.property(
+        fc.oneof(
+          fc.anything(),
+          fc.record({ schemaVersion: fc.constant(1), documents: fc.array(fc.anything()) }),
+          fc.record({
+            schemaVersion: fc.constant(2),
+            documents: fc.array(fc.anything()),
+            thoughts: fc.oneof(fc.anything(), fc.array(fc.anything())),
+            settings: fc.anything()
+          })
+        ),
+        (raw) => {
         try {
           const payload = validateBackupPayload(raw);
-          expect(payload.schemaVersion).toBe(1);
+          expect(payload.schemaVersion).toBe(2);
           for (const doc of payload.documents) {
             expect(typeof doc.id).toBe('string');
             expect(typeof doc.text).toBe('string');
           }
+          for (const note of payload.thoughts) {
+            expect(typeof note.id).toBe('string');
+            expect(typeof note.text).toBe('string');
+          }
+          if (payload.settings) expect(['dark', 'paper', 'gray', 'mint']).toContain(payload.settings.theme);
         } catch (err) {
           expect(err).toBeInstanceOf(PlynError);
         }
-      }),
+        }
+      ),
       { seed: 1900, numRuns: 300 }
     );
   });

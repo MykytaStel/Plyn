@@ -18,11 +18,10 @@ import { ACHIEVEMENTS } from '../../core/achievements/achievements';
 import { parseEpubFile } from '../../core/parsers/epub';
 import { cleanMarkdown } from '../../core/parsers/markdown';
 import { extractArticleFromUrl } from '../../services/extract/urlExtractor';
-import {
-  exportLibraryBackup,
-  importLibraryBackup
-} from '../../services/storage/backup';
-import { db, removeDocument, renameDocument } from '../../services/storage/db';
+import type { PlynDocument } from '../../core/models/types';
+import { importLibraryBackup } from '../../services/storage/backup';
+import { saveBackupFile } from '../../services/storage/backupFile';
+import { db, removeDocument, renameDocument, restoreDocument } from '../../services/storage/db';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { AchievementsSheet } from '../achievements/AchievementsSheet';
@@ -35,6 +34,7 @@ import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../i18n/errorMessage';
 import { LibraryCard } from './LibraryCard';
+import { UndoToast } from './UndoToast';
 
 type LibraryFilter = 'all' | 'active' | 'completed' | 'bookmarked';
 
@@ -57,6 +57,8 @@ export function LibraryView() {
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone());
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<LibraryFilter>('all');
+  /** The last deleted text, kept in memory while Undo is offered. */
+  const [deletedDoc, setDeletedDoc] = useState<PlynDocument | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +66,7 @@ export function LibraryView() {
   const feedbackTimerRef = useRef<number | undefined>(undefined);
 
   const cardLength = useSettingsStore((s) => s.cardLength);
+  const updateSettings = useSettingsStore((s) => s.updateSettings);
   const startNewDocument = useReaderStore((s) => s.startNewDocument);
   const openDocument = useReaderStore((s) => s.openDocument);
 
@@ -226,17 +229,9 @@ export function LibraryView() {
 
   const handleExportBackup = async () => {
     try {
-      const payload = await exportLibraryBackup();
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: 'application/json'
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `plyn-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showFeedback(t.feedback.backupSaved);
+      const result = await saveBackupFile();
+      // Closing the share sheet is a choice, not something to report.
+      if (result !== 'cancelled') showFeedback(t.feedback.backupSaved);
     } catch {
       showFeedback(t.feedback.backupFailed);
     }
@@ -247,11 +242,18 @@ export function LibraryView() {
     if (!file) return;
     try {
       const raw = JSON.parse(await file.text()) as unknown;
-      const { importedDocs } = await importLibraryBackup(raw);
+      const { importedDocs, importedThoughts, appliedSettings } =
+        await importLibraryBackup(raw);
+      // Settings were restored on a device that had none: apply them now.
+      if (appliedSettings) updateSettings(appliedSettings);
+      const texts = i18n.plural(i18n.m.common.texts, importedDocs);
       showFeedback(
-        i18n.format(t.feedback.backupImported, {
-          texts: i18n.plural(i18n.m.common.texts, importedDocs)
-        })
+        importedThoughts > 0
+          ? i18n.format(t.feedback.backupImportedWithThoughts, {
+              texts,
+              thoughts: i18n.plural(i18n.m.common.thoughts, importedThoughts)
+            })
+          : i18n.format(t.feedback.backupImported, { texts })
       );
     } catch (err) {
       const msg =
@@ -260,6 +262,26 @@ export function LibraryView() {
     } finally {
       e.target.value = '';
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    const doc = documents?.find((d) => d.id === id);
+    if (!doc) return;
+    await removeDocument(id);
+    setDeletedDoc(doc);
+  };
+
+  const handleUndoDelete = async () => {
+    const doc = deletedDoc;
+    if (!doc) return;
+    setDeletedDoc(null);
+    await restoreDocument(doc);
+    // Give focus back to the restored card once it is rendered again.
+    window.requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLButtonElement>(`[data-doc-id="${CSS.escape(doc.id)}"] .library-card-open`)
+        ?.focus();
+    });
   };
 
   const handleUrlExtract = async () => {
@@ -591,7 +613,7 @@ export function LibraryView() {
                   doc={doc}
                   onOpen={(d) => openDocument(d, cardLength)}
                   onRename={(id, newTitle) => void renameDocument(id, newTitle)}
-                  onDelete={(id) => void removeDocument(id)}
+                  onDelete={(id) => void handleDelete(id)}
                 />
               ))}
             </div>
@@ -605,6 +627,15 @@ export function LibraryView() {
           )}
         </section>
       </section>
+
+      {deletedDoc && (
+        <UndoToast
+          message={i18n.format(t.feedback.deleted, { title: deletedDoc.title })}
+          undoLabel={t.feedback.undo}
+          onUndo={() => void handleUndoDelete()}
+          onExpire={() => setDeletedDoc(null)}
+        />
+      )}
 
       {showAchievements && (
         <>

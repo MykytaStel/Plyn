@@ -60,7 +60,7 @@ Keep `src/core/` free of DOM, React and storage imports so that it stays testabl
 2. **The splitter is shared behaviour.** If you change `splitTextIntoCards`, update `spec/splitter-cases.json` and keep every case green.
 3. **Dexie schema changes need a new `this.version(n)`.** Never edit an existing version's stores. Database name: `plyn_library_v2`.
 4. **localStorage keys are versioned**: `plyn_settings_v1`, `plyn_onboarding_done_v1`, `plyn_progress_journal_v1` (last reading place, applied on start if newer than IndexedDB). Changing a stored shape means a new key plus a migration.
-5. **Backups stay compatible.** `PlynBackupPayload.schemaVersion` must be bumped and handled in `services/storage/backup.ts` when the shape changes.
+5. **Backups stay compatible.** `PlynBackupPayload.schemaVersion` must be bumped and handled in `services/storage/backup.ts` when the shape changes (now 2: documents, stats, thoughts, settings). Every version still imports: add a fixture to `spec/backups/` for a new schema and never edit an old one.
 6. **Everything works offline.** User text never leaves the device, except URL import, which sends only the URL to `/api/extract`. New assets must match the Workbox `globPatterns` in `vite.config.ts`.
 7. **Heavy parsers are lazy-loaded.** `pdfjs-dist` (and any future OCR) must be loaded with dynamic `import()` only when used.
 

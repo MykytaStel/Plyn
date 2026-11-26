@@ -58,6 +58,13 @@ for (const theme of THEMES) {
         await page.keyboard.press('Escape');
         await expect(page.getByRole('dialog')).toHaveCount(0);
       }
+
+      // 0.21: Undo after deleting a text.
+      await library
+        .getByRole('button', { name: uk.libraryCard.delete.replace('{title}', 'Доступність') })
+        .click();
+      await expect(page.getByRole('button', { name: uk.library.feedback.undo })).toBeFocused();
+      await expectNoSeriousA11yIssues(page, `undo toast (${theme})`);
     });
 
     test('reader and its sheets', async ({ page }) => {

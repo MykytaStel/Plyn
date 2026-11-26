@@ -92,11 +92,19 @@ export interface AchievementDefinition {
   getProgress: (stats: UserProgressStats) => number;
 }
 
+/**
+ * A library backup file. v1 (up to 0.20): documents and stats.
+ * v2 (0.21+): also Thought Parking notes and settings. Both import forever
+ * (fixtures in spec/backups/).
+ */
 export interface PlynBackupPayload {
-  schemaVersion: 1;
+  schemaVersion: 2;
   exportedAt: number;
   documents: PlynDocument[];
   stats: UserProgressStats | null;
+  thoughts: ThoughtNote[];
+  /** Null in v1 files; applied on import only if the device has no settings yet. */
+  settings: UserSettings | null;
 }
 
 export type AnchorToken =

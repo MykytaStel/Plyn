@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": 1795000000000,
+  "documents": [
+    {
+      "id": "3f1c2a9e-0b7d-4e55-9d0a-1a2b3c4d5e6f",
+      "schemaVersion": 1,
+      "title": "Ранок у горах",
+      "text": "Ранок у горах починається тихо. Туман лежить у долині, а сонце ще ховається за вершиною.\n\nМи йдемо повільно. Кожен крок — це маленька перемога.",
+      "charOffset": 32,
+      "currentIndex": 1,
+      "totalCards": 3,
+      "bookmarkOffsets": [0, 32],
+      "bookmarkNotes": { "32": "гарне місце" },
+      "completedOnce": false,
+      "createdAt": 1794900000000,
+      "updatedAt": 1794990000000
+    },
+    {
+      "id": "doc_1794800000000_ab12cd3",
+      "schemaVersion": 1,
+      "title": "A short walk",
+      "text": "We walked to the river. The water was cold and clear.",
+      "charOffset": 0,
+      "currentIndex": 0,
+      "totalCards": 1,
+      "bookmarkOffsets": [],
+      "createdAt": 1794800000000,
+      "updatedAt": 1794800000000
+    }
+  ],
+  "stats": {
+    "id": "main",
+    "totalCardsRead": 42,
+    "totalDocsCompleted": 1,
+    "anchorCardsRead": 5,
+    "totalBookmarksCreated": 2,
+    "timerSessionsCompleted": 1,
+    "ttsCardsListened": 0,
+    "zenModeUsed": 0,
+    "dailyCardsRead": { "2026-11-20": 30, "2026-11-21": 12 },
+    "unlockedIds": ["first_step"],
+    "unlockedAt": { "first_step": 1794900000000 },
+    "updatedAt": 1794990000000
+  }
+}

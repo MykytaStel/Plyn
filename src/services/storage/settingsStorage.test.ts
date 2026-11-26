@@ -3,6 +3,7 @@ import {
   DEFAULT_SETTINGS,
   loadUserSettings,
   mergeSettings,
+  parseSettings,
   saveUserSettings
 } from './settingsStorage';
 
@@ -64,5 +65,33 @@ describe('mergeSettings', () => {
 
   it('applies a language patch', () => {
     expect(mergeSettings(DEFAULT_SETTINGS, { language: 'en' }).language).toBe('en');
+  });
+});
+
+describe('parseSettings (backup files)', () => {
+  it('keeps valid values and replaces invalid ones with defaults', () => {
+    const parsed = parseSettings({
+      theme: 'mint',
+      fontFamily: 'comic',
+      fontSize: 500,
+      lineHeight: 1.8,
+      anchorMode: 'yes',
+      ttsRate: 1.25,
+      language: 'en',
+      extra: 'ignored'
+    });
+    expect(parsed).toEqual({
+      ...DEFAULT_SETTINGS,
+      theme: 'mint',
+      lineHeight: 1.8,
+      ttsRate: 1.25,
+      language: 'en'
+    });
+  });
+
+  it('returns null for anything that is not an object', () => {
+    expect(parseSettings(null)).toBeNull();
+    expect(parseSettings('dark')).toBeNull();
+    expect(parseSettings([])).toBeNull();
   });
 });
