@@ -116,7 +116,7 @@ export function AchievementsSheet({ stats, onClose }: AchievementsSheetProps) {
                   {isUnlocked ? (
                     <CheckCircle2 size={18} />
                   ) : (
-                    `${progress} / ${def.target}`
+                    `${i18n.number(progress)} / ${i18n.number(def.target)}`
                   )}
                 </span>
               </div>
