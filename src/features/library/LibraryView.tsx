@@ -1,6 +1,14 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Download, Link2, Search, Sun, Trophy, Upload } from 'lucide-react';
+import {
+  Download,
+  HelpCircle,
+  Link2,
+  Search,
+  Sun,
+  Trophy,
+  Upload
+} from 'lucide-react';
 import { ACHIEVEMENTS } from '../../core/achievements/achievements';
 import { parseEpubFile } from '../../core/parsers/epub';
 import { cleanMarkdown } from '../../core/parsers/markdown';
@@ -13,6 +21,10 @@ import { db, removeDocument, renameDocument } from '../../services/storage/db';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { AchievementsSheet } from '../achievements/AchievementsSheet';
+import {
+  isOnboardingDone,
+  OnboardingModal
+} from '../onboarding/OnboardingModal';
 import { LibraryCard } from './LibraryCard';
 
 const SAMPLE_TEXT = `Коли перед очима відкривається довга «стіна тексту», мозок часто втомлюється ще до першого абзацу. Погляд зісковзує на сусідній рядок, і доводиться перечитувати одне й те саме речення по три рази.
@@ -21,7 +33,7 @@ Plyn прибирає це перевантаження. Замість неск
 
 Свайпай вгору на iPhone або натискай Пробіл чи стрілки на MacBook, щоб рухатися далі. Верхня смужка показує реальний прогрес і орієнтовний час до кінця.
 
-Спробуй увімкнути режим «Якір» (клавіша A), тему «М’ята», шрифт і ширший інтервал для дислексії в налаштуваннях, або «Чистий екран» (клавіша Z), щоб прибрати всі зайві кнопки.
+Спробуй увімкнути режим «Якір» (клавіша A), «Фокус-речення» (клавіша F), тему «М’ята», шрифт і ширший інтервал для дислексії в налаштуваннях або «Чистий екран» (клавіша Z).
 
 Ти також можеш ставити закладки (клавіша B), слухати озвучку картки (клавіша S), імпортувати книги .epub, файли .txt / .md або переносити бібліотеку через JSON-бекап.`;
 
@@ -33,6 +45,7 @@ export function LibraryView() {
   const [urlInput, setUrlInput] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone());
   const [searchQuery, setSearchQuery] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +80,49 @@ export function LibraryView() {
     window.clearTimeout(feedbackTimerRef.current);
     feedbackTimerRef.current = window.setTimeout(() => setFeedback(''), 3600);
   };
+
+  // Обробка Web Share Target (?url=...&text=...&title=...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedUrl = params.get('url')?.trim() || '';
+    const sharedText = params.get('text')?.trim() || '';
+    const sharedTitle = params.get('title')?.trim() || '';
+
+    if (!sharedUrl && !sharedText) return;
+
+    window.history.replaceState({}, '', window.location.pathname);
+
+    const urlCandidate =
+      sharedUrl ||
+      (sharedText.match(/https?:\/\/\S+/i)?.[0] ?? '');
+
+    if (urlCandidate) {
+      setShowUrlBar(true);
+      setUrlInput(urlCandidate);
+      setIsExtracting(true);
+      showFeedback('Завантажую статтю з «Поділитися»...');
+      void extractArticleFromUrl(urlCandidate)
+        .then((article) => {
+          setTitle(sharedTitle || article.title);
+          setText(article.text);
+          setShowUrlBar(false);
+          setUrlInput('');
+          showFeedback(`Статтю «${article.title}» завантажено.`);
+        })
+        .catch(() => {
+          if (sharedText) {
+            setTitle(sharedTitle);
+            setText(sharedText);
+          }
+          showFeedback('Не вдалося витягти сторінку — перевір посилання вище.');
+        })
+        .finally(() => setIsExtracting(false));
+    } else if (sharedText) {
+      setTitle(sharedTitle);
+      setText(sharedText);
+      showFeedback('Текст отримано через «Поділитися».');
+    }
+  }, []);
 
   const handlePaste = async () => {
     if (!navigator.clipboard?.readText) {
@@ -204,6 +260,15 @@ export function LibraryView() {
             <span>
               {unlockedCount} / {ACHIEVEMENTS.length}
             </span>
+          </button>
+          <button
+            className="icon-btn"
+            type="button"
+            aria-label="Як користуватися Plyn"
+            title="Швидкий старт"
+            onClick={() => setShowOnboarding(true)}
+          >
+            <HelpCircle size={19} />
           </button>
           <button
             className="icon-btn"
@@ -418,6 +483,15 @@ export function LibraryView() {
             onClose={() => setShowAchievements(false)}
           />
         </>
+      )}
+
+      {showOnboarding && (
+        <OnboardingModal
+          onClose={() => setShowOnboarding(false)}
+          onTrySample={() => {
+            void startNewDocument('Знайомство з Plyn', SAMPLE_TEXT, cardLength);
+          }}
+        />
       )}
     </main>
   );

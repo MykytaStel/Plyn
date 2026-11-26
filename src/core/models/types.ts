@@ -10,6 +10,7 @@ export interface UserSettings {
   fontSize: number;
   lineHeight: number;
   anchorMode: boolean;
+  sentenceFocus: boolean;
   cardLength: CardLengthPreset;
 }
 

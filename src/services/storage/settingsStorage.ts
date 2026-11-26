@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   fontSize: 24,
   lineHeight: 1.65,
   anchorMode: false,
+  sentenceFocus: false,
   cardLength: 'medium'
 };
 

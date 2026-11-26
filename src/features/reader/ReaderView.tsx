@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { CardLengthPreset } from '../../core/models/types';
 import { estimateRemainingMinutes } from '../../core/reading/readingStats';
+import { splitCardIntoSentences } from '../../core/splitter/sentences';
 import {
   isTtsSupported,
   speakCardText,
@@ -46,11 +47,13 @@ export function ReaderView() {
   const shiftRecentUnlock = useReaderStore((s) => s.shiftRecentUnlock);
 
   const anchorMode = useSettingsStore((s) => s.anchorMode);
+  const sentenceFocus = useSettingsStore((s) => s.sentenceFocus);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
   const [sheet, setSheet] = useState<ActiveSheet>('none');
   const [showScrubber, setShowScrubber] = useState(false);
   const [zenMode, setZenMode] = useState(false);
+  const [activeSentenceIndex, setActiveSentenceIndex] = useState(0);
   const [isDoneVisible, setIsDoneVisible] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [toast, setToast] = useState<{
@@ -62,6 +65,12 @@ export function ReaderView() {
   const feedRef = useRef<HTMLDivElement>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
   const ttsAvailable = useMemo(() => isTtsSupported(), []);
+
+  const currentSentenceCount = useMemo(() => {
+    const text = cards[currentIndex]?.text;
+    if (!sentenceFocus || !text) return 1;
+    return Math.max(1, splitCardIntoSentences(text).length);
+  }, [cards, currentIndex, sentenceFocus]);
 
   const showToast = useCallback((text: string, isAchievement = false) => {
     setToast({ text, isAchievement });
@@ -97,6 +106,39 @@ export function ReaderView() {
     return Math.round(feed.scrollTop / height);
   }, [currentIndex]);
 
+  const advanceStep = useCallback(() => {
+    if (
+      sentenceFocus &&
+      !isDoneVisible &&
+      activeSentenceIndex < currentSentenceCount - 1
+    ) {
+      setActiveSentenceIndex((prev) => prev + 1);
+      return;
+    }
+    scrollToCard(getVisibleSlideIndex() + 1);
+  }, [
+    sentenceFocus,
+    isDoneVisible,
+    activeSentenceIndex,
+    currentSentenceCount,
+    scrollToCard,
+    getVisibleSlideIndex
+  ]);
+
+  const retreatStep = useCallback(() => {
+    if (sentenceFocus && !isDoneVisible && activeSentenceIndex > 0) {
+      setActiveSentenceIndex((prev) => prev - 1);
+      return;
+    }
+    scrollToCard(getVisibleSlideIndex() - 1);
+  }, [
+    sentenceFocus,
+    isDoneVisible,
+    activeSentenceIndex,
+    scrollToCard,
+    getVisibleSlideIndex
+  ]);
+
   useEffect(() => {
     if (!activeDoc) return;
     requestAnimationFrame(() => {
@@ -109,6 +151,7 @@ export function ReaderView() {
   useEffect(() => {
     stopSpeaking();
     setIsSpeaking(false);
+    setActiveSentenceIndex(0);
   }, [currentIndex]);
 
   useEffect(() => {
@@ -216,19 +259,27 @@ export function ReaderView() {
 
       if (e.code === 'Space' && !e.shiftKey) {
         e.preventDefault();
-        scrollToCard(getVisibleSlideIndex() + 1);
+        advanceStep();
       } else if (e.code === 'Space' && e.shiftKey) {
         e.preventDefault();
-        scrollToCard(getVisibleSlideIndex() - 1);
+        retreatStep();
       } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'j') {
         e.preventDefault();
-        scrollToCard(getVisibleSlideIndex() + 1);
+        advanceStep();
       } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'k') {
         e.preventDefault();
-        scrollToCard(getVisibleSlideIndex() - 1);
+        retreatStep();
       } else if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'ф') {
         e.preventDefault();
         updateSettings({ anchorMode: !anchorMode });
+      } else if (e.key.toLowerCase() === 'f' || e.key.toLowerCase() === 'а') {
+        e.preventDefault();
+        updateSettings({ sentenceFocus: !sentenceFocus });
+        showToast(
+          !sentenceFocus
+            ? 'Фокус-речення увімкнено'
+            : 'Фокус-речення вимкнено'
+        );
       } else if (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'и') {
         e.preventDefault();
         void handleToggleBookmark();
@@ -248,10 +299,12 @@ export function ReaderView() {
     zenMode,
     showScrubber,
     anchorMode,
+    sentenceFocus,
     closeReader,
-    getVisibleSlideIndex,
-    scrollToCard,
+    advanceStep,
+    retreatStep,
     updateSettings,
+    showToast,
     handleToggleBookmark,
     handleToggleSpeech,
     handleToggleZen
@@ -460,6 +513,10 @@ export function ReaderView() {
           if (target.closest('button')) return;
           if (zenMode) {
             setZenMode(false);
+            return;
+          }
+          if (sentenceFocus && !isDoneVisible) {
+            advanceStep();
           }
         }}
       >
@@ -469,6 +526,9 @@ export function ReaderView() {
             card={card}
             total={total}
             anchorMode={anchorMode}
+            sentenceFocus={sentenceFocus}
+            isActiveCard={card.index === currentIndex}
+            activeSentenceIndex={activeSentenceIndex}
             isWithinWindow={
               Math.abs(card.index - currentIndex) <= RENDER_WINDOW_RADIUS
             }
@@ -497,7 +557,7 @@ export function ReaderView() {
           type="button"
           aria-label="Попередня картка"
           title="Попередня (↑)"
-          onClick={() => scrollToCard(getVisibleSlideIndex() - 1)}
+          onClick={retreatStep}
         >
           <ChevronUp size={18} />
         </button>
@@ -506,7 +566,7 @@ export function ReaderView() {
           type="button"
           aria-label="Наступна картка"
           title="Наступна (Space або ↓)"
-          onClick={() => scrollToCard(getVisibleSlideIndex() + 1)}
+          onClick={advanceStep}
         >
           <ChevronDown size={18} />
         </button>

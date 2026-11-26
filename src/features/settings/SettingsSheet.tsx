@@ -59,6 +59,7 @@ export function SettingsSheet({
     fontSize,
     lineHeight,
     anchorMode,
+    sentenceFocus,
     cardLength,
     updateSettings
   } = useSettingsStore();
@@ -100,6 +101,28 @@ export function SettingsSheet({
               type="checkbox"
               checked={anchorMode}
               onChange={(e) => updateSettings({ anchorMode: e.target.checked })}
+            />
+            <span className="switch-slider" />
+          </label>
+        </div>
+
+        <div className="setting-row-toggle">
+          <div>
+            <label htmlFor="toggle-sentence-focus" className="setting-label">
+              Фокус-речення
+            </label>
+            <p className="setting-hint">
+              Підсвічує одне речення за раз — погляд не перестрибує (клавіша F)
+            </p>
+          </div>
+          <label className="switch">
+            <input
+              id="toggle-sentence-focus"
+              type="checkbox"
+              checked={sentenceFocus}
+              onChange={(e) =>
+                updateSettings({ sentenceFocus: e.target.checked })
+              }
             />
             <span className="switch-slider" />
           </label>
@@ -248,8 +271,8 @@ export function SettingsSheet({
 
         <p className="shortcuts-hint">
           Клавіатура: <kbd>Space</kbd>/<kbd>↓</kbd> далі · <kbd>A</kbd> якір ·{' '}
-          <kbd>B</kbd> закладка · <kbd>S</kbd> озвучка · <kbd>Z</kbd> чистий
-          екран
+          <kbd>F</kbd> фокус · <kbd>B</kbd> закладка · <kbd>S</kbd> озвучка ·{' '}
+          <kbd>Z</kbd> чистий екран
         </p>
       </div>
     </aside>

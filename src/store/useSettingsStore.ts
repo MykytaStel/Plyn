@@ -50,6 +50,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       fontSize: patch.fontSize ?? get().fontSize,
       lineHeight: patch.lineHeight ?? get().lineHeight,
       anchorMode: patch.anchorMode ?? get().anchorMode,
+      sentenceFocus: patch.sentenceFocus ?? get().sentenceFocus,
       cardLength: patch.cardLength ?? get().cardLength
     };
     saveUserSettings(next);
@@ -70,6 +71,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       fontSize,
       lineHeight,
       anchorMode,
+      sentenceFocus,
       cardLength
     } = get();
     syncDom({
@@ -79,6 +81,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       fontSize,
       lineHeight,
       anchorMode,
+      sentenceFocus,
       cardLength
     });
   }

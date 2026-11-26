@@ -20,6 +20,15 @@ export default defineConfig({
         background_color: '#16181D',
         theme_color: '#16181D',
         lang: 'uk',
+        share_target: {
+          action: './',
+          method: 'GET',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url'
+          }
+        },
         icons: [
           {
             src: './icons/icon.svg',
