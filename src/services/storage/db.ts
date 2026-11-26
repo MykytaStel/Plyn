@@ -9,6 +9,7 @@ import type {
   UserProgressStats
 } from '../../core/models/types';
 import { deriveTitle } from '../../core/parsers/markdown';
+import { toLocalDateKey } from '../../core/reading/weeklyActivity';
 
 class PlynDatabase extends Dexie {
   documents!: EntityTable<PlynDocument, 'id'>;
@@ -50,6 +51,7 @@ export async function createDocument(input: {
     currentIndex: 0,
     totalCards: Math.max(1, input.totalCards),
     bookmarkOffsets: [],
+    bookmarkNotes: {},
     completedOnce: false,
     createdAt: now,
     updatedAt: now
@@ -95,13 +97,21 @@ export interface ProgressDelta {
 }
 
 /**
- * Атомарно оновлює накопичувальну статистику прогресу і повертає щойно відкриті ачівменти.
+ * Атомарно оновлює накопичувальну статистику прогресу (вкл. 7-денний ритм)
+ * і повертає щойно відкриті ачівменти.
  */
 export async function recordProgressDelta(
   delta: ProgressDelta
 ): Promise<AchievementDefinition[]> {
   try {
     const current = await getProgressStats();
+    const dailyCardsRead = { ...(current.dailyCardsRead || {}) };
+
+    if (delta.cardsRead && delta.cardsRead > 0) {
+      const todayKey = toLocalDateKey(new Date());
+      dailyCardsRead[todayKey] = (dailyCardsRead[todayKey] || 0) + delta.cardsRead;
+    }
+
     const updated: UserProgressStats = {
       ...current,
       totalCardsRead: current.totalCardsRead + (delta.cardsRead ?? 0),
@@ -114,7 +124,8 @@ export async function recordProgressDelta(
         current.timerSessionsCompleted + (delta.timerSessionsCompleted ?? 0),
       ttsCardsListened:
         (current.ttsCardsListened ?? 0) + (delta.ttsCardsListened ?? 0),
-      zenModeUsed: (current.zenModeUsed ?? 0) + (delta.zenModeUsed ?? 0)
+      zenModeUsed: (current.zenModeUsed ?? 0) + (delta.zenModeUsed ?? 0),
+      dailyCardsRead
     };
 
     const { nextStats, newlyUnlocked } = evaluateAchievements(updated);

@@ -10,6 +10,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   lineHeight: 1.65,
   anchorMode: false,
   sentenceFocus: false,
+  ttsRate: 1,
+  ttsAutoAdvance: false,
   cardLength: 'medium'
 };
 

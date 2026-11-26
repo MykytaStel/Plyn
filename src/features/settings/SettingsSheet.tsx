@@ -3,7 +3,8 @@ import type {
   CardLengthPreset,
   FontFamilyPreset,
   LetterSpacingPreset,
-  ThemeMode
+  ThemeMode,
+  TtsRatePreset
 } from '../../core/models/types';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -40,6 +41,13 @@ const LENGTHS: Array<{ value: CardLengthPreset; label: string }> = [
   { value: 'long', label: 'Довша' }
 ];
 
+const TTS_RATES: Array<{ value: TtsRatePreset; label: string }> = [
+  { value: 0.75, label: '0.75×' },
+  { value: 1, label: '1×' },
+  { value: 1.25, label: '1.25×' },
+  { value: 1.5, label: '1.5×' }
+];
+
 const TIMERS = [
   { value: 0, label: 'Вимк.' },
   { value: 5, label: '5 хв' },
@@ -60,6 +68,8 @@ export function SettingsSheet({
     lineHeight,
     anchorMode,
     sentenceFocus,
+    ttsRate,
+    ttsAutoAdvance,
     cardLength,
     updateSettings
   } = useSettingsStore();
@@ -126,6 +136,48 @@ export function SettingsSheet({
             />
             <span className="switch-slider" />
           </label>
+        </div>
+
+        <div className="setting-row-toggle">
+          <div>
+            <label htmlFor="toggle-tts-auto" className="setting-label">
+              Слухати підряд (авто-перехід)
+            </label>
+            <p className="setting-hint">
+              Озвучка сама перегортає на наступну картку після завершення
+            </p>
+          </div>
+          <label className="switch">
+            <input
+              id="toggle-tts-auto"
+              type="checkbox"
+              checked={ttsAutoAdvance}
+              onChange={(e) =>
+                updateSettings({ ttsAutoAdvance: e.target.checked })
+              }
+            />
+            <span className="switch-slider" />
+          </label>
+        </div>
+
+        <div className="setting-group">
+          <span className="setting-label">Швидкість озвучки</span>
+          <div
+            className="segmented segmented-4"
+            role="radiogroup"
+            aria-label="Швидкість озвучки"
+          >
+            {TTS_RATES.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                className={`seg-btn ${ttsRate === item.value ? 'is-active' : ''}`}
+                onClick={() => updateSettings({ ttsRate: item.value })}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="setting-group">

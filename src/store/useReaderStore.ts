@@ -22,9 +22,16 @@ interface ReaderState {
   currentIndex: number;
   timerMinutes: number;
   timerEndsAt: number;
+  microGoalTarget: number | null;
+  microGoalCount: number;
+  microGoalCompleted: boolean;
   recentUnlocks: AchievementDefinition[];
 
-  openDocument: (doc: PlynDocument, lengthPreset: CardLengthPreset) => void;
+  openDocument: (
+    doc: PlynDocument,
+    lengthPreset: CardLengthPreset,
+    microGoalTarget?: number | null
+  ) => void;
   startNewDocument: (
     title: string,
     text: string,
@@ -35,6 +42,7 @@ interface ReaderState {
   markDocumentCompleted: () => Promise<void>;
   recalculateCards: (lengthPreset: CardLengthPreset) => number;
   toggleBookmarkAtCurrent: () => Promise<boolean>;
+  setBookmarkNote: (offset: number, note: string) => Promise<void>;
   setFocusTimer: (minutes: number) => void;
   completeFocusTimer: () => Promise<void>;
   recordTtsListened: () => Promise<void>;
@@ -59,9 +67,12 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   currentIndex: 0,
   timerMinutes: 0,
   timerEndsAt: 0,
+  microGoalTarget: null,
+  microGoalCount: 0,
+  microGoalCompleted: false,
   recentUnlocks: [],
 
-  openDocument: (doc, lengthPreset) => {
+  openDocument: (doc, lengthPreset, microGoalTarget = null) => {
     const cards = splitTextIntoCards(doc.text, { lengthPreset });
     if (cards.length === 0) return;
 
@@ -78,7 +89,10 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     set({
       activeDoc: syncedDoc,
       cards,
-      currentIndex: startIdx
+      currentIndex: startIdx,
+      microGoalTarget,
+      microGoalCount: microGoalTarget ? 1 : 0,
+      microGoalCompleted: false
     });
   },
 
@@ -101,7 +115,10 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     set({
       activeDoc: doc,
       cards,
-      currentIndex: 0
+      currentIndex: 0,
+      microGoalTarget: null,
+      microGoalCount: 0,
+      microGoalCompleted: false
     });
   },
 
@@ -118,12 +135,16 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
       cards: [],
       currentIndex: 0,
       timerMinutes: 0,
-      timerEndsAt: 0
+      timerEndsAt: 0,
+      microGoalTarget: null,
+      microGoalCount: 0,
+      microGoalCompleted: false
     });
   },
 
   setCurrentIndex: (index, anchorMode) => {
-    const { activeDoc, cards } = get();
+    const { activeDoc, cards, microGoalTarget, microGoalCount, microGoalCompleted } =
+      get();
     if (!activeDoc || cards.length === 0) return;
 
     const clamped = Math.min(Math.max(0, index), cards.length - 1);
@@ -135,12 +156,29 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
       totalCards: cards.length
     };
 
-    set({ currentIndex: clamped, activeDoc: updatedDoc });
+    const isNewInSession = !seenInSession.has(clamped);
+    let nextGoalCount = microGoalCount;
+    let nextGoalCompleted = microGoalCompleted;
+
+    if (isNewInSession) {
+      seenInSession.add(clamped);
+      if (microGoalTarget && !microGoalCompleted) {
+        nextGoalCount = microGoalCount + 1;
+        if (nextGoalCount >= microGoalTarget) {
+          nextGoalCompleted = true;
+        }
+      }
+    }
+
+    set({
+      currentIndex: clamped,
+      activeDoc: updatedDoc,
+      microGoalCount: nextGoalCount,
+      microGoalCompleted: nextGoalCompleted
+    });
     schedulePersist(updatedDoc);
 
-    // Зараховуємо прочитану картку в статистику раз за сесію
-    if (!seenInSession.has(clamped)) {
-      seenInSession.add(clamped);
+    if (isNewInSession) {
       void recordProgressDelta({
         cardsRead: 1,
         anchorCardsRead: anchorMode ? 1 : 0
@@ -198,12 +236,15 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     );
 
     let nextOffsets: number[];
+    let nextNotes = { ...(activeDoc.bookmarkNotes || {}) };
     let added = false;
 
     if (alreadyInCard) {
-      nextOffsets = existing.filter(
-        (offset) => offset < card.startOffset || offset >= card.endOffset
-      );
+      nextOffsets = existing.filter((offset) => {
+        const inCard = offset >= card.startOffset && offset < card.endOffset;
+        if (inCard) delete nextNotes[String(offset)];
+        return !inCard;
+      });
     } else {
       nextOffsets = [...existing, card.startOffset].sort((a, b) => a - b);
       added = true;
@@ -211,7 +252,8 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
 
     const updatedDoc = await updateDocument({
       ...activeDoc,
-      bookmarkOffsets: nextOffsets
+      bookmarkOffsets: nextOffsets,
+      bookmarkNotes: nextNotes
     });
 
     set({ activeDoc: updatedDoc });
@@ -224,6 +266,25 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     }
 
     return added;
+  },
+
+  setBookmarkNote: async (offset, note) => {
+    const { activeDoc } = get();
+    if (!activeDoc) return;
+
+    const nextNotes = { ...(activeDoc.bookmarkNotes || {}) };
+    const trimmed = note.trim();
+    if (trimmed) {
+      nextNotes[String(offset)] = trimmed;
+    } else {
+      delete nextNotes[String(offset)];
+    }
+
+    const updatedDoc = await updateDocument({
+      ...activeDoc,
+      bookmarkNotes: nextNotes
+    });
+    set({ activeDoc: updatedDoc });
   },
 
   setFocusTimer: (minutes) => {

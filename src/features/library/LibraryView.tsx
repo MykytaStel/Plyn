@@ -5,6 +5,7 @@ import {
   HelpCircle,
   Link2,
   Search,
+  Sparkles,
   Sun,
   Trophy,
   Upload
@@ -27,6 +28,15 @@ import {
 } from '../onboarding/OnboardingModal';
 import { LibraryCard } from './LibraryCard';
 
+type LibraryFilter = 'all' | 'active' | 'completed' | 'bookmarked';
+
+const FILTERS: Array<{ value: LibraryFilter; label: string }> = [
+  { value: 'all', label: 'Усі' },
+  { value: 'active', label: 'В процесі' },
+  { value: 'bookmarked', label: 'Із закладками' },
+  { value: 'completed', label: 'Завершені' }
+];
+
 const SAMPLE_TEXT = `Коли перед очима відкривається довга «стіна тексту», мозок часто втомлюється ще до першого абзацу. Погляд зісковзує на сусідній рядок, і доводиться перечитувати одне й те саме речення по три рази.
 
 Plyn прибирає це перевантаження. Замість нескінченного полотна ти бачиш лише одну коротку думку за раз — у спокійній рамці та з чіткими межами.
@@ -35,7 +45,7 @@ Plyn прибирає це перевантаження. Замість неск
 
 Спробуй увімкнути режим «Якір» (клавіша A), «Фокус-речення» (клавіша F), тему «М’ята», шрифт і ширший інтервал для дислексії в налаштуваннях або «Чистий екран» (клавіша Z).
 
-Ти також можеш ставити закладки (клавіша B), слухати озвучку картки (клавіша S), імпортувати книги .epub, файли .txt / .md або переносити бібліотеку через JSON-бекап.`;
+Ти також можеш ставити закладки з нотатками (клавіша B), слухати озвучку підряд (клавіша S), імпортувати книги .epub, файли .txt / .md або переносити бібліотеку через JSON-бекап.`;
 
 export function LibraryView() {
   const [title, setTitle] = useState('');
@@ -47,6 +57,7 @@ export function LibraryView() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone());
   const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<LibraryFilter>('all');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
@@ -64,16 +75,28 @@ export function LibraryView() {
   );
   const stats = useLiveQuery(() => db.stats.get('main'), []);
 
+  const nextUnfinishedDoc = useMemo(
+    () => documents?.find((d) => !d.completedOnce) ?? documents?.[0] ?? null,
+    [documents]
+  );
+
   const filteredDocuments = useMemo(() => {
     if (!documents) return [];
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return documents;
-    return documents.filter(
-      (doc) =>
+
+    return documents.filter((doc) => {
+      if (filter === 'active' && doc.completedOnce) return false;
+      if (filter === 'completed' && !doc.completedOnce) return false;
+      if (filter === 'bookmarked' && (doc.bookmarkOffsets?.length ?? 0) === 0) {
+        return false;
+      }
+      if (!q) return true;
+      return (
         doc.title.toLowerCase().includes(q) ||
         doc.text.toLowerCase().includes(q)
-    );
-  }, [documents, searchQuery]);
+      );
+    });
+  }, [documents, searchQuery, filter]);
 
   const showFeedback = (msg: string) => {
     setFeedback(msg);
@@ -81,7 +104,6 @@ export function LibraryView() {
     feedbackTimerRef.current = window.setTimeout(() => setFeedback(''), 3600);
   };
 
-  // Обробка Web Share Target (?url=...&text=...&title=...)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sharedUrl = params.get('url')?.trim() || '';
@@ -93,8 +115,7 @@ export function LibraryView() {
     window.history.replaceState({}, '', window.location.pathname);
 
     const urlCandidate =
-      sharedUrl ||
-      (sharedText.match(/https?:\/\/\S+/i)?.[0] ?? '');
+      sharedUrl || (sharedText.match(/https?:\/\/\S+/i)?.[0] ?? '');
 
     if (urlCandidate) {
       setShowUrlBar(true);
@@ -291,6 +312,25 @@ export function LibraryView() {
           </p>
         </div>
 
+        {/* Анти-прокрастинація для РДУГ: м'який старт на 5 карток */}
+        {nextUnfinishedDoc && (
+          <div className="micro-start-banner">
+            <div className="micro-start-text">
+              <span className="micro-start-label">
+                <Sparkles size={13} /> Легкий старт
+              </span>
+              <p className="micro-start-title">{nextUnfinishedDoc.title}</p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => openDocument(nextUnfinishedDoc, cardLength, 5)}
+            >
+              Почитати 5 карток
+            </button>
+          </div>
+        )}
+
         {showUrlBar && (
           <div className="url-import-row">
             <input
@@ -443,19 +483,35 @@ export function LibraryView() {
           </div>
 
           {documents && documents.length >= 2 && (
-            <div className="library-search">
-              <Search size={15} className="library-search-icon" />
-              <input
-                type="search"
-                className="library-search-input"
-                placeholder="Пошук у бібліотеці..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+            <>
+              <div className="library-filters" role="tablist" aria-label="Фільтр бібліотеки">
+                {FILTERS.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={filter === item.value}
+                    className={`filter-chip ${filter === item.value ? 'is-active' : ''}`}
+                    onClick={() => setFilter(item.value)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <div className="library-search">
+                <Search size={15} className="library-search-icon" />
+                <input
+                  type="search"
+                  className="library-search-input"
+                  placeholder="Пошук у бібліотеці..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </>
           )}
 
-          {filteredDocuments.length > 0 && (
+          {filteredDocuments.length > 0 ? (
             <div className="library-list">
               {filteredDocuments.map((doc) => (
                 <LibraryCard
@@ -467,6 +523,13 @@ export function LibraryView() {
                 />
               ))}
             </div>
+          ) : (
+            documents &&
+            documents.length > 0 && (
+              <p className="bookmarks-empty">
+                За цим фільтром поки нічого не знайдено.
+              </p>
+            )
           )}
         </section>
       </section>

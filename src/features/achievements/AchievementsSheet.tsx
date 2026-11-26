@@ -4,6 +4,7 @@ import {
   DEFAULT_PROGRESS_STATS
 } from '../../core/achievements/achievements';
 import type { UserProgressStats } from '../../core/models/types';
+import { buildLast7DaysActivity } from '../../core/reading/weeklyActivity';
 
 interface AchievementsSheetProps {
   stats: UserProgressStats | undefined;
@@ -13,6 +14,9 @@ interface AchievementsSheetProps {
 export function AchievementsSheet({ stats, onClose }: AchievementsSheetProps) {
   const safeStats = stats ?? DEFAULT_PROGRESS_STATS;
   const unlockedSet = new Set(safeStats.unlockedIds);
+  const { days, weeklyTotal, maxDay } = buildLast7DaysActivity(
+    safeStats.dailyCardsRead
+  );
 
   return (
     <aside
@@ -37,7 +41,7 @@ export function AchievementsSheet({ stats, onClose }: AchievementsSheetProps) {
       <div className="stats-summary-grid">
         <div className="stat-tile">
           <span className="stat-value">{safeStats.totalCardsRead}</span>
-          <span className="stat-label">Карток прочитано</span>
+          <span className="stat-label">Карток усього</span>
         </div>
         <div className="stat-tile">
           <span className="stat-value">{safeStats.totalDocsCompleted}</span>
@@ -48,6 +52,37 @@ export function AchievementsSheet({ stats, onClose }: AchievementsSheetProps) {
             {unlockedSet.size} / {ACHIEVEMENTS.length}
           </span>
           <span className="stat-label">Нагород</span>
+        </div>
+      </div>
+
+      {/* Спокійний 7-денний ритм без штрафних стріків */}
+      <div className="weekly-card">
+        <div className="weekly-header">
+          <span>Останні 7 днів</span>
+          <span className="weekly-total">{weeklyTotal} карток</span>
+        </div>
+        <div className="weekly-bars" aria-label="Активність за 7 днів">
+          {days.map((day) => {
+            const heightPct =
+              day.cardsRead === 0
+                ? 8
+                : Math.max(18, Math.round((day.cardsRead / maxDay) * 100));
+            return (
+              <div
+                key={day.dateKey}
+                className={`weekly-col ${day.isToday ? 'is-today' : ''}`}
+                title={`${day.label}: ${day.cardsRead} карток`}
+              >
+                <div className="weekly-bar-track">
+                  <div
+                    className={`weekly-bar-fill ${day.cardsRead > 0 ? 'has-value' : ''}`}
+                    style={{ height: `${heightPct}%` }}
+                  />
+                </div>
+                <span className="weekly-day-label">{day.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 

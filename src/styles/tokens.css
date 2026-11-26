@@ -1346,6 +1346,167 @@ input[type="range"] {
   margin-top: 4px;
 }
 
+/* Легкий старт на 5 карток (анти-прокрастинація при РДУГ) */
+.micro-start-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.micro-start-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.micro-start-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.micro-start-title {
+  margin: 3px 0 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Фільтри бібліотеки */
+.library-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.filter-chip.is-active {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+
+/* Нотатки до закладок та дії в заголовку шторки */
+.sheet-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bookmark-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bookmark-note-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--surface-elevated);
+  font-size: 13px;
+  outline: none;
+}
+
+.bookmark-note-input:focus {
+  border-color: var(--accent);
+}
+
+/* Спокійний 7-денний ритм у шторці прогресу */
+.weekly-card {
+  padding: 13px 14px;
+  border-radius: var(--radius-md);
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.weekly-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+  margin-bottom: 12px;
+}
+
+.weekly-total {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.weekly-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+
+.weekly-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.weekly-bar-track {
+  width: 100%;
+  max-width: 24px;
+  height: 54px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.weekly-bar-fill {
+  width: 100%;
+  border-radius: 6px;
+  background-color: var(--progress-bg);
+  transition: height 0.25s ease;
+}
+
+.weekly-bar-fill.has-value {
+  background-color: var(--accent);
+}
+
+.weekly-day-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.weekly-col.is-today .weekly-day-label {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 @media (max-width: 480px) {
   .card-body {
     padding: 24px 20px;

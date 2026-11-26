@@ -32,6 +32,9 @@ export function ReaderView() {
   const cards = useReaderStore((s) => s.cards);
   const currentIndex = useReaderStore((s) => s.currentIndex);
   const timerEndsAt = useReaderStore((s) => s.timerEndsAt);
+  const microGoalTarget = useReaderStore((s) => s.microGoalTarget);
+  const microGoalCount = useReaderStore((s) => s.microGoalCount);
+  const microGoalCompleted = useReaderStore((s) => s.microGoalCompleted);
   const recentUnlocks = useReaderStore((s) => s.recentUnlocks);
   const closeReader = useReaderStore((s) => s.closeReader);
   const setCurrentIndex = useReaderStore((s) => s.setCurrentIndex);
@@ -40,6 +43,7 @@ export function ReaderView() {
   const toggleBookmarkAtCurrent = useReaderStore(
     (s) => s.toggleBookmarkAtCurrent
   );
+  const setBookmarkNote = useReaderStore((s) => s.setBookmarkNote);
   const setFocusTimer = useReaderStore((s) => s.setFocusTimer);
   const completeFocusTimer = useReaderStore((s) => s.completeFocusTimer);
   const recordTtsListened = useReaderStore((s) => s.recordTtsListened);
@@ -48,6 +52,8 @@ export function ReaderView() {
 
   const anchorMode = useSettingsStore((s) => s.anchorMode);
   const sentenceFocus = useSettingsStore((s) => s.sentenceFocus);
+  const ttsRate = useSettingsStore((s) => s.ttsRate);
+  const ttsAutoAdvance = useSettingsStore((s) => s.ttsAutoAdvance);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
   const [sheet, setSheet] = useState<ActiveSheet>('none');
@@ -64,6 +70,8 @@ export function ReaderView() {
 
   const feedRef = useRef<HTMLDivElement>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
+  const pendingAutoSpeakRef = useRef(false);
+  const microGoalNotifiedRef = useRef(false);
   const ttsAvailable = useMemo(() => isTtsSupported(), []);
 
   const currentSentenceCount = useMemo(() => {
@@ -87,6 +95,20 @@ export function ReaderView() {
     showToast(`Нова нагорода: «${next.title}»`, true);
     shiftRecentUnlock();
   }, [recentUnlocks, shiftRecentUnlock, showToast]);
+
+  // Спокійне сповіщення при виконанні мікро-цілі (наприклад, 5 карток)
+  useEffect(() => {
+    if (microGoalTarget && microGoalCompleted && !microGoalNotifiedRef.current) {
+      microGoalNotifiedRef.current = true;
+      showToast(
+        `${microGoalTarget} карток пройдено! Можеш зупинитись або читати далі`,
+        true
+      );
+    }
+    if (!microGoalTarget) {
+      microGoalNotifiedRef.current = false;
+    }
+  }, [microGoalTarget, microGoalCompleted, showToast]);
 
   const scrollToCard = useCallback(
     (index: number, behavior: ScrollBehavior = 'smooth') => {
@@ -139,6 +161,35 @@ export function ReaderView() {
     getVisibleSlideIndex
   ]);
 
+  const startSpeakingIndex = useCallback(
+    (cardIndex: number) => {
+      if (!ttsAvailable) return;
+      const text = cards[cardIndex]?.text;
+      if (!text) return;
+
+      speakCardText(text, {
+        rate: ttsRate,
+        onStart: () => {
+          setIsSpeaking(true);
+          void recordTtsListened();
+        },
+        onComplete: () => {
+          if (ttsAutoAdvance && cardIndex + 1 < cards.length) {
+            pendingAutoSpeakRef.current = true;
+            scrollToCard(cardIndex + 1);
+          } else {
+            setIsSpeaking(false);
+          }
+        },
+        onStop: () => {
+          pendingAutoSpeakRef.current = false;
+          setIsSpeaking(false);
+        }
+      });
+    },
+    [ttsAvailable, cards, ttsRate, ttsAutoAdvance, recordTtsListened, scrollToCard]
+  );
+
   useEffect(() => {
     if (!activeDoc) return;
     requestAnimationFrame(() => {
@@ -149,10 +200,15 @@ export function ReaderView() {
   }, [activeDoc?.id]);
 
   useEffect(() => {
+    setActiveSentenceIndex(0);
+    if (pendingAutoSpeakRef.current) {
+      pendingAutoSpeakRef.current = false;
+      startSpeakingIndex(currentIndex);
+      return;
+    }
     stopSpeaking();
     setIsSpeaking(false);
-    setActiveSentenceIndex(0);
-  }, [currentIndex]);
+  }, [currentIndex, startSpeakingIndex]);
 
   useEffect(() => {
     const feed = feedRef.current;
@@ -225,20 +281,13 @@ export function ReaderView() {
   const handleToggleSpeech = useCallback(() => {
     if (!ttsAvailable) return;
     if (isSpeaking) {
+      pendingAutoSpeakRef.current = false;
       stopSpeaking();
       setIsSpeaking(false);
       return;
     }
-    const text = cards[currentIndex]?.text;
-    if (!text) return;
-    speakCardText(text, {
-      onStart: () => {
-        setIsSpeaking(true);
-        void recordTtsListened();
-      },
-      onEnd: () => setIsSpeaking(false)
-    });
-  }, [ttsAvailable, isSpeaking, cards, currentIndex, recordTtsListened]);
+    startSpeakingIndex(currentIndex);
+  }, [ttsAvailable, isSpeaking, currentIndex, startSpeakingIndex]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -393,6 +442,11 @@ export function ReaderView() {
               <span className="counter-eta">· ~{remainingMins} хв</span>
             )}
           </button>
+          {microGoalTarget && !microGoalCompleted && (
+            <span className="timer-pill" title="Мікро-ціль цієї сесії">
+              Ціль {microGoalCount}/{microGoalTarget}
+            </span>
+          )}
           {timerLabel && (
             <span className="timer-pill" title="М’який таймер фокусу">
               {timerLabel}
@@ -590,8 +644,11 @@ export function ReaderView() {
 
       {sheet === 'bookmarks' && (
         <BookmarksSheet
+          docTitle={activeDoc.title}
           cards={cards}
           bookmarkOffsets={bookmarkOffsets}
+          bookmarkNotes={activeDoc.bookmarkNotes || {}}
+          onSaveNote={(offset, note) => void setBookmarkNote(offset, note)}
           onSelectCard={(idx) => {
             setSheet('none');
             scrollToCard(idx);
