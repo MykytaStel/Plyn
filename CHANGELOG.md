@@ -8,7 +8,17 @@ Your library is safe.
 
 ### Added
 
+- Plyn asks the browser to keep your library, so it isn't cleared when the device runs low on space. Settings → "Your library" shows how much Plyn takes and whether the browser agreed, with a button to ask again.
+- Backups now also keep your Thought Parking notes and settings. Older backups still import. Settings from a backup are applied only on a device that has none of its own, for example after you clear the browser.
+- On a phone, "Backup" opens the share sheet, so the file goes to Files, iCloud or Drive in one step.
+- Deleted a text by mistake? "Undo" stays for a few seconds and brings it back with your place and bookmarks.
+- If something breaks, a calm screen offers to save a backup and reload, instead of a blank page.
 - Settings now show which version of Plyn you have, at the very bottom.
+
+### Under the hood
+
+- Backup files from every version are kept in `spec/backups/` and imported on every change.
+- New browser journeys: backup → clear the device → restore, and delete → Undo.
 
 ## [0.20.0] — 2026-11-26
 

@@ -11,7 +11,8 @@ Status: draft · updated for 0.20.0 · part of the [roadmap](ROADMAP.md)
 - Vitest: 27 test files, 142 tests, in two projects: `node` (core, storage, worker, property, spec) and `dom` (jsdom + Testing Library). Run time about 1.5 s.
 - New in 0.19: L0 (ESLint + typecheck in CI), L2 (EPUB parser, onboarding component), L3 (`db.ts`, backup round trip, reader store with `fake-indexeddb`), L4 (`fast-check` properties for the splitter, sentences, anchor, language detection, backup validation), more L5 fixtures (`spec/anchor-cases.json`, `sentence-cases.json`, `language-cases.json`).
 - Findings fixed in 0.19: lost stats updates under concurrency ([IMP-04](IMPROVEMENTS.md#imp-04-atomic-progress-stats)); splitter offsets drifting when sentences had no space between them, and leading `?` / `…` being dropped (now cards are exact slices of the normalized text).
-- Not covered yet: TTS and audio services (stubbed out of the journeys), backup → restore in a browser (CUJ-6, 0.21), Firefox, visual regression (0.22).
+- New in 0.21: L5 backup fixtures (`spec/backups/`), CUJ-6 (backup → wipe → restore, download on desktop and share sheet on phones) and CUJ-11 (delete → Undo), axe on the Undo toast. Vitest: 33 files, 172 tests; Playwright: 68 runs.
+- Not covered yet: TTS and audio services (stubbed out of the journeys), the error screen in a browser (component test only), Firefox, visual regression (0.22).
 - CI: `ci.yml` runs `checks` (lint, typecheck, tests with coverage, build) and then `e2e` (Playwright) on every pull request; `deploy.yml` reuses it, so production deploys only after both. `preview.yml` uploads a Worker version per PR and comments its URL.
 - Known lint warnings (not blocking): 7 `jsx-a11y` warnings for pointer-only click targets (progress bar, card feed, words), left for the 0.28 audit.
 
@@ -105,7 +106,8 @@ Status: draft · updated for 0.20.0 · part of the [roadmap](ROADMAP.md)
 `spec/` holds JSON fixtures that future native apps will reuse. Tests read them, so web and native share one definition of correct.
 
 - Exists: `spec/splitter-cases.json` (with `expectedOffsets` since 0.19), `spec/anchor-cases.json`, `spec/sentence-cases.json`, `spec/language-cases.json` (0.19, run by `src/core/spec.test.ts`).
-- Add ([IMP-17](IMPROVEMENTS.md#imp-17-shared-spec-fixtures)): `spec/backups/v1-*.json` (0.21), `spec/backups/v2-*.json` (0.21), `spec/parsers/` expected outputs (0.23).
+- Backups (0.21): `spec/backups/v1-0.18.json` and `v2-0.21.json`, imported into an empty library by `src/services/storage/backup.compat.test.ts`. A new backup schema adds a fixture; old fixtures are never edited.
+- Add ([IMP-17](IMPROVEMENTS.md#imp-17-shared-spec-fixtures)): `spec/parsers/` expected outputs (0.23).
 - Compatibility matrix (complete by 0.30):
   1. Every backup fixture ever published imports without loss.
   2. Every Dexie version upgrades to the newest.
@@ -201,12 +203,12 @@ E2E (L7) covers these. Each journey is one spec file (`e2e/cuj-<n>-*.spec.ts`). 
 | CUJ-3 | Change card length mid-text → the same sentence stays on screen; bookmarks still point to the same text | 0.20 ✓ |
 | CUJ-4 | Import `.epub` and `.pdf` fixtures → right title, right first card | 0.20 ✓ |
 | CUJ-5 | Load once, go offline, reload → library and reading work; URL import shows the offline message | 0.20 ✓ |
-| CUJ-6 | Backup → clear storage → restore → same library, bookmarks, notes and thoughts | 0.21 |
+| CUJ-6 | Backup → clear storage → restore → same library, bookmarks, notes and thoughts | 0.21 ✓ |
 | CUJ-7 | Park a thought mid-text → find it in the library → return to the text | 0.21 |
 | CUJ-8 | Bookmark with a note → export Markdown → file contains the note | 0.21 |
 | CUJ-9 | Back button: sheet closes → reader closes → library stays | 0.22 |
 | CUJ-10 | Share target: open `/?title=…&text=…` → the text lands in the import box | 0.22 |
-| CUJ-11 | Delete a document → undo → it is back with its progress | 0.21 |
+| CUJ-11 | Delete a document → undo → it is back with its progress | 0.21 ✓ |
 | CUJ-12 | Read aloud with auto-advance across three cards (stubbed voice) | 0.26 |
 
 ## Coverage targets

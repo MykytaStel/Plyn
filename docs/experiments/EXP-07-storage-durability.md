@@ -1,6 +1,6 @@
 # EXP-07 Storage durability
 
-Status: not started · Feeds: [0.21](../ROADMAP.md#0210--your-library-is-safe) · Time box: 1 day of setup + a 2-week soak
+Status: partly done (0.21 ships the calls; the device soak is pending) · Feeds: [0.21](../ROADMAP.md#0210--your-library-is-safe) · Time box: 1 day of setup + a 2-week soak
 
 ## Question
 
@@ -36,4 +36,8 @@ Plyn's library exists only on the device. If a browser evicts storage, a reader 
 
 ## Result
 
+0.21 shipped the diagnostics as a reader-facing line in Settings ("Your library": size and whether the browser promised to keep it), so the per-platform table can be filled from any PR preview or production install. The two-week soak on real devices has not been run yet.
+
 ## Decision
+
+Interim, for 0.21 (see the [design](../superpowers/specs/2026-11-26-v0.21-library-safe-design.md)): call `persist()` quietly once the library has a text, except in Firefox, which shows a prompt; there the reader asks from Settings. Settings always points to the backup as the safe option. Revisit after the soak.
