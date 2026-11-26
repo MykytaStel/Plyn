@@ -6,6 +6,7 @@ import {
   ChevronUp,
   EyeOff,
   Lightbulb,
+  MoreHorizontal,
   SlidersHorizontal,
   Square,
   Volume2
@@ -28,12 +29,13 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { SettingsSheet } from '../settings/SettingsSheet';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { BookmarksSheet } from './BookmarksSheet';
+import { ReaderToolsSheet } from './ReaderToolsSheet';
 import { currentI18n, useI18n } from '../../i18n';
 import { readerToggleFor } from './shortcuts';
 import { CardSlide } from './CardSlide';
 import { DoneSlide } from './DoneSlide';
 
-type ActiveSheet = 'none' | 'settings' | 'bookmarks' | 'thoughts';
+type ActiveSheet = 'none' | 'settings' | 'bookmarks' | 'thoughts' | 'tools';
 const RENDER_WINDOW_RADIUS = 5;
 const EYE_BREAK_INTERVAL = 25;
 
@@ -542,7 +544,7 @@ export function ReaderView() {
 
           {ttsAvailable && (
             <button
-              className="icon-btn"
+              className="icon-btn reader-secondary"
               type="button"
               aria-pressed={isSpeaking}
               aria-label={isSpeaking ? t.stopSpeech : t.speak}
@@ -571,7 +573,7 @@ export function ReaderView() {
 
           {bookmarkOffsets.length > 0 && (
             <button
-              className="icon-btn icon-btn-badge"
+              className="icon-btn icon-btn-badge reader-secondary"
               type="button"
               aria-label={t.bookmarksList}
               title={t.bookmarksListHint}
@@ -585,7 +587,7 @@ export function ReaderView() {
           )}
 
           <button
-            className="icon-btn"
+            className="icon-btn reader-secondary"
             type="button"
             aria-pressed={anchorMode}
             aria-label={t.anchor}
@@ -599,7 +601,7 @@ export function ReaderView() {
           </button>
 
           <button
-            className="icon-btn"
+            className="icon-btn reader-secondary"
             type="button"
             aria-pressed={zenMode}
             aria-label={t.zen}
@@ -610,7 +612,7 @@ export function ReaderView() {
           </button>
 
           <button
-            className="icon-btn"
+            className="icon-btn reader-secondary"
             type="button"
             aria-label={t.settings}
             title={t.settingsHint}
@@ -620,6 +622,19 @@ export function ReaderView() {
             }}
           >
             <SlidersHorizontal size={17} />
+          </button>
+
+          <button
+            className="icon-btn reader-more"
+            type="button"
+            aria-label={t.tools.more}
+            aria-haspopup="dialog"
+            onClick={() => {
+              setShowScrubber(false);
+              setSheet('tools');
+            }}
+          >
+            <MoreHorizontal size={18} />
           </button>
         </div>
       </header>
@@ -753,6 +768,36 @@ export function ReaderView() {
             setSheet('none');
             scrollToCard(idx);
           }}
+          onClose={() => setSheet('none')}
+        />
+      )}
+
+      {sheet === 'tools' && (
+        <ReaderToolsSheet
+          ttsAvailable={ttsAvailable}
+          isSpeaking={isSpeaking}
+          anchorMode={anchorMode}
+          sentenceFocus={sentenceFocus}
+          bookmarksCount={bookmarkOffsets.length}
+          onSpeak={() => {
+            setSheet('none');
+            handleToggleSpeech();
+          }}
+          onAnchor={() => {
+            setSheet('none');
+            updateSettings({ anchorMode: !anchorMode });
+          }}
+          onSentenceFocus={() => {
+            setSheet('none');
+            updateSettings({ sentenceFocus: !sentenceFocus });
+            showToast(!sentenceFocus ? toasts().focusOn : toasts().focusOff);
+          }}
+          onZen={() => {
+            setSheet('none');
+            handleToggleZen();
+          }}
+          onBookmarks={() => setSheet('bookmarks')}
+          onSettings={() => setSheet('settings')}
           onClose={() => setSheet('none')}
         />
       )}
