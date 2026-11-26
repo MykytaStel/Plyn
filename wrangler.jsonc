@@ -2,6 +2,8 @@
   "name": "plyn",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-11-25",
+  // Per-PR preview URLs (.github/workflows/preview.yml, IMP-13).
+  "preview_urls": true,
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
