@@ -95,7 +95,7 @@ export function LibraryCard({
           </div>
         ) : (
           <>
-            <h3 className="library-card-title">{doc.title}</h3>
+            <h3 className="library-card-title" title={doc.title}>{doc.title}</h3>
             <div className="library-card-actions">
               <button
                 type="button"

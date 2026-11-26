@@ -112,9 +112,11 @@ describe('errorMessage', () => {
     expect(errorMessage(new ExtractError('no_article'), m)).toBe(m.errors.extract.no_article);
     expect(errorMessage(new ExtractError('upstream_error', { status: 503 }), m)).toContain('503');
   });
-  it('shows the server message for unknown extract codes', () => {
+  it('never shows the untranslated server message for unknown extract codes', () => {
     const m = getMessages('en');
-    expect(errorMessage(new ExtractError('unknown', { serverMessage: 'Сервер' }), m)).toBe('Сервер');
-    expect(errorMessage(new ExtractError('unknown'), m)).toBe(m.errors.generic);
+    expect(errorMessage(new ExtractError('unknown', { serverMessage: 'Сервер' }), m)).toBe(m.errors.generic);
+    expect(
+      errorMessage(new ExtractError('unknown', { serverMessage: 'Сервер' }), m, m.errors.article_read)
+    ).toBe(m.errors.article_read);
   });
 });

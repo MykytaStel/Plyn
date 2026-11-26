@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { titleFromFileName } from '../../core/parsers/fileName';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ChevronUp,
@@ -104,6 +105,18 @@ export function LibraryView() {
     feedbackTimerRef.current = window.setTimeout(() => setFeedback(''), 3600);
   };
 
+  // Escape closes whichever library sheet is open (the reader handles its own).
+  useEffect(() => {
+    if (!showAchievements && !showThoughts) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setShowAchievements(false);
+      setShowThoughts(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [showAchievements, showThoughts]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sharedUrl = params.get('url')?.trim() || '';
@@ -196,7 +209,7 @@ export function LibraryView() {
           showFeedback(t.feedback.fileEmpty);
           return;
         }
-        setTitle(file.name.replace(/\.(txt|md)$/i, ''));
+        setTitle(titleFromFileName(file.name));
         setText(prepared);
         showFeedback(i18n.format(t.feedback.fileImported, { name: file.name }));
       }

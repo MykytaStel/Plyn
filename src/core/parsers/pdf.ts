@@ -1,4 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import { titleFromFileName } from './fileName';
 import { PlynError } from '../errors';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
@@ -34,6 +35,6 @@ export async function parsePdfFile(file: File): Promise<ParsedPdf> {
     throw new PlynError('pdf_no_text');
   }
 
-  const fallbackTitle = file.name.replace(/\.pdf$/i, '');
+  const fallbackTitle = titleFromFileName(file.name);
   return { title: fallbackTitle, text: fullText };
 }

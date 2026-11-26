@@ -493,7 +493,7 @@ export function ReaderView() {
           }}
         >
           <ChevronLeft size={20} />
-          <span>{t.library}</span>
+          <span className="reader-back-label">{t.library}</span>
         </button>
 
         <div className="reader-center">

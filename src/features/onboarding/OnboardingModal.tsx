@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Sparkles, X } from 'lucide-react';
 import { tokenizeWithAnchors } from '../../core/anchor/anchor';
 import type { ThemeMode } from '../../core/models/types';
@@ -45,6 +45,17 @@ export function OnboardingModal({
     if (startSample) onTrySample();
   };
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        markOnboardingDone();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   const tokens = anchorMode ? tokenizeWithAnchors(t.demoPreview) : null;
 
   return (
@@ -61,7 +72,7 @@ export function OnboardingModal({
         aria-labelledby="onboarding-title"
       >
         <div className="onboarding-top">
-          <div className="onboarding-dots" aria-label={i18n.format(t.stepOf, { step: step + 1, total: 3 })}>
+          <div className="onboarding-dots" role="img" aria-label={i18n.format(t.stepOf, { step: step + 1, total: 3 })}>
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
@@ -112,11 +123,17 @@ export function OnboardingModal({
               </p>
             </div>
             <div className="onboarding-controls">
-              <div className="segmented">
+              <div
+                className="segmented"
+                role="radiogroup"
+                aria-label={i18n.m.settings.theme}
+              >
                 {QUICK_THEMES.map((value) => (
                   <button
                     key={value}
                     type="button"
+                    role="radio"
+                    aria-checked={theme === value}
                     className={`seg-btn ${theme === value ? 'is-active' : ''}`}
                     onClick={() => updateSettings({ theme: value })}
                   >

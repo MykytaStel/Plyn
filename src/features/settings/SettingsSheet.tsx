@@ -235,6 +235,8 @@ export function SettingsSheet({
               <button
                 key={item.value}
                 type="button"
+                role="radio"
+                aria-checked={ttsRate === item.value}
                 className={`seg-btn ${ttsRate === item.value ? 'is-active' : ''}`}
                 onClick={() => updateSettings({ ttsRate: item.value })}
               >
@@ -255,6 +257,8 @@ export function SettingsSheet({
               <button
                 key={item.value}
                 type="button"
+                role="radio"
+                aria-checked={fontFamily === item.value}
                 className={`seg-btn ${fontFamily === item.value ? 'is-active' : ''}`}
                 onClick={() => updateSettings({ fontFamily: item.value })}
               >
@@ -275,6 +279,8 @@ export function SettingsSheet({
               <button
                 key={item.value}
                 type="button"
+                role="radio"
+                aria-checked={letterSpacing === item.value}
                 className={`seg-btn ${letterSpacing === item.value ? 'is-active' : ''}`}
                 onClick={() => updateSettings({ letterSpacing: item.value })}
               >
@@ -295,6 +301,8 @@ export function SettingsSheet({
               <button
                 key={item.value}
                 type="button"
+                role="radio"
+                aria-checked={columnWidth === item.value}
                 className={`seg-btn ${columnWidth === item.value ? 'is-active' : ''}`}
                 onClick={() => updateSettings({ columnWidth: item.value })}
               >
@@ -315,6 +323,8 @@ export function SettingsSheet({
               <button
                 key={item.value}
                 type="button"
+                role="radio"
+                aria-checked={theme === item.value}
                 className={`seg-btn ${theme === item.value ? 'is-active' : ''}`}
                 onClick={() => updateSettings({ theme: item.value })}
               >
@@ -335,6 +345,8 @@ export function SettingsSheet({
               <button
                 key={item.value}
                 type="button"
+                role="radio"
+                aria-checked={cardLength === item.value}
                 className={`seg-btn ${cardLength === item.value ? 'is-active' : ''}`}
                 onClick={() => onCardLengthChange(item.value)}
               >
@@ -358,6 +370,8 @@ export function SettingsSheet({
               <button
                 key={item.value}
                 type="button"
+                role="radio"
+                aria-checked={timerMinutes === item.value}
                 className={`seg-btn ${timerMinutes === item.value ? 'is-active' : ''}`}
                 onClick={() => onTimerSelect(item.value)}
               >

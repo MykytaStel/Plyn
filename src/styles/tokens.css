@@ -507,6 +507,12 @@ textarea {
 
 .library-card-title {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-size: 15.5px;
   font-weight: 600;
   line-height: 1.35;
@@ -629,6 +635,7 @@ textarea {
 
 .counter-btn {
   display: inline-flex;
+  white-space: nowrap;
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
@@ -655,6 +662,7 @@ textarea {
 }
 
 .timer-pill {
+  white-space: nowrap;
   font-size: 12px;
   font-weight: 600;
   color: var(--accent);
@@ -1616,5 +1624,35 @@ input[type="range"] {
 @media (max-width: 480px) {
   .card-body {
     padding: 24px 20px;
+  }
+
+  /* Narrow screens: the arrow alone says "back"; time left lives in the library. */
+  .reader-back-label,
+  .counter-eta {
+    display: none;
+  }
+}
+
+/* Very narrow phones (≤360px): tighten the reader toolbar so every button,
+   including Settings, stays on screen. */
+@media (max-width: 360px) {
+  .reader-header {
+    gap: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .reader-header .icon-btn {
+    min-width: 30px;
+    padding: 0 6px;
+  }
+
+  .reader-header .icon-btn-badge {
+    min-width: 24px;
+    padding: 0 4px;
+  }
+
+  .reader-header .counter-btn {
+    padding: 5px 6px;
   }
 }

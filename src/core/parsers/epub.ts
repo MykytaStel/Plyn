@@ -1,4 +1,5 @@
 import { strFromU8, unzipSync } from 'fflate';
+import { titleFromFileName } from './fileName';
 import { PlynError } from '../errors';
 
 export interface ParsedEpub {
@@ -65,7 +66,7 @@ export async function parseEpubFile(file: File): Promise<ParsedEpub> {
   const titleEl =
     opfDoc.querySelector('metadata title') ||
     opfDoc.getElementsByTagNameNS('*', 'title')[0];
-  const fallbackName = file.name.replace(/\.epub$/i, '');
+  const fallbackName = titleFromFileName(file.name);
   const title = (titleEl?.textContent || '').trim() || fallbackName;
 
   const manifestMap = new Map<string, string>();
