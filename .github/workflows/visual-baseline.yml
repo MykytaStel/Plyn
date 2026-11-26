@@ -1,13 +1,25 @@
 name: Visual baseline
 
-# Run by hand when the visual snapshots must change on purpose (or were made on
-# another machine). Builds the snapshots on the same runner as CI and uploads
-# them; download the artifact, review the images and commit them.
+# Rebuilds the visual snapshots (e2e/visual.spec.ts) on the same runner as CI,
+# so their pixels match what CI compares against.
+#
+# - Push a commit whose message contains [visual-baseline] to a branch other
+#   than main: the snapshots are rebuilt and committed back to that branch.
+#   Review the images in the PR like code. A push made with GITHUB_TOKEN does
+#   not start CI, so push any follow-up commit (or re-run CI) afterwards.
+# - Or run it by hand: the snapshots are uploaded as an artifact.
 on:
   workflow_dispatch:
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: write
 
 jobs:
   snapshots:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual-baseline]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,3 +42,16 @@ jobs:
           name: visual-snapshots
           path: e2e/visual.spec.ts-snapshots/
           retention-days: 7
+
+      - name: Commit snapshots to the branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add e2e/visual.spec.ts-snapshots
+          if git diff --cached --quiet; then
+            echo "Snapshots unchanged."
+          else
+            git commit -m "chore: visual snapshots rendered on the CI runner"
+            git push
+          fi

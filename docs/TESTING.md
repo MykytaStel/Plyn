@@ -145,7 +145,7 @@ Status: draft · updated for 0.22.0 · part of the [roadmap](ROADMAP.md)
 ### L9 Visual regression
 
 - Since 0.22: `e2e/visual.spec.ts`, Playwright `toHaveScreenshot()` on Chromium desktop and Pixel 7: the reader card with Ukrainian and English text in 4 themes × 4 font presets, the empty library and the reader settings sheet per theme (48 images). Animations off, caret hidden, `maxDiffPixelRatio: 0.01`; the storage line is masked.
-- Runs on Linux in CI, so font rendering is stable. Snapshots change only on purpose: `npm run test:visual:update` locally, or the manual "Visual baseline" workflow, which renders them on the CI runner and uploads them. Updated images are reviewed in the PR like code.
+- Runs on Linux in CI, so font rendering is stable. Snapshots change only on purpose: `npm run test:visual:update` locally, or the "Visual baseline" workflow, which renders them on the CI runner: push a commit with `[visual-baseline]` in its message to a branch (not `main`) and the images are committed back to it; run by hand, they are uploaded as an artifact. Pixels from another machine's Chromium differ by a few per cent on the phone layout, so the committed baseline always comes from the runner. Updated images are reviewed in the PR like code.
 - Required before splitting `tokens.css` ([IMP-09](IMPROVEMENTS.md#imp-09-split-tokenscss)).
 
 ### L10 Performance budgets
