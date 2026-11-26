@@ -17,7 +17,7 @@ export type ExtractErrorCode =
   | 'no_article'
   | 'network_error';
 
-const EXTRACT_CODES: readonly string[] = [
+export const EXTRACT_CODES: readonly string[] = [
   'method_not_allowed',
   'invalid_request',
   'invalid_url',
@@ -31,17 +31,15 @@ const EXTRACT_CODES: readonly string[] = [
 export class ExtractError extends Error {
   readonly code: ExtractErrorCode | 'unknown';
   readonly status?: number;
-  readonly serverMessage?: string;
 
   constructor(
     code: ExtractErrorCode | 'unknown',
-    details: { status?: number; serverMessage?: string } = {}
+    details: { status?: number } = {}
   ) {
     super(code);
     this.name = 'ExtractError';
     this.code = code;
     this.status = details.status;
-    this.serverMessage = details.serverMessage;
   }
 }
 
@@ -63,7 +61,7 @@ export async function extractArticleFromUrl(
   });
 
   const payload = (await response.json().catch(() => null)) as
-    | (ExtractedArticle & { code?: string; error?: string; status?: number })
+    | (ExtractedArticle & { code?: string; status?: number })
     | null;
 
   if (!response.ok || !payload || !payload.text) {
@@ -72,8 +70,7 @@ export async function extractArticleFromUrl(
         ? (payload.code as ExtractErrorCode)
         : 'unknown';
     throw new ExtractError(code, {
-      status: payload?.status ?? response.status,
-      serverMessage: payload?.error
+      status: payload?.status ?? response.status
     });
   }
 
