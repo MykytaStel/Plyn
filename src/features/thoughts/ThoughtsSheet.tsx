@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useI18n } from '../../i18n';
 import { Plus, Trash2, X } from 'lucide-react';
 import {
   addThoughtNote,
@@ -16,6 +17,7 @@ export function ThoughtsSheet({
   currentDocTitle,
   onClose
 }: ThoughtsSheetProps) {
+  const t = useI18n().m.thoughts;
   const [draft, setDraft] = useState('');
   const thoughts = useLiveQuery(
     () => db.thoughts.orderBy('createdAt').reverse().toArray(),
@@ -38,15 +40,15 @@ export function ThoughtsSheet({
       <div className="sheet-handle" aria-hidden="true" />
       <div className="sheet-header">
         <div>
-          <h2 id="thoughts-title">Парковка думок</h2>
+          <h2 id="thoughts-title">{t.title}</h2>
           <p className="setting-hint">
-            Запиши сторонню думку за 2 секунди й повертайся до читання
+            {t.subtitle}
           </p>
         </div>
         <button
           className="icon-btn"
           type="button"
-          aria-label="Закрити парковку думок"
+          aria-label={t.close}
           onClick={onClose}
         >
           <X size={20} />
@@ -57,7 +59,7 @@ export function ThoughtsSheet({
         <input
           type="text"
           className="url-input"
-          placeholder="Наприклад: відповісти на лист, купити каву..."
+          placeholder={t.placeholder}
           maxLength={280}
           autoFocus
           value={draft}
@@ -73,15 +75,14 @@ export function ThoughtsSheet({
           onClick={() => void handleAdd()}
         >
           <Plus size={15} />
-          <span>Записати</span>
+          <span>{t.save}</span>
         </button>
       </div>
 
       <div className="thoughts-list">
         {!thoughts || thoughts.length === 0 ? (
           <p className="bookmarks-empty">
-            Тут порожньо. Коли під час читання вирине стороння думка — натисни
-            іконку лампочки або клавішу N.
+            {t.empty}
           </p>
         ) : (
           thoughts.map((item) => (
@@ -90,14 +91,14 @@ export function ThoughtsSheet({
                 <p className="thought-item-text">{item.text}</p>
                 {item.docTitle && (
                   <span className="thought-item-meta">
-                    Під час: {item.docTitle}
+                    {t.during} {item.docTitle}
                   </span>
                 )}
               </div>
               <button
                 type="button"
                 className="library-action-btn"
-                aria-label="Видалити думку"
+                aria-label={t.delete}
                 onClick={() => void removeThoughtNote(item.id)}
               >
                 <Trash2 size={15} />

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
 import type { PlynDocument } from '../../core/models/types';
 import { estimateReadingMinutes } from '../../core/reading/readingStats';
+import { useI18n } from '../../i18n';
 
 interface LibraryCardProps {
   doc: PlynDocument;
@@ -16,6 +17,8 @@ export function LibraryCard({
   onRename,
   onDelete
 }: LibraryCardProps) {
+  const i18n = useI18n();
+  const t = i18n.m.libraryCard;
   const [isEditing, setIsEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(doc.title);
 
@@ -38,7 +41,7 @@ export function LibraryCard({
       className="library-card"
       tabIndex={isEditing ? -1 : 0}
       role="button"
-      aria-label={`Відкрити ${doc.title}`}
+      aria-label={i18n.format(t.open, { title: doc.title })}
       onClick={() => {
         if (!isEditing) onOpen(doc);
       }}
@@ -73,7 +76,7 @@ export function LibraryCard({
             <button
               type="button"
               className="library-action-btn"
-              aria-label="Зберегти назву"
+              aria-label={t.saveTitle}
               onClick={commitRename}
             >
               <Check size={16} />
@@ -81,7 +84,7 @@ export function LibraryCard({
             <button
               type="button"
               className="library-action-btn"
-              aria-label="Скасувати"
+              aria-label={i18n.m.common.cancel}
               onClick={() => {
                 setDraftTitle(doc.title);
                 setIsEditing(false);
@@ -97,8 +100,8 @@ export function LibraryCard({
               <button
                 type="button"
                 className="library-action-btn"
-                aria-label={`Перейменувати ${doc.title}`}
-                title="Перейменувати"
+                aria-label={i18n.format(t.rename, { title: doc.title })}
+                title={t.renameHint}
                 onClick={(e) => {
                   e.stopPropagation();
                   setDraftTitle(doc.title);
@@ -110,8 +113,8 @@ export function LibraryCard({
               <button
                 type="button"
                 className="library-action-btn"
-                aria-label={`Видалити ${doc.title}`}
-                title="Видалити з бібліотеки"
+                aria-label={i18n.format(t.delete, { title: doc.title })}
+                title={t.deleteHint}
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(doc.id);
@@ -126,10 +129,18 @@ export function LibraryCard({
 
       <div className="library-card-meta">
         <span>
-          Картка {current + 1} з {total} · {percent}%
+          {i18n.format(t.progress, {
+            current: i18n.number(current + 1),
+            total: i18n.number(total),
+            percent
+          })}
         </span>
-        {estMinutes > 0 && <span>· ~{estMinutes} хв</span>}
-        {bookmarksCount > 0 && <span>· Закладок: {bookmarksCount}</span>}
+        {estMinutes > 0 && (
+          <span>· {i18n.format(i18n.m.common.minutesApprox, { minutes: estMinutes })}</span>
+        )}
+        {bookmarksCount > 0 && (
+          <span>· {i18n.format(t.bookmarks, { count: i18n.number(bookmarksCount) })}</span>
+        )}
       </div>
 
       <div className="library-progress-bar">

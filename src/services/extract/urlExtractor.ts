@@ -1,7 +1,48 @@
+import { PlynError } from '../../core/errors';
+
 export interface ExtractedArticle {
   title: string;
   text: string;
   sourceUrl: string;
+}
+
+/** Mirrors worker/index.ts (the worker is outside the app's tsconfig). */
+export type ExtractErrorCode =
+  | 'method_not_allowed'
+  | 'invalid_request'
+  | 'invalid_url'
+  | 'unsupported_protocol'
+  | 'blocked_host'
+  | 'upstream_error'
+  | 'no_article'
+  | 'network_error';
+
+const EXTRACT_CODES: readonly string[] = [
+  'method_not_allowed',
+  'invalid_request',
+  'invalid_url',
+  'unsupported_protocol',
+  'blocked_host',
+  'upstream_error',
+  'no_article',
+  'network_error'
+];
+
+export class ExtractError extends Error {
+  readonly code: ExtractErrorCode | 'unknown';
+  readonly status?: number;
+  readonly serverMessage?: string;
+
+  constructor(
+    code: ExtractErrorCode | 'unknown',
+    details: { status?: number; serverMessage?: string } = {}
+  ) {
+    super(code);
+    this.name = 'ExtractError';
+    this.code = code;
+    this.status = details.status;
+    this.serverMessage = details.serverMessage;
+  }
 }
 
 /**
@@ -12,7 +53,7 @@ export async function extractArticleFromUrl(
 ): Promise<ExtractedArticle> {
   const url = rawUrl.trim();
   if (!/^https?:\/\//i.test(url)) {
-    throw new Error('Введи повне посилання, що починається з https://');
+    throw new PlynError('url_invalid');
   }
 
   const response = await fetch('/api/extract', {
@@ -22,14 +63,18 @@ export async function extractArticleFromUrl(
   });
 
   const payload = (await response.json().catch(() => null)) as
-    | (ExtractedArticle & { error?: string })
+    | (ExtractedArticle & { code?: string; error?: string; status?: number })
     | null;
 
   if (!response.ok || !payload || !payload.text) {
-    throw new Error(
-      payload?.error ||
-        'Не вдалося завантажити статтю. Спробуй скопіювати текст вручну.'
-    );
+    const code =
+      payload?.code && EXTRACT_CODES.includes(payload.code)
+        ? (payload.code as ExtractErrorCode)
+        : 'unknown';
+    throw new ExtractError(code, {
+      status: payload?.status ?? response.status,
+      serverMessage: payload?.error
+    });
   }
 
   return payload;

@@ -20,4 +20,12 @@ describe('buildLast7DaysActivity', () => {
     expect(result.weeklyTotal).toBe(20);
     expect(result.maxDay).toBe(12);
   });
+
+  it('returns dates, not localized labels', () => {
+    const ref = new Date('2026-11-26T12:00:00');
+    const { days } = buildLast7DaysActivity({}, ref);
+    expect(toLocalDateKey(days[6].date)).toBe('2026-11-26');
+    expect(toLocalDateKey(days[0].date)).toBe('2026-11-20');
+    expect('label' in days[0]).toBe(false);
+  });
 });

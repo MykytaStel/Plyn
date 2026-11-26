@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { tokenizeWithAnchors } from '../../core/anchor/anchor';
+import { detectContentLanguage } from '../../core/language/detectContentLanguage';
 import type { ReadingCard } from '../../core/models/types';
 import { splitCardIntoSentences } from '../../core/splitter/sentences';
+import { useI18n } from '../../i18n';
 import { speakSingleWord } from '../../services/speech/tts';
 
 interface CardSlideProps {
@@ -54,6 +56,7 @@ export function CardSlide({
   activeSentenceIndex,
   isWithinWindow
 }: CardSlideProps) {
+  const i18n = useI18n();
   const sentences = useMemo(
     () =>
       isWithinWindow && sentenceFocus
@@ -67,7 +70,11 @@ export function CardSlide({
   );
 
   return (
-    <article className="card-slide" data-index={card.index}>
+    <article
+      className="card-slide"
+      data-index={card.index}
+      lang={detectContentLanguage(card.text)}
+    >
       {isWithinWindow && (
         <div className="card-body">
           {previousSnippet && (
@@ -91,10 +98,10 @@ export function CardSlide({
               : renderInteractiveWords(card.text, anchorMode)}
           </p>
           {card.index === 0 && total > 1 && (
-            <div className="card-hint">
+            <div className="card-hint" lang={i18n.locale}>
               {sentenceFocus
-                ? 'Тапни або натисни Пробіл для наступного речення · 2× тап по слову — озвучити'
-                : 'Свайпни вгору або натисни Пробіл · 2× тап по слову — озвучити'}
+                ? i18n.m.reader.hintSentenceFocus
+                : i18n.m.reader.hintSwipe}
             </div>
           )}
         </div>

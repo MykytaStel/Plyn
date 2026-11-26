@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Sparkles, X } from 'lucide-react';
 import { tokenizeWithAnchors } from '../../core/anchor/anchor';
 import type { ThemeMode } from '../../core/models/types';
+import { useI18n } from '../../i18n';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 const ONBOARDING_KEY = 'plyn_onboarding_done_v1';
@@ -27,19 +28,14 @@ interface OnboardingModalProps {
   onTrySample: () => void;
 }
 
-const DEMO_PREVIEW =
-  'Режим «Якір» підсвічує початок кожного слова, щоб погляд не ковзав по рядках.';
-
-const QUICK_THEMES: Array<{ value: ThemeMode; label: string }> = [
-  { value: 'dark', label: 'Темна' },
-  { value: 'paper', label: 'Папір' },
-  { value: 'mint', label: 'М’ята' }
-];
+const QUICK_THEMES: ThemeMode[] = ['dark', 'paper', 'mint'];
 
 export function OnboardingModal({
   onClose,
   onTrySample
 }: OnboardingModalProps) {
+  const i18n = useI18n();
+  const t = i18n.m.onboarding;
   const [step, setStep] = useState(0);
   const { theme, anchorMode, updateSettings } = useSettingsStore();
 
@@ -49,7 +45,7 @@ export function OnboardingModal({
     if (startSample) onTrySample();
   };
 
-  const tokens = anchorMode ? tokenizeWithAnchors(DEMO_PREVIEW) : null;
+  const tokens = anchorMode ? tokenizeWithAnchors(t.demoPreview) : null;
 
   return (
     <>
@@ -65,7 +61,7 @@ export function OnboardingModal({
         aria-labelledby="onboarding-title"
       >
         <div className="onboarding-top">
-          <div className="onboarding-dots" aria-label={`Крок ${step + 1} з 3`}>
+          <div className="onboarding-dots" aria-label={i18n.format(t.stepOf, { step: step + 1, total: 3 })}>
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
@@ -76,7 +72,7 @@ export function OnboardingModal({
           <button
             type="button"
             className="icon-btn"
-            aria-label="Пропустити знайомство"
+            aria-label={t.skipLabel}
             onClick={() => finish(false)}
           >
             <X size={18} />
@@ -86,21 +82,19 @@ export function OnboardingModal({
         {step === 0 && (
           <div className="onboarding-body">
             <span className="onboarding-kicker">
-              <Sparkles size={14} /> Знайомство · 1 з 3
+              <Sparkles size={14} /> {t.step1.kicker}
             </span>
-            <h2 id="onboarding-title">Читай без «стін тексту»</h2>
+            <h2 id="onboarding-title">{t.step1.title}</h2>
             <p className="onboarding-copy">
-              Plyn розбиває довгі статті, конспекти й книги <code>.epub</code>{' '}
-              на короткі картки. Мозок бачить чіткі межі та реальний прогрес —
-              очі втомлюються значно менше.
+              {t.step1.before} <code>.epub</code> {t.step1.after}
             </p>
           </div>
         )}
 
         {step === 1 && (
           <div className="onboarding-body">
-            <span className="onboarding-kicker">Налаштуй під себе · 2 з 3</span>
-            <h2 id="onboarding-title">Спокійні теми та «Якір»</h2>
+            <span className="onboarding-kicker">{t.step2.kicker}</span>
+            <h2 id="onboarding-title">{t.step2.title}</h2>
             <div className={`onboarding-preview ${anchorMode ? 'anchor-active' : ''}`}>
               <p>
                 {tokens
@@ -114,19 +108,19 @@ export function OnboardingModal({
                         <span key={idx}>{token.value}</span>
                       )
                     )
-                  : DEMO_PREVIEW}
+                  : t.demoPreview}
               </p>
             </div>
             <div className="onboarding-controls">
               <div className="segmented">
-                {QUICK_THEMES.map((item) => (
+                {QUICK_THEMES.map((value) => (
                   <button
-                    key={item.value}
+                    key={value}
                     type="button"
-                    className={`seg-btn ${theme === item.value ? 'is-active' : ''}`}
-                    onClick={() => updateSettings({ theme: item.value })}
+                    className={`seg-btn ${theme === value ? 'is-active' : ''}`}
+                    onClick={() => updateSettings({ theme: value })}
                   >
-                    {item.label}
+                    {i18n.m.settings.themes[value]}
                   </button>
                 ))}
               </div>
@@ -135,7 +129,7 @@ export function OnboardingModal({
                 className="btn btn-secondary btn-sm"
                 onClick={() => updateSettings({ anchorMode: !anchorMode })}
               >
-                {anchorMode ? 'Вимкнути «Якір»' : 'Спробувати «Якір»'}
+                {anchorMode ? t.step2.anchorOff : t.step2.anchorOn}
               </button>
             </div>
           </div>
@@ -143,12 +137,10 @@ export function OnboardingModal({
 
         {step === 2 && (
           <div className="onboarding-body">
-            <span className="onboarding-kicker">Готово до старту · 3 з 3</span>
-            <h2 id="onboarding-title">Свайпай або тисни Пробіл</h2>
+            <span className="onboarding-kicker">{t.step3.kicker}</span>
+            <h2 id="onboarding-title">{t.step3.title}</h2>
             <p className="onboarding-copy">
-              На iPhone свайпай картки вгору, на MacBook натискай{' '}
-              <strong>Space</strong> чи стрілки. У налаштуваннях також є шрифт
-              для дислексії, «Фокус-речення», озвучка та «Чистий екран».
+              {t.step3.before} <strong>Space</strong> {t.step3.after}
             </p>
           </div>
         )}
@@ -161,14 +153,14 @@ export function OnboardingModal({
                 className="btn btn-ghost btn-sm"
                 onClick={() => finish(false)}
               >
-                Пропустити
+                {t.skip}
               </button>
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
                 onClick={() => setStep((s) => s + 1)}
               >
-                <span>Далі</span>
+                <span>{t.next}</span>
                 <ArrowRight size={15} />
               </button>
             </>
@@ -179,14 +171,14 @@ export function OnboardingModal({
                 className="btn btn-secondary btn-sm"
                 onClick={() => finish(false)}
               >
-                До свого тексту
+                {t.ownText}
               </button>
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
                 onClick={() => finish(true)}
               >
-                Спробувати приклад
+                {t.trySample}
               </button>
             </>
           )}

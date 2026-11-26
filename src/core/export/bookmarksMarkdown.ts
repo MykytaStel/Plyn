@@ -9,10 +9,12 @@ export function formatBookmarksAsMarkdown(input: {
   cards: ReadingCard[];
   bookmarkOffsets: number[];
   bookmarkNotes?: Record<string, string>;
+  /** Localized headings; `card` contains `{n}`. */
+  labels: { bookmarks: string; card: string; note: string };
 }): string {
-  const { title, cards, bookmarkOffsets, bookmarkNotes = {} } = input;
+  const { title, cards, bookmarkOffsets, bookmarkNotes = {}, labels } = input;
   const seenCards = new Set<number>();
-  const lines: string[] = [`# ${title} — Закладки`, ''];
+  const lines: string[] = [`# ${title} — ${labels.bookmarks}`, ''];
 
   const sortedOffsets = [...bookmarkOffsets].sort((a, b) => a - b);
 
@@ -24,13 +26,13 @@ export function formatBookmarksAsMarkdown(input: {
     const card = cards[idx];
     if (!card) continue;
 
-    lines.push(`### Картка ${idx + 1}`);
+    lines.push(`### ${labels.card.replace('{n}', String(idx + 1))}`);
     lines.push(`> ${card.text}`);
 
     const note = (bookmarkNotes[String(offset)] || '').trim();
     if (note) {
       lines.push('');
-      lines.push(`**Нотатка:** ${note}`);
+      lines.push(`**${labels.note}:** ${note}`);
     }
     lines.push('');
   }

@@ -28,6 +28,8 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { SettingsSheet } from '../settings/SettingsSheet';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { BookmarksSheet } from './BookmarksSheet';
+import { currentI18n, useI18n } from '../../i18n';
+import { readerToggleFor } from './shortcuts';
 import { CardSlide } from './CardSlide';
 import { DoneSlide } from './DoneSlide';
 
@@ -45,6 +47,10 @@ function getPreviousTailSnippet(prevText?: string): string | undefined {
 }
 
 export function ReaderView() {
+  const i18n = useI18n();
+  const t = i18n.m.reader;
+  /** Effects and handlers read copy at call time, so a language switch applies immediately. */
+  const toasts = () => currentI18n().m.reader.toasts;
   const activeDoc = useReaderStore((s) => s.activeDoc);
   const cards = useReaderStore((s) => s.cards);
   const currentIndex = useReaderStore((s) => s.currentIndex);
@@ -119,7 +125,12 @@ export function ReaderView() {
   useEffect(() => {
     if (recentUnlocks.length === 0) return;
     const next = recentUnlocks[0];
-    showToast(`Нова нагорода: «${next.title}»`, true);
+    showToast(
+      currentI18n().format(toasts().newReward, {
+        title: currentI18n().m.achievements[next.id].title
+      }),
+      true
+    );
     shiftRecentUnlock();
   }, [recentUnlocks, shiftRecentUnlock, showToast]);
 
@@ -127,7 +138,7 @@ export function ReaderView() {
     if (microGoalTarget && microGoalCompleted && !microGoalNotifiedRef.current) {
       microGoalNotifiedRef.current = true;
       showToast(
-        `${microGoalTarget} карток пройдено! Можеш зупинитись або читати далі`,
+        currentI18n().plural(toasts().goalReached, microGoalTarget),
         true
       );
     }
@@ -143,7 +154,7 @@ export function ReaderView() {
     const count = sessionCardsSeenRef.current.size;
     if (count > 1 && count % EYE_BREAK_INTERVAL === 0) {
       showToast(
-        'Пауза для очей (20-20-20): відведи погляд у далечінь на 10 секунд',
+        toasts().eyeBreak,
         true
       );
     }
@@ -289,11 +300,11 @@ export function ReaderView() {
       if (remainingMs <= 0) {
         void completeFocusTimer();
         setTimerLabel('');
-        showToast('Час фокусу завершено — можеш зробити паузу або читати далі');
+        showToast(toasts().timerDone);
         return;
       }
       const mins = Math.max(1, Math.ceil(remainingMs / 60000));
-      setTimerLabel(`~${mins} хв`);
+      setTimerLabel(currentI18n().format(currentI18n().m.common.minutesApprox, { minutes: mins }));
     };
 
     tick();
@@ -306,11 +317,11 @@ export function ReaderView() {
       if (enabled) {
         const started = startBrownNoise();
         setBrownNoiseOn(started);
-        if (started) showToast('М’який коричневий шум увімкнено');
+        if (started) showToast(toasts().noiseOn);
       } else {
         stopBrownNoise();
         setBrownNoiseOn(false);
-        showToast('Коричневий шум вимкнено');
+        showToast(toasts().noiseOff);
       }
     },
     [showToast]
@@ -322,7 +333,7 @@ export function ReaderView() {
       const next = !prev;
       if (next) {
         void recordZenModeUsed();
-        showToast('Чистий екран — тапни по картці або натисни Z, щоб повернути панель');
+        showToast(toasts().zenOn);
       }
       return next;
     });
@@ -330,7 +341,7 @@ export function ReaderView() {
 
   const handleToggleBookmark = useCallback(async () => {
     const added = await toggleBookmarkAtCurrent();
-    showToast(added ? 'Картку додано в закладки' : 'Закладку прибрано');
+    showToast(added ? toasts().bookmarkAdded : toasts().bookmarkRemoved);
   }, [toggleBookmarkAtCurrent, showToast]);
 
   const handleToggleSpeech = useCallback(() => {
@@ -374,28 +385,25 @@ export function ReaderView() {
       } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'k') {
         e.preventDefault();
         retreatStep();
-      } else if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'ф') {
+      } else {
+        const toggle = readerToggleFor(e);
+        if (!toggle) return;
         e.preventDefault();
-        updateSettings({ anchorMode: !anchorMode });
-      } else if (e.key.toLowerCase() === 'f' || e.key.toLowerCase() === 'а') {
-        e.preventDefault();
-        updateSettings({ sentenceFocus: !sentenceFocus });
-        showToast(
-          !sentenceFocus ? 'Фокус-речення увімкнено' : 'Фокус-речення вимкнено'
-        );
-      } else if (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'и') {
-        e.preventDefault();
-        void handleToggleBookmark();
-      } else if (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'і') {
-        e.preventDefault();
-        handleToggleSpeech();
-      } else if (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'я') {
-        e.preventDefault();
-        handleToggleZen();
-      } else if (e.key.toLowerCase() === 'n' || e.key.toLowerCase() === 'т') {
-        e.preventDefault();
-        setShowScrubber(false);
-        setSheet('thoughts');
+        if (toggle === 'anchor') {
+          updateSettings({ anchorMode: !anchorMode });
+        } else if (toggle === 'sentenceFocus') {
+          updateSettings({ sentenceFocus: !sentenceFocus });
+          showToast(!sentenceFocus ? toasts().focusOn : toasts().focusOff);
+        } else if (toggle === 'bookmark') {
+          void handleToggleBookmark();
+        } else if (toggle === 'speech') {
+          handleToggleSpeech();
+        } else if (toggle === 'zen') {
+          handleToggleZen();
+        } else if (toggle === 'thoughts') {
+          setShowScrubber(false);
+          setSheet('thoughts');
+        }
       }
     };
 
@@ -447,14 +455,14 @@ export function ReaderView() {
   const handleTimerSelect = (minutes: number) => {
     setFocusTimer(minutes);
     if (minutes > 0) {
-      showToast(`М’який таймер на ${minutes} хв увімкнено`);
+      showToast(currentI18n().format(toasts().timerOn, { minutes }));
     }
   };
 
   return (
     <section
       className={`view view-reader ${zenMode ? 'is-zen' : ''}`}
-      aria-label="Режим читання"
+      aria-label={t.mainLabel}
     >
       <div
         className="progress-track"
@@ -466,7 +474,7 @@ export function ReaderView() {
           setZenMode(false);
           setShowScrubber((v) => !v);
         }}
-        title="Натисни для швидкого переходу по картках"
+        title={t.progressHint}
       >
         <div
           className="progress-fill"
@@ -478,14 +486,14 @@ export function ReaderView() {
         <button
           className="icon-btn icon-btn-text"
           type="button"
-          aria-label="Повернутися до бібліотеки"
+          aria-label={t.back}
           onClick={() => {
             stopBrownNoise();
             void closeReader();
           }}
         >
           <ChevronLeft size={20} />
-          <span>Бібліотека</span>
+          <span>{t.library}</span>
         </button>
 
         <div className="reader-center">
@@ -493,23 +501,26 @@ export function ReaderView() {
             type="button"
             className="counter-btn"
             aria-expanded={showScrubber}
-            title="Швидкий перехід по картках"
+            title={t.counterHint}
             onClick={() => setShowScrubber((v) => !v)}
           >
             <span>
-              {isDoneVisible ? 'Готово' : `${currentIndex + 1} / ${total}`}
+              {isDoneVisible ? t.done : `${currentIndex + 1} / ${total}`}
             </span>
             {!isDoneVisible && remainingMins > 0 && (
-              <span className="counter-eta">· ~{remainingMins} хв</span>
+              <span className="counter-eta">
+                ·{' '}
+                {i18n.format(i18n.m.common.minutesApprox, { minutes: remainingMins })}
+              </span>
             )}
           </button>
           {microGoalTarget && !microGoalCompleted && (
-            <span className="timer-pill" title="Мікро-ціль цієї сесії">
-              Ціль {microGoalCount}/{microGoalTarget}
+            <span className="timer-pill" title={t.goalHint}>
+              {i18n.format(t.goal, { count: microGoalCount, target: microGoalTarget })}
             </span>
           )}
           {timerLabel && (
-            <span className="timer-pill" title="М’який таймер фокусу">
+            <span className="timer-pill" title={t.timerHint}>
               {timerLabel}
             </span>
           )}
@@ -519,8 +530,8 @@ export function ReaderView() {
           <button
             className="icon-btn"
             type="button"
-            aria-label="Запаркувати думку"
-            title="Парковка думок (клавіша N)"
+            aria-label={t.parkThought}
+            title={t.parkThoughtHint}
             onClick={() => {
               setShowScrubber(false);
               setSheet('thoughts');
@@ -534,8 +545,8 @@ export function ReaderView() {
               className="icon-btn"
               type="button"
               aria-pressed={isSpeaking}
-              aria-label={isSpeaking ? 'Зупинити озвучку' : 'Озвучити картку'}
-              title="Озвучити картку (клавіша S)"
+              aria-label={isSpeaking ? t.stopSpeech : t.speak}
+              title={t.speakHint}
               onClick={handleToggleSpeech}
             >
               {isSpeaking ? <Square size={15} /> : <Volume2 size={17} />}
@@ -547,9 +558,9 @@ export function ReaderView() {
             type="button"
             aria-pressed={isCurrentBookmarked}
             aria-label={
-              isCurrentBookmarked ? 'Прибрати закладку' : 'Додати закладку'
+              isCurrentBookmarked ? t.bookmarkRemove : t.bookmarkAdd
             }
-            title="Закладка (клавіша B)"
+            title={t.bookmarkHint}
             onClick={() => void handleToggleBookmark()}
           >
             <Bookmark
@@ -562,8 +573,8 @@ export function ReaderView() {
             <button
               className="icon-btn icon-btn-badge"
               type="button"
-              aria-label="Список закладок"
-              title="Усі закладки"
+              aria-label={t.bookmarksList}
+              title={t.bookmarksListHint}
               onClick={() => {
                 setShowScrubber(false);
                 setSheet('bookmarks');
@@ -577,12 +588,13 @@ export function ReaderView() {
             className="icon-btn"
             type="button"
             aria-pressed={anchorMode}
-            aria-label="Режим Якір"
-            title="Режим Якір (клавіша A)"
+            aria-label={t.anchor}
+            title={t.anchorHint}
             onClick={() => updateSettings({ anchorMode: !anchorMode })}
           >
             <span className="anchor-icon-glyph">
-              <strong>Я</strong>к
+              <strong>{t.anchorButton.bold}</strong>
+              {t.anchorButton.rest}
             </span>
           </button>
 
@@ -590,8 +602,8 @@ export function ReaderView() {
             className="icon-btn"
             type="button"
             aria-pressed={zenMode}
-            aria-label="Режим Чистий екран"
-            title="Чистий екран (клавіша Z)"
+            aria-label={t.zen}
+            title={t.zenHint}
             onClick={handleToggleZen}
           >
             <EyeOff size={16} />
@@ -600,8 +612,8 @@ export function ReaderView() {
           <button
             className="icon-btn"
             type="button"
-            aria-label="Налаштування вигляду"
-            title="Налаштування"
+            aria-label={t.settings}
+            title={t.settingsHint}
             onClick={() => {
               setShowScrubber(false);
               setSheet('settings');
@@ -613,11 +625,14 @@ export function ReaderView() {
       </header>
 
       {showScrubber && !zenMode && total > 1 && (
-        <div className="scrubber-bar" aria-label="Швидкий перехід по тексту">
+        <div className="scrubber-bar" aria-label={t.scrubberLabel}>
           <div className="scrubber-meta">
-            <span>Швидкий перехід</span>
+            <span>{t.scrubberTitle}</span>
             <span>
-              Картка {currentIndex + 1} з {total}
+              {i18n.format(t.cardOf, {
+                current: i18n.number(currentIndex + 1),
+                total: i18n.number(total)
+              })}
             </span>
           </div>
           <input
@@ -635,7 +650,7 @@ export function ReaderView() {
         ref={feedRef}
         className={`cards-feed ${anchorMode ? 'anchor-active' : ''}`}
         tabIndex={0}
-        aria-label="Картки тексту"
+        aria-label={t.cardsLabel}
         onClick={(e) => {
           const target = e.target as HTMLElement;
           if (target.closest('button')) return;
@@ -685,12 +700,12 @@ export function ReaderView() {
         </div>
       )}
 
-      <div className="desktop-nav" aria-label="Навігація по картках">
+      <div className="desktop-nav" aria-label={t.navLabel}>
         <button
           className="nav-pill"
           type="button"
-          aria-label="Попередня картка"
-          title="Попередня (↑)"
+          aria-label={t.prev}
+          title={t.prevHint}
           onClick={retreatStep}
         >
           <ChevronUp size={18} />
@@ -698,8 +713,8 @@ export function ReaderView() {
         <button
           className="nav-pill"
           type="button"
-          aria-label="Наступна картка"
-          title="Наступна (Space або ↓)"
+          aria-label={t.next}
+          title={t.nextHint}
           onClick={advanceStep}
         >
           <ChevronDown size={18} />
@@ -720,7 +735,9 @@ export function ReaderView() {
           onToggleBrownNoise={handleToggleBrownNoise}
           onCardLengthChange={handleCardLengthChange}
           onTimerSelect={handleTimerSelect}
-          onPresetApplied={(label) => showToast(`Увімкнено режим «${label}»`)}
+          onPresetApplied={(label) =>
+            showToast(currentI18n().format(toasts().presetOn, { label }))
+          }
           onClose={() => setSheet('none')}
         />
       )}

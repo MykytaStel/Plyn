@@ -1,4 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import { PlynError } from '../errors';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -30,9 +31,7 @@ export async function parsePdfFile(file: File): Promise<ParsedPdf> {
 
   const fullText = pages.join('\n\n').trim();
   if (!fullText) {
-    throw new Error(
-      'У цьому PDF немає текстового шару (можливо, це відскановані зображення).'
-    );
+    throw new PlynError('pdf_no_text');
   }
 
   const fallbackTitle = file.name.replace(/\.pdf$/i, '');

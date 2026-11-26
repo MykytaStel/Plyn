@@ -17,12 +17,12 @@ export function cleanMarkdown(md: string): string {
 /**
  * Генерує короткий заголовок із першого непорожнього рядка тексту.
  */
-export function deriveTitle(text: string): string {
+export function deriveTitle(text: string, fallback: string): string {
   const firstLine =
     (text || '')
       .split(/\n+/)
       .map((line) => line.trim())
-      .find(Boolean) || 'Без назви';
+      .find(Boolean) || fallback;
 
   if (firstLine.length <= 54) return firstLine;
   return `${firstLine.slice(0, 51).trimEnd()}…`;

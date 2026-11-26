@@ -23,71 +23,51 @@ export const DEFAULT_PROGRESS_STATS: UserProgressStats = {
 export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: 'first_step',
-    title: 'Перший крок',
-    description: 'Дочитати перший текст до кінця',
     target: 1,
     getProgress: (s) => s.totalDocsCompleted
   },
   {
     id: 'rhythm_50',
-    title: 'У ритмі',
-    description: 'Прочитати 50 карток сумарно',
     target: 50,
     getProgress: (s) => s.totalCardsRead
   },
   {
     id: 'anchor_25',
-    title: 'Свій якір',
-    description: 'Прочитати 25 карток у режимі «Якір»',
     target: 25,
     getProgress: (s) => s.anchorCardsRead
   },
   {
     id: 'zen_reader',
-    title: 'Тиша навколо',
-    description: 'Спробувати режим «Чистий екран» без зайвих кнопок',
     target: 1,
     getProgress: (s) => s.zenModeUsed ?? 0
   },
   {
     id: 'audio_listener',
-    title: 'Слухач',
-    description: 'Прослухати 5 карток через озвучку',
     target: 5,
     getProgress: (s) => s.ttsCardsListened ?? 0
   },
   {
     id: 'thought_hunter',
-    title: 'Мисливець за думками',
-    description: 'Зберегти 5 закладок у текстах',
     target: 5,
     getProgress: (s) => s.totalBookmarksCreated
   },
   {
     id: 'no_rush',
-    title: 'Без поспіху',
-    description: 'Завершити сесію з м’яким таймером фокусу',
     target: 1,
     getProgress: (s) => s.timerSessionsCompleted
   },
   {
     id: 'bookworm_3',
-    title: 'Власна полиця',
-    description: 'Дочитати 3 тексти до кінця',
     target: 3,
     getProgress: (s) => s.totalDocsCompleted
   },
   {
     id: 'rhythm_250',
-    title: 'Спокійний темп',
-    description: 'Прочитати 250 карток сумарно',
     target: 250,
     getProgress: (s) => s.totalCardsRead
   },
   {
     id: 'rhythm_1000',
-    title: 'Глибокий фокус',
-    description: 'Прочитати 1 000 карток сумарно',
     target: 1000,
     getProgress: (s) => s.totalCardsRead
   }

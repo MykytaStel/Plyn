@@ -15,6 +15,7 @@ import {
   updateDocument
 } from '../services/storage/db';
 import { stopSpeaking } from '../services/speech/tts';
+import { currentI18n } from '../i18n';
 
 interface ReaderState {
   activeDoc: PlynDocument | null;
@@ -109,7 +110,8 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     const doc = await createDocument({
       title,
       text: trimmed,
-      totalCards: cards.length
+      totalCards: cards.length,
+      fallbackTitle: currentI18n().m.common.untitled
     });
 
     set({

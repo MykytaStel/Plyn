@@ -10,6 +10,7 @@ import type {
   UserProgressStats
 } from '../../core/models/types';
 import { deriveTitle } from '../../core/parsers/markdown';
+import { currentI18n } from '../../i18n';
 import { toLocalDateKey } from '../../core/reading/weeklyActivity';
 
 class PlynDatabase extends Dexie {
@@ -47,12 +48,14 @@ export async function createDocument(input: {
   title?: string;
   text: string;
   totalCards: number;
+  /** Localized title for text whose first line is empty. */
+  fallbackTitle: string;
 }): Promise<PlynDocument> {
   const now = Date.now();
   const doc: PlynDocument = {
     id: generateId('doc'),
     schemaVersion: 1,
-    title: input.title?.trim() || deriveTitle(input.text),
+    title: input.title?.trim() || deriveTitle(input.text, input.fallbackTitle),
     text: input.text,
     charOffset: 0,
     currentIndex: 0,
@@ -184,7 +187,8 @@ export async function migrateLegacyLocalSession(): Promise<void> {
     if (!existing.some((d) => d.text === legacy.text)) {
       await createDocument({
         text: legacy.text,
-        totalCards: legacy.totalCards ?? 1
+        totalCards: legacy.totalCards ?? 1,
+        fallbackTitle: currentI18n().m.common.untitled
       });
     }
     window.localStorage.removeItem('plyn_session_v1');

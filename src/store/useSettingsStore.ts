@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { ThemeMode, UserSettings } from '../core/models/types';
 import {
   loadUserSettings,
+  mergeSettings,
   saveUserSettings
 } from '../services/storage/settingsStorage';
 
@@ -20,7 +21,13 @@ interface SettingsState extends UserSettings {
   applyToDom: () => void;
 }
 
+/** Strips store actions, leaving only persisted settings. */
+function pickSettings(state: UserSettings): UserSettings {
+  return mergeSettings(state, {});
+}
+
 function syncDom(settings: UserSettings): void {
+  document.documentElement.lang = settings.language;
   document.documentElement.dataset.theme = settings.theme;
   document.documentElement.dataset.font = settings.fontFamily;
   document.documentElement.dataset.spacing = settings.letterSpacing;
@@ -44,20 +51,7 @@ const initial = loadUserSettings();
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   ...initial,
   updateSettings: (patch) => {
-    const next: UserSettings = {
-      theme: patch.theme ?? get().theme,
-      fontFamily: patch.fontFamily ?? get().fontFamily,
-      letterSpacing: patch.letterSpacing ?? get().letterSpacing,
-      columnWidth: patch.columnWidth ?? get().columnWidth,
-      fontSize: patch.fontSize ?? get().fontSize,
-      lineHeight: patch.lineHeight ?? get().lineHeight,
-      anchorMode: patch.anchorMode ?? get().anchorMode,
-      sentenceFocus: patch.sentenceFocus ?? get().sentenceFocus,
-      eyeBreakReminder: patch.eyeBreakReminder ?? get().eyeBreakReminder,
-      ttsRate: patch.ttsRate ?? get().ttsRate,
-      ttsAutoAdvance: patch.ttsAutoAdvance ?? get().ttsAutoAdvance,
-      cardLength: patch.cardLength ?? get().cardLength
-    };
+    const next = mergeSettings(pickSettings(get()), patch);
     saveUserSettings(next);
     syncDom(next);
     set(next);
@@ -69,33 +63,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     get().updateSettings({ theme: nextTheme });
   },
   applyToDom: () => {
-    const {
-      theme,
-      fontFamily,
-      letterSpacing,
-      columnWidth,
-      fontSize,
-      lineHeight,
-      anchorMode,
-      sentenceFocus,
-      eyeBreakReminder,
-      ttsRate,
-      ttsAutoAdvance,
-      cardLength
-    } = get();
-    syncDom({
-      theme,
-      fontFamily,
-      letterSpacing,
-      columnWidth,
-      fontSize,
-      lineHeight,
-      anchorMode,
-      sentenceFocus,
-      eyeBreakReminder,
-      ttsRate,
-      ttsAutoAdvance,
-      cardLength
-    });
+    syncDom(pickSettings(get()));
   }
 }));

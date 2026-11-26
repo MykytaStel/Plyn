@@ -1,11 +1,10 @@
 export interface DayActivity {
   dateKey: string;
-  label: string;
+  /** Noon local time of that day; the UI formats the weekday. */
+  date: Date;
   cardsRead: number;
   isToday: boolean;
 }
-
-const SHORT_DAYS_UK = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
 export function toLocalDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -37,7 +36,7 @@ export function buildLast7DaysActivity(
 
     days.push({
       dateKey: key,
-      label: SHORT_DAYS_UK[d.getDay()],
+      date: d,
       cardsRead: count,
       isToday: offset === 0
     });

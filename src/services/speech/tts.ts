@@ -3,6 +3,11 @@
  * з підтримкою швидкості та безпечного авто-переходу.
  */
 
+import {
+  contentLanguageToSpeechTag,
+  detectContentLanguage
+} from '../../core/language/detectContentLanguage';
+
 let currentSessionId = 0;
 
 export function isTtsSupported(): boolean {
@@ -10,9 +15,7 @@ export function isTtsSupported(): boolean {
 }
 
 function detectLanguage(text: string): string {
-  const cyrillicCount = (text.match(/[А-Яа-яІіЇїЄєҐґ]/g) || []).length;
-  const latinCount = (text.match(/[A-Za-z]/g) || []).length;
-  return cyrillicCount >= latinCount ? 'uk-UA' : 'en-US';
+  return contentLanguageToSpeechTag(detectContentLanguage(text));
 }
 
 export function stopSpeaking(): void {

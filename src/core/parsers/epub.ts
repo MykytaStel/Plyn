@@ -1,4 +1,5 @@
 import { strFromU8, unzipSync } from 'fflate';
+import { PlynError } from '../errors';
 
 export interface ParsedEpub {
   title: string;
@@ -50,14 +51,14 @@ export async function parseEpubFile(file: File): Promise<ParsedEpub> {
 
   const containerBytes = files['META-INF/container.xml'];
   if (!containerBytes) {
-    throw new Error('Некоректний EPUB-файл (відсутній container.xml)');
+    throw new PlynError('epub_invalid');
   }
 
   const parser = new DOMParser();
   const containerDoc = parser.parseFromString(strFromU8(containerBytes), 'application/xml');
   const opfPath = containerDoc.querySelector('rootfile')?.getAttribute('full-path');
   if (!opfPath || !files[opfPath]) {
-    throw new Error('Не знайдено OPF-маніфест усередині EPUB');
+    throw new PlynError('epub_no_manifest');
   }
 
   const opfDoc = parser.parseFromString(strFromU8(files[opfPath]), 'application/xml');
@@ -91,7 +92,7 @@ export async function parseEpubFile(file: File): Promise<ParsedEpub> {
 
   const fullText = sections.join('\n\n').trim();
   if (!fullText) {
-    throw new Error('Не вдалося витягти текст із цього EPUB');
+    throw new PlynError('epub_no_text');
   }
 
   return { title, text: fullText };

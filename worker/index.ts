@@ -116,6 +116,29 @@ function extractArticleText(html: string): string {
     .trim();
 }
 
+export type ExtractErrorCode =
+  | 'method_not_allowed'
+  | 'invalid_request'
+  | 'invalid_url'
+  | 'unsupported_protocol'
+  | 'blocked_host'
+  | 'upstream_error'
+  | 'no_article'
+  | 'network_error';
+
+/**
+ * `code` is what clients translate. `error` keeps the Ukrainian text for one
+ * release so clients running an older cached service worker still show it.
+ */
+function errorResponse(
+  code: ExtractErrorCode,
+  error: string,
+  status: number,
+  extra: Record<string, unknown> = {}
+): Response {
+  return jsonResponse({ code, error, ...extra }, status);
+}
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -123,9 +146,9 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-async function handleExtract(request: Request): Promise<Response> {
+export async function handleExtract(request: Request): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Метод не підтримується' }, 405);
+    return errorResponse('method_not_allowed', 'Метод не підтримується', 405);
   }
 
   let rawUrl = '';
@@ -133,22 +156,22 @@ async function handleExtract(request: Request): Promise<Response> {
     const data = (await request.json()) as { url?: string };
     rawUrl = (data.url || '').trim();
   } catch {
-    return jsonResponse({ error: 'Некоректний JSON-запит' }, 400);
+    return errorResponse('invalid_request', 'Некоректний JSON-запит', 400);
   }
 
   let parsedUrl: URL;
   try {
     parsedUrl = new URL(rawUrl);
   } catch {
-    return jsonResponse({ error: 'Некоректний формат посилання' }, 400);
+    return errorResponse('invalid_url', 'Некоректний формат посилання', 400);
   }
 
   if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-    return jsonResponse({ error: 'Дозволені лише http/https посилання' }, 400);
+    return errorResponse('unsupported_protocol', 'Дозволені лише http/https посилання', 400);
   }
 
   if (isBlockedHostname(parsedUrl.hostname)) {
-    return jsonResponse({ error: 'Ця адреса недоступна для імпорту' }, 400);
+    return errorResponse('blocked_host', 'Ця адреса недоступна для імпорту', 400);
   }
 
   try {
@@ -162,9 +185,11 @@ async function handleExtract(request: Request): Promise<Response> {
     });
 
     if (!upstream.ok) {
-      return jsonResponse(
-        { error: `Сайт відповів помилкою (${upstream.status})` },
-        502
+      return errorResponse(
+        'upstream_error',
+        `Сайт відповів помилкою (${upstream.status})`,
+        502,
+        { status: upstream.status }
       );
     }
 
@@ -173,11 +198,9 @@ async function handleExtract(request: Request): Promise<Response> {
     const text = extractArticleText(html);
 
     if (text.length < 40) {
-      return jsonResponse(
-        {
-          error:
-            'Не вдалося знайти текст статті (можливо, сайт вимагає JavaScript або вхід).'
-        },
+      return errorResponse(
+        'no_article',
+        'Не вдалося знайти текст статті (можливо, сайт вимагає JavaScript або вхід).',
         422
       );
     }
@@ -188,8 +211,9 @@ async function handleExtract(request: Request): Promise<Response> {
       sourceUrl: parsedUrl.toString()
     });
   } catch {
-    return jsonResponse(
-      { error: 'Не вдалося з’єднатися із сайтом. Спробуй скопіювати текст вручну.' },
+    return errorResponse(
+      'network_error',
+      'Не вдалося з’єднатися із сайтом. Спробуй скопіювати текст вручну.',
       502
     );
   }

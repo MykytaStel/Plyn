@@ -1,6 +1,7 @@
 import { Download, X } from 'lucide-react';
 import { formatBookmarksAsMarkdown } from '../../core/export/bookmarksMarkdown';
 import type { ReadingCard } from '../../core/models/types';
+import { useI18n } from '../../i18n';
 import { findCardIndexByOffset } from '../../core/splitter/splitter';
 
 interface BookmarksSheetProps {
@@ -22,6 +23,8 @@ export function BookmarksSheet({
   onSelectCard,
   onClose
 }: BookmarksSheetProps) {
+  const i18n = useI18n();
+  const t = i18n.m.bookmarks;
   const seenCards = new Set<number>();
   const items: Array<{ offset: number; cardIndex: number; text: string }> = [];
 
@@ -37,7 +40,8 @@ export function BookmarksSheet({
       title: docTitle,
       cards,
       bookmarkOffsets,
-      bookmarkNotes
+      bookmarkNotes,
+      labels: i18n.m.export
     });
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -57,13 +61,13 @@ export function BookmarksSheet({
     >
       <div className="sheet-handle" aria-hidden="true" />
       <div className="sheet-header">
-        <h2 id="bookmarks-title">Закладки</h2>
+        <h2 id="bookmarks-title">{t.title}</h2>
         <div className="sheet-header-actions">
           {items.length > 0 && (
             <button
               className="btn btn-ghost btn-sm"
               type="button"
-              title="Експортувати закладки й нотатки у Markdown"
+              title={t.exportHint}
               onClick={handleExportMd}
             >
               <Download size={14} />
@@ -73,7 +77,7 @@ export function BookmarksSheet({
           <button
             className="icon-btn"
             type="button"
-            aria-label="Закрити закладки"
+            aria-label={t.close}
             onClick={onClose}
           >
             <X size={20} />
@@ -84,8 +88,7 @@ export function BookmarksSheet({
       <div className="bookmarks-list">
         {items.length === 0 ? (
           <p className="bookmarks-empty">
-            Поки немає закладок. Натисни на іконку прапорця або клавішу B під час
-            читання.
+            {t.empty}
           </p>
         ) : (
           items.map((item) => (
@@ -96,14 +99,14 @@ export function BookmarksSheet({
                 onClick={() => onSelectCard(item.cardIndex)}
               >
                 <span className="bookmark-item-num">
-                  Картка {item.cardIndex + 1}
+                  {i18n.format(i18n.m.export.card, { n: i18n.number(item.cardIndex + 1) })}
                 </span>
                 <span className="bookmark-item-text">{item.text}</span>
               </button>
               <input
                 type="text"
                 className="bookmark-note-input"
-                placeholder="Додати коротку нотатку..."
+                placeholder={t.notePlaceholder}
                 maxLength={240}
                 defaultValue={bookmarkNotes[String(item.offset)] || ''}
                 onBlur={(e) => onSaveNote(item.offset, e.target.value)}
