@@ -5,7 +5,8 @@ export type PlynErrorCode =
   | 'pdf_no_text'
   | 'backup_invalid'
   | 'backup_unsupported'
-  | 'url_invalid';
+  | 'url_invalid'
+  | 'offline';
 
 /**
  * A user-facing failure with a stable code. Core never carries copy:

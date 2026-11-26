@@ -305,7 +305,7 @@ export function LibraryView() {
             <button
               className="awards-pill"
               type="button"
-              aria-label={t.thoughtsLabel}
+              aria-label={`${t.thoughtsLabel}, ${thoughtsCount}`}
               title={t.thoughtsHint}
               onClick={() => setShowThoughts(true)}
             >
@@ -316,7 +316,7 @@ export function LibraryView() {
           <button
             className="awards-pill"
             type="button"
-            aria-label={i18n.m.achievementsSheet.title}
+            aria-label={`${i18n.m.achievementsSheet.title}, ${unlockedCount} / ${ACHIEVEMENTS.length}`}
             onClick={() => setShowAchievements(true)}
           >
             <Trophy size={15} />

@@ -18,7 +18,7 @@ Things that make Plyn safer, faster or easier to change, without being features.
 | [IMP-10](#imp-10-lint-and-typecheck-scripts) | Lint and typecheck scripts | code health | 0.19 ✓ |
 | [IMP-11](#imp-11-remove-expired-compatibility-code) | Remove expired compatibility code | code health | 0.19 ✓ (`error` field); legacy session: 1.0 |
 | [IMP-12](#imp-12-pull-request-workflow) | Pull request workflow | delivery | 0.19 ✓ (CI on PRs; branch protection: owner, in GitHub settings) |
-| [IMP-13](#imp-13-preview-deployments) | Preview deployments | delivery | 0.20 |
+| [IMP-13](#imp-13-preview-deployments) | Preview deployments | delivery | 0.20 ✓ |
 | [IMP-14](#imp-14-changelog-and-release-notes) | Changelog and release notes | delivery | 0.19 ✓ (file), 0.29 (in app) |
 | [IMP-15](#imp-15-service-worker-updates) | Service worker updates | PWA | 0.22 |
 | [IMP-16](#imp-16-png-and-maskable-icons) | PNG and maskable icons | PWA | 0.22 |

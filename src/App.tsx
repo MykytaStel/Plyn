@@ -3,6 +3,7 @@ import { useI18n } from './i18n';
 import { LibraryView } from './features/library/LibraryView';
 import { ReaderView } from './features/reader/ReaderView';
 import { migrateLegacyLocalSession } from './services/storage/db';
+import { applyProgressJournal } from './services/storage/progressJournal';
 import { useReaderStore } from './store/useReaderStore';
 import { useSettingsStore } from './store/useSettingsStore';
 
@@ -13,6 +14,8 @@ export function App() {
   useEffect(() => {
     applyToDom();
     void migrateLegacyLocalSession();
+    // A place saved just before the page closed (see progressJournal.ts).
+    void applyProgressJournal();
   }, [applyToDom]);
 
   const { m } = useI18n();

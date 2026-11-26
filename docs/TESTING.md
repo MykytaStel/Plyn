@@ -1,17 +1,19 @@
 # Plyn test plan
 
-Status: draft · updated for 0.19.0 · part of the [roadmap](ROADMAP.md)
+Status: draft · updated for 0.20.0 · part of the [roadmap](ROADMAP.md)
 
 **Goal for 0.30:** every layer below exists, runs automatically where it can, and blocks a broken release. Readers trust Plyn with their texts and their progress, so the tests protect those first.
 
-## Where we are (0.19.0)
+## Where we are (0.20.0)
 
-- 25 test files, 132 tests, in two Vitest projects: `node` (core, storage, worker, property, spec) and `dom` (jsdom + Testing Library). Run time about 1.5 s.
+- New in 0.20: L7 and L8. Playwright runs CUJ-1…5, an axe scan of every screen and sheet in all four themes (and the English UI), and a keyboard-only journey, against the production build with its service worker. Projects: Desktop Chromium, Desktop WebKit, Pixel 7 (Chromium), iPhone 14 (WebKit); 56 runs, about 1.5 min locally. Every PR also gets a preview URL ([IMP-13](IMPROVEMENTS.md#imp-13-preview-deployments)).
+- Findings fixed in 0.20: muted text, the paper accent, the first-card hint and achievement toasts were below 4.5:1 contrast in some themes; four buttons had a name that did not contain their visible text; the library card was a `role="button"` with buttons inside it; offline URL import blamed the site; a reload within 250 ms of a swipe lost that card (now journaled in `plyn_progress_journal_v1`).
+- Vitest: 27 test files, 142 tests, in two projects: `node` (core, storage, worker, property, spec) and `dom` (jsdom + Testing Library). Run time about 1.5 s.
 - New in 0.19: L0 (ESLint + typecheck in CI), L2 (EPUB parser, onboarding component), L3 (`db.ts`, backup round trip, reader store with `fake-indexeddb`), L4 (`fast-check` properties for the splitter, sentences, anchor, language detection, backup validation), more L5 fixtures (`spec/anchor-cases.json`, `sentence-cases.json`, `language-cases.json`).
 - Findings fixed in 0.19: lost stats updates under concurrency ([IMP-04](IMPROVEMENTS.md#imp-04-atomic-progress-stats)); splitter offsets drifting when sentences had no space between them, and leading `?` / `…` being dropped (now cards are exact slices of the normalized text).
-- Not covered yet: the PDF parser, TTS and audio services, most components (sheets, reader, library), the service worker, real browsers.
-- CI: `ci.yml` runs lint, typecheck, tests with coverage and the build on every pull request; `deploy.yml` reuses it before deploying.
-- Known lint warnings (not blocking): 10 `jsx-a11y` warnings for pointer-only click targets (progress bar, card feed, library card), left for the 0.28 audit.
+- Not covered yet: TTS and audio services (stubbed out of the journeys), backup → restore in a browser (CUJ-6, 0.21), Firefox, visual regression (0.22).
+- CI: `ci.yml` runs `checks` (lint, typecheck, tests with coverage, build) and then `e2e` (Playwright) on every pull request; `deploy.yml` reuses it, so production deploys only after both. `preview.yml` uploads a Worker version per PR and comments its URL.
+- Known lint warnings (not blocking): 7 `jsx-a11y` warnings for pointer-only click targets (progress bar, card feed, words), left for the 0.28 audit.
 
 ### Coverage baseline (0.19.0, v8, lines / branches)
 
@@ -38,14 +40,14 @@ Status: draft · updated for 0.19.0 · part of the [roadmap](ROADMAP.md)
 | L4 | Property-based | invariants hold for any input | `fast-check` | every PR | 0.19 ✓ | 0.19 ✓ |
 | L5 | Contract and compatibility | shared behaviour, old backups, old schemas | Vitest + `spec/` fixtures | every PR | splitter exists; backups 0.21 | 0.21 |
 | L6 | Worker runtime | `/api/extract` in the real Workers runtime | `@cloudflare/vitest-pool-workers` | every PR | 0.24 | 0.24 |
-| L7 | End-to-end and PWA | real journeys in real browsers, offline | Playwright | every PR | 0.20 | 0.20 |
-| L8 | Automated accessibility | no detectable a11y violations | `@axe-core/playwright` | every PR | 0.20 | 0.20 (serious+), 0.28 (all) |
+| L7 | End-to-end and PWA | real journeys in real browsers, offline | Playwright | every PR | 0.20 ✓ | 0.20 ✓ |
+| L8 | Automated accessibility | no detectable a11y violations | `@axe-core/playwright` | every PR | 0.20 ✓ | 0.20 ✓ (serious+), 0.28 (all) |
 | L9 | Visual regression | themes and fonts don't break by accident | Playwright screenshots (Linux CI) | every PR | 0.22 | 0.22 |
 | L10 | Performance budgets | size and speed stay in budget | bundle-size script, Lighthouse CI | every PR / weekly | 0.25 | 0.25 |
 | L11 | Security checks | SSRF blocked, headers and CSP present, no known-vulnerable deps | Vitest, Playwright, `npm audit` | every PR / weekly | 0.24 | 0.29 |
 | L12 | Mutation testing | the tests actually catch bugs | Stryker (`src/core/`) | weekly | 0.30 ([EXP-09](experiments/EXP-09-mutation-testing.md)) | 0.30 (score floor) |
 | L13 | Manual assistive-tech runs | works with real screen readers | VoiceOver, TalkBack, NVDA | 0.28, then before each minor release | 0.28 | release checklist |
-| L14 | Release checklist on devices | installed PWA works on real phones | people, ~20 min | every release | 0.20 | every release |
+| L14 | Release checklist on devices | installed PWA works on real phones | people, ~20 min | every release | 0.20 ✓ | every release |
 | L15 | Reader sessions | the product actually helps | moderated sessions ([EXP-08](experiments/EXP-08-reader-sessions.md)) | 0.28, then twice a year | 0.28 | – |
 
 "Enforced" means the CI job fails, or for manual layers, the release does not ship until it is done.
@@ -74,7 +76,7 @@ Status: draft · updated for 0.19.0 · part of the [roadmap](ROADMAP.md)
   1. ✓ EPUB parser with two fixture books (one EPUB 2, one EPUB 3), built in memory with `fflate`.
   2. Every sheet: opens with focus inside, closes on Escape, returns focus. (Moved to 0.22 with focus management.)
   3. Segmented controls behave as radio groups. ✓ `role="radio"` and `aria-checked` (onboarding); arrow keys: 0.28.
-  4. Language switch changes the UI without reload. ✓ for onboarding; Settings sheet: 0.20 (CUJ-1).
+  4. Language switch changes the UI without reload. ✓ for onboarding; Settings sheet ✓ in a real browser (CUJ-1, 0.20).
   5. ✓ Onboarding: shown once, then never again (`plyn_onboarding_done_v1`).
 
 ### L3 Storage integration
@@ -119,16 +121,21 @@ Status: draft · updated for 0.19.0 · part of the [roadmap](ROADMAP.md)
 ### L7 End-to-end and PWA
 
 - Playwright against `npm run build && npm run preview`, so the real service worker is tested.
-- Projects: Desktop Chromium, Desktop WebKit, Pixel (Chromium), iPhone (WebKit). Firefox runs weekly, not blocking.
-- `/api/extract` is mocked with `page.route`. Fonts are self-hosted, so no external requests are expected: the test fails on any request to another host.
-- Each test starts with a clean storage state; journeys that need a library load it from a backup fixture.
-- Files: `e2e/*.spec.ts`, helpers in `e2e/support/`.
+- Projects: Desktop Chromium, Desktop WebKit, Pixel 7 (Chromium), iPhone 14 (WebKit). Firefox runs weekly, not blocking (from 0.30).
+- `/api/extract` is mocked with `page.route`. Fonts are self-hosted, so no external requests are expected: every request to another host is aborted (`e2e/support/app.ts`).
+- Each test starts in a fresh browser context (clean IndexedDB and localStorage). Onboarding is skipped unless a test asks for it (`test.use({ onboarding: true })`); settings can be seeded with `test.use({ settings: {...} })`.
+- The service worker is blocked by default, because it hides requests from `page.route`. CUJ-5 turns it on and waits until it controls the page before going offline.
+- Progress is checked in IndexedDB (`storedDocs`, `expectStoredOffset`), not only on screen: invariant 1 is about `charOffset`.
+- Fixtures are built in memory (`e2e/support/fixtures.ts`): a numbered Ukrainian text, an EPUB zipped with `fflate`, a hand-written one-page PDF. No binary files in the repo.
+- Copy comes from the dictionaries (`uk.library.start`), never literal strings.
+- Run: `npm run test:e2e` (builds and starts `vite preview` on port 4173; reuses a running one locally). One project: `npx playwright test --project=chromium`. Debug: `npx playwright test --ui`. The first time: `npx playwright install chromium webkit`.
+- Files: `e2e/cuj-*.spec.ts` (journeys), `e2e/a11y.spec.ts`, `e2e/keyboard.spec.ts`, helpers in `e2e/support/`.
 
 ### L8 Automated accessibility
 
-- `@axe-core/playwright` scans the library, the reader, every sheet and onboarding, in all four themes and both UI languages.
-- 0.20: fail on `serious` and `critical`. 0.28: fail on any violation not listed in `e2e/a11y-exceptions.ts` with a reason.
-- Keyboard journey: reach every control with Tab, use every reader shortcut from `src/features/reader/shortcuts.ts`, in Latin and Ukrainian layouts.
+- `@axe-core/playwright` (WCAG 2.2 A/AA tags) scans onboarding (all steps), the library (empty and with a text), the reader, zen mode and every sheet (settings, awards, Thought Parking, tools, bookmarks), in all four themes, plus the English UI. Chromium projects only: the DOM is the same in every engine.
+- 0.20: fail on `serious` and `critical`. 0.28: fail on any violation not listed in `e2e/a11y-exceptions.ts` with a reason. Today the list has one entry: the faded previous-card echo (`.card-context`, decorative and `aria-hidden`).
+- Keyboard journey (desktop projects): add a text with Tab only, read with Space / Shift+Space / arrows / j / k, toggle bookmark, anchor, sentence focus and Thought Parking by physical key in Latin and Ukrainian layouts, open bookmarks and settings with Enter, close with Escape, reopen the text from the library.
 
 ### L9 Visual regression
 
@@ -185,15 +192,15 @@ Moderated sessions with readers who have ADHD or dyslexia. Not a pass/fail gate:
 
 ## Critical user journeys
 
-E2E (L7) covers these. Each journey is one spec file.
+E2E (L7) covers these. Each journey is one spec file (`e2e/cuj-<n>-*.spec.ts`). ✓ = in CI.
 
 | ID | Journey | From |
 |---|---|---|
-| CUJ-1 | First run: onboarding → sample text → first card; switch UI to English and back | 0.20 |
-| CUJ-2 | Paste text → read 10 cards → reload → the same card is on screen (same `charOffset`) | 0.20 |
-| CUJ-3 | Change card length mid-text → the same sentence stays on screen; bookmarks still point to the same text | 0.20 |
-| CUJ-4 | Import `.epub` and `.pdf` fixtures → right title, right first card | 0.20 |
-| CUJ-5 | Load once, go offline, reload → library and reading work; URL import shows the offline message | 0.20 |
+| CUJ-1 | First run: onboarding → sample text → first card; switch UI to English and back | 0.20 ✓ |
+| CUJ-2 | Paste text → read 10 cards → reload → the same card is on screen (same `charOffset`) | 0.20 ✓ |
+| CUJ-3 | Change card length mid-text → the same sentence stays on screen; bookmarks still point to the same text | 0.20 ✓ |
+| CUJ-4 | Import `.epub` and `.pdf` fixtures → right title, right first card | 0.20 ✓ |
+| CUJ-5 | Load once, go offline, reload → library and reading work; URL import shows the offline message | 0.20 ✓ |
 | CUJ-6 | Backup → clear storage → restore → same library, bookmarks, notes and thoughts | 0.21 |
 | CUJ-7 | Park a thought mid-text → find it in the library → return to the text | 0.21 |
 | CUJ-8 | Bookmark with a note → export Markdown → file contains the note | 0.21 |
@@ -219,9 +226,9 @@ Coverage is a smoke alarm, not a goal. Thresholds rise slowly so tests stay mean
 
 On every pull request:
 
-1. `checks` (≈ 2 min): `npm ci` → lint → typecheck → Vitest (node + dom, with coverage) → build → bundle budget.
-2. `e2e` (≈ 6 min, needs `checks`): Playwright on Chromium and WebKit (desktop and phone), axe, visual snapshots, against the built preview.
-3. Preview deploy to a Workers preview URL, for checking on a real phone ([IMP-13](IMPROVEMENTS.md#imp-13-preview-deployments)).
+1. `checks` (≈ 2 min): `npm ci` → lint → typecheck → Vitest (node + dom, with coverage) → build → bundle budget. ✓ except the budget (0.25).
+2. `e2e` (≈ 6 min, needs `checks`): Playwright on Chromium and WebKit (desktop and phone), axe, visual snapshots, against the built preview. ✓ except snapshots (0.22).
+3. Preview deploy to a Workers preview URL, for checking on a real phone ([IMP-13](IMPROVEMENTS.md#imp-13-preview-deployments)). ✓ (`preview.yml`, alias `pr-<number>`).
 
 On push to `main`: the same jobs, then deploy. Deploy needs both jobs green.
 
@@ -252,7 +259,9 @@ test/fixtures/           binary and HTML fixtures (epub, pdf, fb2, txt, html)
 
 ## Release checklist
 
-About 20 minutes. Do it on the PR preview (or production right after deploy), on one iPhone and one Android phone with the installed PWA. Write "checklist ok" and the devices in the release PR.
+About 20 minutes. Before starting, the PR's `e2e` job must be green: it already covers first run, resume after reload, card length, EPUB/PDF import, offline, axe and the keyboard (CUJ-1…5). This checklist is for what a real phone adds: install, gestures, voices, airplane mode, update from the previous version.
+
+Do it on the PR preview (the "Preview" comment on the PR, `pr-<number>` alias) or on production right after deploy, on one iPhone and one Android phone with the installed PWA. Write "checklist ok" and the devices in the release PR.
 
 1. Update from the previous version: library, progress and bookmarks are still there.
 2. Open a document, read 20 cards with swipes; the counter and progress move.

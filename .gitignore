@@ -11,3 +11,8 @@ dist
 .claude/launch.json
 .claude/settings.local.json
 coverage
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/

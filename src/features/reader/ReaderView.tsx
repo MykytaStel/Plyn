@@ -488,7 +488,8 @@ export function ReaderView() {
         <button
           className="icon-btn icon-btn-text"
           type="button"
-          aria-label={t.back}
+          aria-label={t.library}
+          title={t.back}
           onClick={() => {
             stopBrownNoise();
             void closeReader();
@@ -575,7 +576,7 @@ export function ReaderView() {
             <button
               className="icon-btn icon-btn-badge reader-secondary"
               type="button"
-              aria-label={t.bookmarksList}
+              aria-label={`${t.bookmarksList}, ${bookmarkOffsets.length}`}
               title={t.bookmarksListHint}
               onClick={() => {
                 setShowScrubber(false);
@@ -590,7 +591,7 @@ export function ReaderView() {
             className="icon-btn reader-secondary"
             type="button"
             aria-pressed={anchorMode}
-            aria-label={t.anchor}
+            aria-label={`${t.anchorButton.bold}${t.anchorButton.rest} · ${t.anchor}`}
             title={t.anchorHint}
             onClick={() => updateSettings({ anchorMode: !anchorMode })}
           >
