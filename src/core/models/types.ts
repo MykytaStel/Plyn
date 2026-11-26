@@ -4,6 +4,8 @@ export type FontFamilyPreset = 'sans' | 'hyperlegible' | 'dyslexic' | 'serif';
 export type LetterSpacingPreset = 'normal' | 'wide' | 'extra';
 export type ColumnWidthPreset = 'narrow' | 'standard';
 export type TtsRatePreset = 0.75 | 1 | 1.25 | 1.5;
+/** Interface language (content language is detected separately per text). */
+export type UiLocale = 'uk' | 'en';
 
 export interface UserSettings {
   theme: ThemeMode;
@@ -18,6 +20,7 @@ export interface UserSettings {
   ttsRate: TtsRatePreset;
   ttsAutoAdvance: boolean;
   cardLength: CardLengthPreset;
+  language: UiLocale;
 }
 
 export interface ReadingCard {
