@@ -24,12 +24,7 @@ const ALLOWED_FILES = new Set([
 /** Files not migrated yet. This list may only shrink. */
 export const PENDING_FILES: string[] = [
   'src/features/onboarding/OnboardingModal.tsx',
-  'src/features/reader/BookmarksSheet.tsx',
-  'src/features/reader/CardSlide.tsx',
-  'src/features/reader/DoneSlide.tsx',
-  'src/features/reader/ReaderView.tsx',
-  'src/features/settings/SettingsSheet.tsx',
-  'src/features/thoughts/ThoughtsSheet.tsx'
+  'src/features/settings/SettingsSheet.tsx'
 ];
 
 const CYRILLIC = /[А-Яа-яІіЇїЄєҐґ]/;
