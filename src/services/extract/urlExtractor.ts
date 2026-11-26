@@ -54,11 +54,22 @@ export async function extractArticleFromUrl(
     throw new PlynError('url_invalid');
   }
 
-  const response = await fetch('/api/extract', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url })
-  });
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    throw new PlynError('offline');
+  }
+
+  let response: Response;
+  try {
+    response = await fetch('/api/extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+  } catch {
+    // fetch rejects only when the request never reached our server
+    // (no connection, or the app is offline behind the service worker).
+    throw new PlynError('offline');
+  }
 
   const payload = (await response.json().catch(() => null)) as
     | (ExtractedArticle & { code?: string; status?: number })

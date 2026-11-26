@@ -304,6 +304,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     backup_invalid: 'This isn’t a valid backup file.',
     backup_unsupported: 'Plyn doesn’t support this backup format.',
     url_invalid: 'Enter the full link, starting with https://',
+    offline: 'You’re offline. Importing from a link needs the internet; reading works without it.',
     generic: 'Something went wrong. Please try again.',
     file_read: 'Couldn’t read the file.',
     backup_read: 'This isn’t a valid backup file.',
