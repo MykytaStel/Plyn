@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 const SOURCES: Record<string, string> = Object.fromEntries(
   Object.entries(
     import.meta.glob<string>(
-      ['/src/features/**/*.{ts,tsx}', '/src/core/**/*.ts', '!/src/**/*.test.ts'],
+      ['/src/features/**/*.{ts,tsx}', '/src/core/**/*.ts', '!/src/**/*.test.ts', '!/src/**/*.test.tsx'],
       { query: '?raw', import: 'default', eager: true }
     )
   ).map(([path, text]) => [path.slice(1), text])

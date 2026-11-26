@@ -19,35 +19,66 @@ export function normalizeText(rawText: string): string {
     .trim();
 }
 
-function splitIntoSentences(paragraph: string): string[] {
-  const matches = paragraph.match(/[^.!?…]+(?:[.!?…]+[»”)"']*|$)/g) || [paragraph];
-  const sentences: string[] = [];
+/** A half-open range `[start, end)` in the normalized text. */
+interface Span {
+  start: number;
+  end: number;
+}
 
-  for (const token of matches) {
-    const clean = token.trim();
-    if (!clean) continue;
+const SENTENCE_REGEX = /[^.!?…]+(?:[.!?…]+[»”)"']*|$)/g;
+
+/** Shrinks a span so it starts and ends on a non-space character. */
+function trimSpan(text: string, span: Span): Span {
+  let { start, end } = span;
+  while (start < end && /\s/.test(text[start])) start += 1;
+  while (end > start && /\s/.test(text[end - 1])) end -= 1;
+  return { start, end };
+}
+
+/**
+ * Sentences of one paragraph as spans of the normalized text. Characters the
+ * sentence pattern skips (leading "?", "…") join the next sentence, so no
+ * text is ever lost.
+ */
+function splitIntoSentences(text: string, paragraph: Span): Span[] {
+  const source = text.slice(paragraph.start, paragraph.end);
+  const boundaries: number[] = [];
+  for (const match of source.matchAll(SENTENCE_REGEX)) {
+    boundaries.push((match.index ?? 0) + match[0].length);
+  }
+  if (boundaries.length === 0 || boundaries[boundaries.length - 1] < source.length) {
+    boundaries.push(source.length);
+  }
+
+  const sentences: Span[] = [];
+  let from = 0;
+  for (const to of boundaries) {
+    const span = trimSpan(text, { start: paragraph.start + from, end: paragraph.start + to });
+    from = to;
+    if (span.end <= span.start) continue;
 
     if (sentences.length > 0) {
       const prev = sentences[sentences.length - 1];
-      const lastWord = prev.split(/\s+/).pop()?.toLowerCase() || '';
+      const lastWord = text.slice(prev.start, prev.end).split(/\s+/).pop()?.toLowerCase() || '';
       if (ABBREVIATIONS.has(lastWord)) {
-        sentences[sentences.length - 1] = `${prev} ${clean}`;
+        prev.end = span.end;
         continue;
       }
     }
-    sentences.push(clean);
+    sentences.push(span);
   }
 
   return sentences;
 }
 
-function splitLongSentence(sentence: string, maxChars: number): string[] {
-  if (sentence.length <= maxChars) return [sentence];
+function splitLongSentence(text: string, sentence: Span, maxChars: number): Span[] {
+  if (sentence.end - sentence.start <= maxChars) return [sentence];
 
-  const chunks: string[] = [];
-  let remaining = sentence.trim();
+  const chunks: Span[] = [];
+  let pos = sentence.start;
 
-  while (remaining.length > maxChars) {
+  while (sentence.end - pos > maxChars) {
+    const remaining = text.slice(pos, sentence.end);
     let sliceEnd = maxChars;
     const windowText = remaining.slice(0, maxChars + 1);
 
@@ -76,12 +107,13 @@ function splitLongSentence(sentence: string, maxChars: number): string[] {
       }
     }
 
-    chunks.push(remaining.slice(0, sliceEnd).trim());
-    remaining = remaining.slice(sliceEnd).trim();
+    chunks.push(trimSpan(text, { start: pos, end: pos + sliceEnd }));
+    pos += sliceEnd;
+    while (pos < sentence.end && /\s/.test(text[pos])) pos += 1;
   }
 
-  if (remaining) {
-    chunks.push(remaining);
+  if (pos < sentence.end) {
+    chunks.push({ start: pos, end: sentence.end });
   }
 
   return chunks;
@@ -94,6 +126,9 @@ export interface SplitOptions {
 /**
  * Розбиває текст на короткі картки (1–2 речення / ліміт символів без розриву слів)
  * і обчислює точний charOffset кожної картки для кросплатформової синхронізації.
+ *
+ * Every card is the exact slice `normalized.slice(startOffset, endOffset)`,
+ * so offsets never drift, whatever the spacing in the source.
  */
 export function splitTextIntoCards(
   rawText: string,
@@ -103,59 +138,43 @@ export function splitTextIntoCards(
   const normalized = normalizeText(rawText);
   if (!normalized) return [];
 
-  const paragraphs = normalized
-    .split(/\n+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
+  const spans: Span[] = [];
 
-  const rawCards: string[] = [];
+  for (const line of normalized.matchAll(/[^\n]+/g)) {
+    const start = line.index ?? 0;
+    const paragraph = trimSpan(normalized, { start, end: start + line[0].length });
+    if (paragraph.end <= paragraph.start) continue;
 
-  for (const paragraph of paragraphs) {
-    const sentences = splitIntoSentences(paragraph);
-    let buffer = '';
+    let buffer: Span | null = null;
     let sentenceCount = 0;
 
-    for (const sentence of sentences) {
-      const parts = splitLongSentence(sentence, maxChars);
-
-      for (const part of parts) {
-        const candidate = buffer ? `${buffer} ${part}` : part;
+    for (const sentence of splitIntoSentences(normalized, paragraph)) {
+      for (const part of splitLongSentence(normalized, sentence, maxChars)) {
         const canMerge =
-          Boolean(buffer) &&
+          buffer !== null &&
           sentenceCount < 2 &&
-          candidate.length <= maxChars;
+          part.end - buffer.start <= maxChars;
 
-        if (canMerge) {
-          buffer = candidate;
+        if (canMerge && buffer) {
+          buffer = { start: buffer.start, end: part.end };
           sentenceCount += 1;
         } else {
-          if (buffer) rawCards.push(buffer);
+          if (buffer) spans.push(buffer);
           buffer = part;
           sentenceCount = 1;
         }
       }
     }
 
-    if (buffer) {
-      rawCards.push(buffer);
-    }
+    if (buffer) spans.push(buffer);
   }
 
-  // Прив'язуємо кожну картку до її startOffset / endOffset у нормалізованому тексті
-  let cursor = 0;
-  return rawCards.map((text, index) => {
-    const found = normalized.indexOf(text, cursor);
-    const startOffset = found >= 0 ? found : cursor;
-    const endOffset = startOffset + text.length;
-    cursor = endOffset;
-
-    return {
-      index,
-      text,
-      startOffset,
-      endOffset
-    };
-  });
+  return spans.map((span, index) => ({
+    index,
+    text: normalized.slice(span.start, span.end),
+    startOffset: span.start,
+    endOffset: span.end
+  }));
 }
 
 /**

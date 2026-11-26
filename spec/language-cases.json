@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "description": "Content language detection (not the UI language). Output is 'uk' or 'en'; ties and empty text are 'uk'. `speechTag` maps the language to a BCP-47 voice tag.",
+  "cases": [
+    { "name": "Ukrainian", "input": "Привіт, світ", "expected": "uk" },
+    { "name": "English", "input": "Hello world", "expected": "en" },
+    { "name": "mixed, more Cyrillic", "input": "Plyn — це читалка", "expected": "uk" },
+    { "name": "mixed, more Latin", "input": "Read the book «Кобзар» today, please", "expected": "en" },
+    { "name": "empty text", "input": "", "expected": "uk" },
+    { "name": "digits and punctuation only", "input": "1, 2, 3!", "expected": "uk" }
+  ],
+  "speechTag": { "uk": "uk-UA", "en": "en-US" }
+}

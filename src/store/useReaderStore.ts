@@ -247,7 +247,7 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     );
 
     let nextOffsets: number[];
-    let nextNotes = { ...(activeDoc.bookmarkNotes || {}) };
+    const nextNotes = { ...(activeDoc.bookmarkNotes || {}) };
     let added = false;
 
     if (alreadyInCard) {

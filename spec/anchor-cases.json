@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "description": "Anchor mode (bold word starts). `leadLengths`: word length -> number of bold leading letters. `tokenize`: input text -> tokens; a `word` token is {lead, rest}, a `text` token is {value}. Joining all tokens gives back the input.",
+  "leadLengths": [[1, 0], [2, 1], [3, 1], [4, 2], [5, 2], [6, 3], [8, 3], [9, 4], [10, 4], [15, 6]],
+  "tokenize": [
+    {
+      "name": "Ukrainian words with an apostrophe and punctuation",
+      "input": "Об’єкт і світ!",
+      "expected": [
+        { "type": "word", "lead": "Об’", "rest": "єкт" },
+        { "type": "text", "value": " " },
+        { "type": "text", "value": "і" },
+        { "type": "text", "value": " " },
+        { "type": "word", "lead": "св", "rest": "іт" },
+        { "type": "text", "value": "!" }
+      ]
+    },
+    {
+      "name": "English words and digits",
+      "input": "Read 3 books",
+      "expected": [
+        { "type": "word", "lead": "Re", "rest": "ad" },
+        { "type": "text", "value": " 3 " },
+        { "type": "word", "lead": "bo", "rest": "oks" }
+      ]
+    },
+    {
+      "name": "Ukrainian letters ґ, є, ї",
+      "input": "ґанок їжак",
+      "expected": [
+        { "type": "word", "lead": "ґа", "rest": "нок" },
+        { "type": "text", "value": " " },
+        { "type": "word", "lead": "їж", "rest": "ак" }
+      ]
+    },
+    {
+      "name": "empty text",
+      "input": "",
+      "expected": []
+    }
+  ]
+}

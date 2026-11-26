@@ -142,33 +142,37 @@ export async function recordProgressDelta(
   delta: ProgressDelta
 ): Promise<AchievementDefinition[]> {
   try {
-    const current = await getProgressStats();
-    const dailyCardsRead = { ...(current.dailyCardsRead || {}) };
+    // Read-modify-write inside one transaction, so close calls (fast swipes
+    // plus a TTS event) are serialized and no delta is lost.
+    return await db.transaction('rw', db.stats, async () => {
+      const current = await getProgressStats();
+      const dailyCardsRead = { ...(current.dailyCardsRead || {}) };
 
-    if (delta.cardsRead && delta.cardsRead > 0) {
-      const todayKey = toLocalDateKey(new Date());
-      dailyCardsRead[todayKey] = (dailyCardsRead[todayKey] || 0) + delta.cardsRead;
-    }
+      if (delta.cardsRead && delta.cardsRead > 0) {
+        const todayKey = toLocalDateKey(new Date());
+        dailyCardsRead[todayKey] = (dailyCardsRead[todayKey] || 0) + delta.cardsRead;
+      }
 
-    const updated: UserProgressStats = {
-      ...current,
-      totalCardsRead: current.totalCardsRead + (delta.cardsRead ?? 0),
-      anchorCardsRead: current.anchorCardsRead + (delta.anchorCardsRead ?? 0),
-      totalDocsCompleted:
-        current.totalDocsCompleted + (delta.docsCompleted ?? 0),
-      totalBookmarksCreated:
-        current.totalBookmarksCreated + (delta.bookmarksCreated ?? 0),
-      timerSessionsCompleted:
-        current.timerSessionsCompleted + (delta.timerSessionsCompleted ?? 0),
-      ttsCardsListened:
-        (current.ttsCardsListened ?? 0) + (delta.ttsCardsListened ?? 0),
-      zenModeUsed: (current.zenModeUsed ?? 0) + (delta.zenModeUsed ?? 0),
-      dailyCardsRead
-    };
+      const updated: UserProgressStats = {
+        ...current,
+        totalCardsRead: current.totalCardsRead + (delta.cardsRead ?? 0),
+        anchorCardsRead: current.anchorCardsRead + (delta.anchorCardsRead ?? 0),
+        totalDocsCompleted:
+          current.totalDocsCompleted + (delta.docsCompleted ?? 0),
+        totalBookmarksCreated:
+          current.totalBookmarksCreated + (delta.bookmarksCreated ?? 0),
+        timerSessionsCompleted:
+          current.timerSessionsCompleted + (delta.timerSessionsCompleted ?? 0),
+        ttsCardsListened:
+          (current.ttsCardsListened ?? 0) + (delta.ttsCardsListened ?? 0),
+        zenModeUsed: (current.zenModeUsed ?? 0) + (delta.zenModeUsed ?? 0),
+        dailyCardsRead
+      };
 
-    const { nextStats, newlyUnlocked } = evaluateAchievements(updated);
-    await db.stats.put(nextStats);
-    return newlyUnlocked;
+      const { nextStats, newlyUnlocked } = evaluateAchievements(updated);
+      await db.stats.put(nextStats);
+      return newlyUnlocked;
+    });
   } catch {
     return [];
   }

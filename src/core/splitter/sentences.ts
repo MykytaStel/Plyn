@@ -12,12 +12,22 @@ export function splitCardIntoSentences(text: string): string[] {
   const cleanText = (text || '').trim();
   if (!cleanText) return [];
 
-  const matches =
-    cleanText.match(/[^.!?…]+(?:[.!?…]+[»”)"']*|$)/g) || [cleanText];
-  const sentences: string[] = [];
+  // Split at the end of each sentence match; characters the pattern skips
+  // (a leading "?" or "…") stay with the next sentence instead of vanishing.
+  const boundaries: number[] = [];
+  for (const match of cleanText.matchAll(/[^.!?…]+(?:[.!?…]+[»”)"']*|$)/g)) {
+    boundaries.push((match.index ?? 0) + match[0].length);
+  }
+  if (boundaries.length === 0 || boundaries[boundaries.length - 1] < cleanText.length) {
+    boundaries.push(cleanText.length);
+  }
 
-  for (const token of matches) {
-    const clean = token.trim();
+  const sentences: string[] = [];
+  let from = 0;
+
+  for (const to of boundaries) {
+    const clean = cleanText.slice(from, to).trim();
+    from = to;
     if (!clean) continue;
 
     if (sentences.length > 0) {

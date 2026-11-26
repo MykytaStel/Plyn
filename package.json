@@ -1,6 +1,6 @@
 {
   "name": "plyn",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@fontsource/andika": "^5.3.0",
@@ -26,12 +29,28 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.13",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^5.1.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "fake-indexeddb": "^6.2.8",
+    "fast-check": "^4.11.0",
+    "globals": "^17.14.0",
+    "jsdom": "^31.0.1",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.74.0",
     "vite": "^6.1.0",
     "vite-plugin-pwa": "^0.21.1",
-    "vitest": "^3.0.5"
+    "vitest": "^5.1.2"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

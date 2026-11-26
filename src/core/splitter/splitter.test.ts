@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import spec from '../../../spec/splitter-cases.json';
 import {
   findCardIndexByOffset,
+  normalizeText,
   splitTextIntoCards
 } from './splitter';
 import type { CardLengthPreset } from '../models/types';
@@ -12,6 +13,15 @@ describe('splitTextIntoCards (shared spec fixtures)', () => {
       const cards = splitTextIntoCards(testCase.input, {
         lengthPreset: testCase.lengthPreset as CardLengthPreset
       });
+
+      const normalized = normalizeText(testCase.input);
+      for (const card of cards) {
+        expect(normalized.slice(card.startOffset, card.endOffset)).toBe(card.text);
+      }
+
+      if ('expectedOffsets' in testCase && testCase.expectedOffsets) {
+        expect(cards.map((c) => [c.startOffset, c.endOffset])).toEqual(testCase.expectedOffsets);
+      }
 
       if (testCase.expected) {
         expect(cards.map((c) => c.text)).toEqual(testCase.expected);

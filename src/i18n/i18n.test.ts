@@ -114,9 +114,9 @@ describe('errorMessage', () => {
   });
   it('never shows the untranslated server message for unknown extract codes', () => {
     const m = getMessages('en');
-    expect(errorMessage(new ExtractError('unknown', { serverMessage: 'Сервер' }), m)).toBe(m.errors.generic);
+    expect(errorMessage(new ExtractError('unknown', { status: 500 }), m)).toBe(m.errors.generic);
     expect(
-      errorMessage(new ExtractError('unknown', { serverMessage: 'Сервер' }), m, m.errors.article_read)
+      errorMessage(new ExtractError('unknown', { status: 500 }), m, m.errors.article_read)
     ).toBe(m.errors.article_read);
   });
 });

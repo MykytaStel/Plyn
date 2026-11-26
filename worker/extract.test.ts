@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { EXTRACT_CODES } from '../src/services/extract/urlExtractor';
 import { handleExtract } from './index';
 
 function post(body: unknown): Request {
@@ -43,11 +44,18 @@ describe('/api/extract error codes', () => {
     expect((await json(res)).code).toBe('blocked_host');
   });
 
-  it('keeps a readable error string for old cached clients', async () => {
-    for (const req of [post('{nope'), post({ url: 'ftp://x' }), post({ url: 'http://127.0.0.1' })]) {
+  it('answers every error with a code the client knows, and no untranslated text', async () => {
+    const requests = [
+      new Request('https://plyn.test/api/extract'),
+      post('{nope'),
+      post({ url: 'not a url' }),
+      post({ url: 'ftp://x' }),
+      post({ url: 'http://127.0.0.1' })
+    ];
+    for (const req of requests) {
       const body = await json(await handleExtract(req));
-      expect(typeof body.error).toBe('string');
-      expect(body.error!.length).toBeGreaterThan(0);
+      expect(EXTRACT_CODES).toContain(body.code);
+      expect(body).not.toHaveProperty('error');
     }
   });
 });
