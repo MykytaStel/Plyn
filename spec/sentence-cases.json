@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "description": "Sentence focus: one card's text -> its sentences, in order. Abbreviations do not end a sentence. No character other than whitespace between sentences is lost.",
+  "cases": [
+    {
+      "name": "keeps abbreviations inside a sentence",
+      "input": "Зустріч у м. Київ пройшла чудово. Наступного разу поїдемо далі!",
+      "expected": ["Зустріч у м. Київ пройшла чудово.", "Наступного разу поїдемо далі!"]
+    },
+    {
+      "name": "closing quotes stay with their sentence",
+      "input": "Він сказав: «Досить!» Потім пішов.",
+      "expected": ["Він сказав: «Досить!»", "Потім пішов."]
+    },
+    {
+      "name": "ellipsis and question marks end sentences",
+      "input": "Що далі? Не знаю… Подивимось.",
+      "expected": ["Що далі?", "Не знаю…", "Подивимось."]
+    },
+    {
+      "name": "leading punctuation is kept",
+      "input": "… і тоді все почалося.",
+      "expected": ["… і тоді все почалося."]
+    },
+    {
+      "name": "English abbreviations",
+      "input": "Ask Dr. Smith first. Then rest.",
+      "expected": ["Ask Dr. Smith first.", "Then rest."]
+    },
+    {
+      "name": "empty text",
+      "input": "   ",
+      "expected": []
+    }
+  ]
+}

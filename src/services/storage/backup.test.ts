@@ -1,3 +1,4 @@
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { PlynError } from '../../core/errors';
 import { validateBackupPayload } from './backup';
@@ -40,5 +41,25 @@ describe('backup validation', () => {
     } catch (err) {
       expect((err as PlynError).code).toBe('backup_invalid');
     }
+  });
+});
+
+describe('backup validation (property)', () => {
+  it('backup validation returns a valid payload or throws PlynError, nothing else', () => {
+    fc.assert(
+      fc.property(fc.oneof(fc.anything(), fc.record({ schemaVersion: fc.constant(1), documents: fc.array(fc.anything()) })), (raw) => {
+        try {
+          const payload = validateBackupPayload(raw);
+          expect(payload.schemaVersion).toBe(1);
+          for (const doc of payload.documents) {
+            expect(typeof doc.id).toBe('string');
+            expect(typeof doc.text).toBe('string');
+          }
+        } catch (err) {
+          expect(err).toBeInstanceOf(PlynError);
+        }
+      }),
+      { seed: 1900, numRuns: 300 }
+    );
   });
 });
