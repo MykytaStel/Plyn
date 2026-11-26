@@ -90,6 +90,8 @@ export interface ProgressDelta {
   docsCompleted?: number;
   bookmarksCreated?: number;
   timerSessionsCompleted?: number;
+  ttsCardsListened?: number;
+  zenModeUsed?: number;
 }
 
 /**
@@ -109,7 +111,10 @@ export async function recordProgressDelta(
       totalBookmarksCreated:
         current.totalBookmarksCreated + (delta.bookmarksCreated ?? 0),
       timerSessionsCompleted:
-        current.timerSessionsCompleted + (delta.timerSessionsCompleted ?? 0)
+        current.timerSessionsCompleted + (delta.timerSessionsCompleted ?? 0),
+      ttsCardsListened:
+        (current.ttsCardsListened ?? 0) + (delta.ttsCardsListened ?? 0),
+      zenModeUsed: (current.zenModeUsed ?? 0) + (delta.zenModeUsed ?? 0)
     };
 
     const { nextStats, newlyUnlocked } = evaluateAchievements(updated);

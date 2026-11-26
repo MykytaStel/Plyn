@@ -37,6 +37,8 @@ interface ReaderState {
   toggleBookmarkAtCurrent: () => Promise<boolean>;
   setFocusTimer: (minutes: number) => void;
   completeFocusTimer: () => Promise<void>;
+  recordTtsListened: () => Promise<void>;
+  recordZenModeUsed: () => Promise<void>;
   clearFocusTimer: () => void;
   shiftRecentUnlock: () => void;
 }
@@ -238,6 +240,20 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   completeFocusTimer: async () => {
     set({ timerMinutes: 0, timerEndsAt: 0 });
     const unlocked = await recordProgressDelta({ timerSessionsCompleted: 1 });
+    if (unlocked.length > 0) {
+      set((s) => ({ recentUnlocks: [...s.recentUnlocks, ...unlocked] }));
+    }
+  },
+
+  recordTtsListened: async () => {
+    const unlocked = await recordProgressDelta({ ttsCardsListened: 1 });
+    if (unlocked.length > 0) {
+      set((s) => ({ recentUnlocks: [...s.recentUnlocks, ...unlocked] }));
+    }
+  },
+
+  recordZenModeUsed: async () => {
+    const unlocked = await recordProgressDelta({ zenModeUsed: 1 });
     if (unlocked.length > 0) {
       set((s) => ({ recentUnlocks: [...s.recentUnlocks, ...unlocked] }));
     }

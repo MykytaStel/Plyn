@@ -5,6 +5,7 @@ const SETTINGS_KEY = 'plyn_settings_v1';
 export const DEFAULT_SETTINGS: UserSettings = {
   theme: 'dark',
   fontFamily: 'sans',
+  letterSpacing: 'normal',
   fontSize: 24,
   lineHeight: 1.65,
   anchorMode: false,

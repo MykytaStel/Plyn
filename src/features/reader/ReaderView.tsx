@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronUp,
+  EyeOff,
   SlidersHorizontal,
   Square,
   Volume2
@@ -40,6 +41,8 @@ export function ReaderView() {
   );
   const setFocusTimer = useReaderStore((s) => s.setFocusTimer);
   const completeFocusTimer = useReaderStore((s) => s.completeFocusTimer);
+  const recordTtsListened = useReaderStore((s) => s.recordTtsListened);
+  const recordZenModeUsed = useReaderStore((s) => s.recordZenModeUsed);
   const shiftRecentUnlock = useReaderStore((s) => s.shiftRecentUnlock);
 
   const anchorMode = useSettingsStore((s) => s.anchorMode);
@@ -47,9 +50,13 @@ export function ReaderView() {
 
   const [sheet, setSheet] = useState<ActiveSheet>('none');
   const [showScrubber, setShowScrubber] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
   const [isDoneVisible, setIsDoneVisible] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [toast, setToast] = useState<{ text: string; isAchievement?: boolean } | null>(null);
+  const [toast, setToast] = useState<{
+    text: string;
+    isAchievement?: boolean;
+  } | null>(null);
   const [timerLabel, setTimerLabel] = useState('');
 
   const feedRef = useRef<HTMLDivElement>(null);
@@ -65,7 +72,6 @@ export function ReaderView() {
     );
   }, []);
 
-  // Показуємо спокійний тост при відкритті нової нагороди
   useEffect(() => {
     if (recentUnlocks.length === 0) return;
     const next = recentUnlocks[0];
@@ -91,7 +97,6 @@ export function ReaderView() {
     return Math.round(feed.scrollTop / height);
   }, [currentIndex]);
 
-  // Початковий перехід на збережену позицію
   useEffect(() => {
     if (!activeDoc) return;
     requestAnimationFrame(() => {
@@ -101,13 +106,11 @@ export function ReaderView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDoc?.id]);
 
-  // Зупиняємо озвучку при зміні картки
   useEffect(() => {
     stopSpeaking();
     setIsSpeaking(false);
   }, [currentIndex]);
 
-  // Відстеження активної картки через IntersectionObserver
   useEffect(() => {
     const feed = feedRef.current;
     if (!feed || cards.length === 0) return;
@@ -120,6 +123,7 @@ export function ReaderView() {
             if (Number.isNaN(idx)) continue;
             if (idx >= cards.length) {
               setIsDoneVisible(true);
+              setZenMode(false);
               void markDocumentCompleted();
             } else {
               setIsDoneVisible(false);
@@ -135,7 +139,6 @@ export function ReaderView() {
     return () => observer.disconnect();
   }, [cards, anchorMode, setCurrentIndex, markDocumentCompleted]);
 
-  // М'який таймер фокусу (без секунд)
   useEffect(() => {
     if (!timerEndsAt) {
       setTimerLabel('');
@@ -159,6 +162,18 @@ export function ReaderView() {
     return () => window.clearInterval(id);
   }, [timerEndsAt, completeFocusTimer, showToast]);
 
+  const handleToggleZen = useCallback(() => {
+    setShowScrubber(false);
+    setZenMode((prev) => {
+      const next = !prev;
+      if (next) {
+        void recordZenModeUsed();
+        showToast('Чистий екран — тапни по картці або натисни Z, щоб повернути панель');
+      }
+      return next;
+    });
+  }, [recordZenModeUsed, showToast]);
+
   const handleToggleBookmark = useCallback(async () => {
     const added = await toggleBookmarkAtCurrent();
     showToast(added ? 'Картку додано в закладки' : 'Закладку прибрано');
@@ -174,17 +189,21 @@ export function ReaderView() {
     const text = cards[currentIndex]?.text;
     if (!text) return;
     speakCardText(text, {
-      onStart: () => setIsSpeaking(true),
+      onStart: () => {
+        setIsSpeaking(true);
+        void recordTtsListened();
+      },
       onEnd: () => setIsSpeaking(false)
     });
-  }, [ttsAvailable, isSpeaking, cards, currentIndex]);
+  }, [ttsAvailable, isSpeaking, cards, currentIndex, recordTtsListened]);
 
-  // Клавіатура для MacBook
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (sheet !== 'none') {
           setSheet('none');
+        } else if (zenMode) {
+          setZenMode(false);
         } else if (showScrubber) {
           setShowScrubber(false);
         } else {
@@ -216,6 +235,9 @@ export function ReaderView() {
       } else if (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'і') {
         e.preventDefault();
         handleToggleSpeech();
+      } else if (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'я') {
+        e.preventDefault();
+        handleToggleZen();
       }
     };
 
@@ -223,6 +245,7 @@ export function ReaderView() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [
     sheet,
+    zenMode,
     showScrubber,
     anchorMode,
     closeReader,
@@ -230,7 +253,8 @@ export function ReaderView() {
     scrollToCard,
     updateSettings,
     handleToggleBookmark,
-    handleToggleSpeech
+    handleToggleSpeech,
+    handleToggleZen
   ]);
 
   if (!activeDoc) return null;
@@ -268,14 +292,20 @@ export function ReaderView() {
   };
 
   return (
-    <section className="view view-reader" aria-label="Режим читання">
+    <section
+      className={`view view-reader ${zenMode ? 'is-zen' : ''}`}
+      aria-label="Режим читання"
+    >
       <div
         className="progress-track"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={progressPercent}
-        onClick={() => setShowScrubber((v) => !v)}
+        onClick={() => {
+          setZenMode(false);
+          setShowScrubber((v) => !v);
+        }}
         title="Натисни для швидкого переходу по картках"
       >
         <div
@@ -304,7 +334,7 @@ export function ReaderView() {
             onClick={() => setShowScrubber((v) => !v)}
           >
             <span>
-              {isDoneVisible ? `Готово` : `${currentIndex + 1} / ${total}`}
+              {isDoneVisible ? 'Готово' : `${currentIndex + 1} / ${total}`}
             </span>
             {!isDoneVisible && remainingMins > 0 && (
               <span className="counter-eta">· ~{remainingMins} хв</span>
@@ -378,6 +408,17 @@ export function ReaderView() {
           <button
             className="icon-btn"
             type="button"
+            aria-pressed={zenMode}
+            aria-label="Режим Чистий екран"
+            title="Чистий екран (клавіша Z)"
+            onClick={handleToggleZen}
+          >
+            <EyeOff size={17} />
+          </button>
+
+          <button
+            className="icon-btn"
+            type="button"
             aria-label="Налаштування вигляду"
             title="Налаштування"
             onClick={() => {
@@ -390,7 +431,7 @@ export function ReaderView() {
         </div>
       </header>
 
-      {showScrubber && total > 1 && (
+      {showScrubber && !zenMode && total > 1 && (
         <div className="scrubber-bar" aria-label="Швидкий перехід по тексту">
           <div className="scrubber-meta">
             <span>Швидкий перехід</span>
@@ -414,6 +455,13 @@ export function ReaderView() {
         className={`cards-feed ${anchorMode ? 'anchor-active' : ''}`}
         tabIndex={0}
         aria-label="Картки тексту"
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('button')) return;
+          if (zenMode) {
+            setZenMode(false);
+          }
+        }}
       >
         {cards.map((card) => (
           <CardSlide

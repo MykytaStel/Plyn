@@ -8,10 +8,11 @@ import {
 const THEME_META_COLORS: Record<ThemeMode, string> = {
   dark: '#16181D',
   paper: '#F4EFE6',
-  gray: '#2C2F33'
+  gray: '#2C2F33',
+  mint: '#E6EFEA'
 };
 
-const THEME_ORDER: ThemeMode[] = ['dark', 'paper', 'gray'];
+const THEME_ORDER: ThemeMode[] = ['dark', 'paper', 'gray', 'mint'];
 
 interface SettingsState extends UserSettings {
   updateSettings: (patch: Partial<UserSettings>) => void;
@@ -22,6 +23,7 @@ interface SettingsState extends UserSettings {
 function syncDom(settings: UserSettings): void {
   document.documentElement.dataset.theme = settings.theme;
   document.documentElement.dataset.font = settings.fontFamily;
+  document.documentElement.dataset.spacing = settings.letterSpacing;
   document.documentElement.style.setProperty(
     '--reader-font-size',
     `${settings.fontSize}px`
@@ -44,6 +46,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const next: UserSettings = {
       theme: patch.theme ?? get().theme,
       fontFamily: patch.fontFamily ?? get().fontFamily,
+      letterSpacing: patch.letterSpacing ?? get().letterSpacing,
       fontSize: patch.fontSize ?? get().fontSize,
       lineHeight: patch.lineHeight ?? get().lineHeight,
       anchorMode: patch.anchorMode ?? get().anchorMode,
@@ -60,8 +63,23 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     get().updateSettings({ theme: nextTheme });
   },
   applyToDom: () => {
-    const { theme, fontFamily, fontSize, lineHeight, anchorMode, cardLength } =
-      get();
-    syncDom({ theme, fontFamily, fontSize, lineHeight, anchorMode, cardLength });
+    const {
+      theme,
+      fontFamily,
+      letterSpacing,
+      fontSize,
+      lineHeight,
+      anchorMode,
+      cardLength
+    } = get();
+    syncDom({
+      theme,
+      fontFamily,
+      letterSpacing,
+      fontSize,
+      lineHeight,
+      anchorMode,
+      cardLength
+    });
   }
 }));

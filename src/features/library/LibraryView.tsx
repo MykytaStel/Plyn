@@ -1,10 +1,14 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link2, Sun, Trophy } from 'lucide-react';
+import { Download, Link2, Search, Sun, Trophy, Upload } from 'lucide-react';
 import { ACHIEVEMENTS } from '../../core/achievements/achievements';
 import { parseEpubFile } from '../../core/parsers/epub';
 import { cleanMarkdown } from '../../core/parsers/markdown';
 import { extractArticleFromUrl } from '../../services/extract/urlExtractor';
+import {
+  exportLibraryBackup,
+  importLibraryBackup
+} from '../../services/storage/backup';
 import { db, removeDocument, renameDocument } from '../../services/storage/db';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -17,9 +21,9 @@ Plyn прибирає це перевантаження. Замість неск
 
 Свайпай вгору на iPhone або натискай Пробіл чи стрілки на MacBook, щоб рухатися далі. Верхня смужка показує реальний прогрес і орієнтовний час до кінця.
 
-Спробуй увімкнути режим «Якір» (клавіша A), шрифт для дислексії в налаштуваннях або озвучку картки (клавіша S), коли очі вже втомилися.
+Спробуй увімкнути режим «Якір» (клавіша A), тему «М’ята», шрифт і ширший інтервал для дислексії в налаштуваннях, або «Чистий екран» (клавіша Z), щоб прибрати всі зайві кнопки.
 
-Ти також можеш ставити закладки (клавіша B), імпортувати книги .epub, файли .txt / .md або завантажувати статті прямо за посиланням.`;
+Ти також можеш ставити закладки (клавіша B), слухати озвучку картки (клавіша S), імпортувати книги .epub, файли .txt / .md або переносити бібліотеку через JSON-бекап.`;
 
 export function LibraryView() {
   const [title, setTitle] = useState('');
@@ -29,8 +33,10 @@ export function LibraryView() {
   const [urlInput, setUrlInput] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backupInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const feedbackTimerRef = useRef<number | undefined>(undefined);
 
@@ -44,6 +50,17 @@ export function LibraryView() {
     []
   );
   const stats = useLiveQuery(() => db.stats.get('main'), []);
+
+  const filteredDocuments = useMemo(() => {
+    if (!documents) return [];
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return documents;
+    return documents.filter(
+      (doc) =>
+        doc.title.toLowerCase().includes(q) ||
+        doc.text.toLowerCase().includes(q)
+    );
+  }, [documents, searchQuery]);
 
   const showFeedback = (msg: string) => {
     setFeedback(msg);
@@ -82,7 +99,9 @@ export function LibraryView() {
         const parsed = await parseEpubFile(file);
         setTitle(parsed.title);
         setText(parsed.text);
-        showFeedback(`Книгу «${parsed.title}» завантажено. Натисни «Почати читання».`);
+        showFeedback(
+          `Книгу «${parsed.title}» завантажено. Натисни «Почати читання».`
+        );
       } else {
         const raw = await file.text();
         const prepared = lower.endsWith('.md') ? cleanMarkdown(raw) : raw.trim();
@@ -95,7 +114,42 @@ export function LibraryView() {
         showFeedback(`Імпортовано «${file.name}». Натисни «Почати читання».`);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Не вдалося прочитати файл.';
+      const msg =
+        err instanceof Error ? err.message : 'Не вдалося прочитати файл.';
+      showFeedback(msg);
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const handleExportBackup = async () => {
+    try {
+      const payload = await exportLibraryBackup();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `plyn-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showFeedback('Резервну копію бібліотеки збережено.');
+    } catch {
+      showFeedback('Не вдалося створити резервну копію.');
+    }
+  };
+
+  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const raw = JSON.parse(await file.text()) as unknown;
+      const { importedDocs } = await importLibraryBackup(raw);
+      showFeedback(`Імпортовано з бекапу: ${importedDocs} текстів.`);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Некоректний файл резервної копії.';
       showFeedback(msg);
     } finally {
       e.target.value = '';
@@ -284,14 +338,61 @@ export function LibraryView() {
           Почати читання
         </button>
 
-        {documents && documents.length > 0 && (
-          <section className="library-section" aria-label="Моя бібліотека">
-            <div className="library-header">
+        <section className="library-section" aria-label="Моя бібліотека">
+          <div className="library-header">
+            <div className="library-header-left">
               <h2>Моя бібліотека</h2>
-              <span className="library-count">{documents.length}</span>
+              {documents && documents.length > 0 && (
+                <span className="library-count">{documents.length}</span>
+              )}
             </div>
+            <div className="library-backup-actions">
+              {documents && documents.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  title="Експортувати бібліотеку та нагороди в JSON"
+                  onClick={() => void handleExportBackup()}
+                >
+                  <Download size={14} />
+                  <span>Бекап</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                title="Відновити з JSON-бекапу"
+                onClick={() => backupInputRef.current?.click()}
+              >
+                <Upload size={14} />
+                <span>Імпорт</span>
+              </button>
+              <input
+                ref={backupInputRef}
+                type="file"
+                accept=".json,application/json"
+                hidden
+                onChange={handleImportBackup}
+              />
+            </div>
+          </div>
+
+          {documents && documents.length >= 2 && (
+            <div className="library-search">
+              <Search size={15} className="library-search-icon" />
+              <input
+                type="search"
+                className="library-search-input"
+                placeholder="Пошук у бібліотеці..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          )}
+
+          {filteredDocuments.length > 0 && (
             <div className="library-list">
-              {documents.map((doc) => (
+              {filteredDocuments.map((doc) => (
                 <LibraryCard
                   key={doc.id}
                   doc={doc}
@@ -301,8 +402,8 @@ export function LibraryView() {
                 />
               ))}
             </div>
-          </section>
-        )}
+          )}
+        </section>
       </section>
 
       {showAchievements && (

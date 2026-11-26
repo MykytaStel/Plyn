@@ -10,6 +10,8 @@ export const DEFAULT_PROGRESS_STATS: UserProgressStats = {
   anchorCardsRead: 0,
   totalBookmarksCreated: 0,
   timerSessionsCompleted: 0,
+  ttsCardsListened: 0,
+  zenModeUsed: 0,
   unlockedIds: [],
   unlockedAt: {},
   updatedAt: 0
@@ -39,6 +41,20 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     description: 'Прочитати 25 карток у режимі «Якір»',
     target: 25,
     getProgress: (s) => s.anchorCardsRead
+  },
+  {
+    id: 'zen_reader',
+    title: 'Тиша навколо',
+    description: 'Спробувати режим «Чистий екран» без зайвих кнопок',
+    target: 1,
+    getProgress: (s) => s.zenModeUsed ?? 0
+  },
+  {
+    id: 'audio_listener',
+    title: 'Слухач',
+    description: 'Прослухати 5 карток через озвучку',
+    target: 5,
+    getProgress: (s) => s.ttsCardsListened ?? 0
   },
   {
     id: 'thought_hunter',

@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import type {
   CardLengthPreset,
   FontFamilyPreset,
+  LetterSpacingPreset,
   ThemeMode
 } from '../../core/models/types';
 import { useReaderStore } from '../../store/useReaderStore';
@@ -15,8 +16,9 @@ interface SettingsSheetProps {
 
 const THEMES: Array<{ value: ThemeMode; label: string }> = [
   { value: 'dark', label: 'Темна' },
-  { value: 'paper', label: 'Паперова' },
-  { value: 'gray', label: 'Сіра' }
+  { value: 'paper', label: 'Папір' },
+  { value: 'gray', label: 'Сіра' },
+  { value: 'mint', label: 'М’ята' }
 ];
 
 const FONTS: Array<{ value: FontFamilyPreset; label: string }> = [
@@ -24,6 +26,12 @@ const FONTS: Array<{ value: FontFamilyPreset; label: string }> = [
   { value: 'hyperlegible', label: 'Для очей' },
   { value: 'dyslexic', label: 'Дислексія' },
   { value: 'serif', label: 'Книжковий' }
+];
+
+const SPACINGS: Array<{ value: LetterSpacingPreset; label: string }> = [
+  { value: 'normal', label: 'Звичайний' },
+  { value: 'wide', label: 'Ширший' },
+  { value: 'extra', label: 'Дислексія' }
 ];
 
 const LENGTHS: Array<{ value: CardLengthPreset; label: string }> = [
@@ -47,6 +55,7 @@ export function SettingsSheet({
   const {
     theme,
     fontFamily,
+    letterSpacing,
     fontSize,
     lineHeight,
     anchorMode,
@@ -117,8 +126,32 @@ export function SettingsSheet({
         </div>
 
         <div className="setting-group">
+          <span className="setting-label">Інтервал літер і слів</span>
+          <div
+            className="segmented"
+            role="radiogroup"
+            aria-label="Інтервал літер і слів"
+          >
+            {SPACINGS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                className={`seg-btn ${letterSpacing === item.value ? 'is-active' : ''}`}
+                onClick={() => updateSettings({ letterSpacing: item.value })}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="setting-group">
           <span className="setting-label">Тема</span>
-          <div className="segmented" role="radiogroup" aria-label="Вибір теми">
+          <div
+            className="segmented segmented-4"
+            role="radiogroup"
+            aria-label="Вибір теми"
+          >
             {THEMES.map((item) => (
               <button
                 key={item.value}
@@ -214,8 +247,9 @@ export function SettingsSheet({
         </div>
 
         <p className="shortcuts-hint">
-          Клавіатура: <kbd>Space</kbd>/<kbd>↓</kbd> далі · <kbd>↑</kbd> назад ·{' '}
-          <kbd>A</kbd> якір · <kbd>B</kbd> закладка · <kbd>S</kbd> озвучка
+          Клавіатура: <kbd>Space</kbd>/<kbd>↓</kbd> далі · <kbd>A</kbd> якір ·{' '}
+          <kbd>B</kbd> закладка · <kbd>S</kbd> озвучка · <kbd>Z</kbd> чистий
+          екран
         </p>
       </div>
     </aside>

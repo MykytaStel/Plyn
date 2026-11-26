@@ -48,6 +48,22 @@
   --backdrop: rgba(18, 20, 22, 0.56);
 }
 
+/* Пастельно-м'ятна тема — знижує візуальний стрес при дислексії (Irlen-friendly) */
+[data-theme="mint"] {
+  --bg: #E6EFEA;
+  --surface: #F1F6F3;
+  --surface-elevated: #DCE8E1;
+  --border: rgba(31, 51, 42, 0.11);
+  --text: #1F332A;
+  --text-soft: #334C40;
+  --text-muted: #607A6E;
+  --accent: #3F735E;
+  --accent-strong: #325D4C;
+  --accent-contrast: #F4FAF6;
+  --progress-bg: rgba(31, 51, 42, 0.1);
+  --backdrop: rgba(20, 34, 28, 0.36);
+}
+
 :root {
   --reader-font-size: 24px;
   --reader-line-height: 1.65;
@@ -64,26 +80,33 @@
 
 [data-font="sans"] {
   --reader-font-family: var(--font-sans);
-  --reader-letter-spacing: 0.005em;
-  --reader-word-spacing: normal;
 }
 
 [data-font="hyperlegible"] {
   --reader-font-family: "Atkinson Hyperlegible", var(--font-sans);
-  --reader-letter-spacing: 0.015em;
-  --reader-word-spacing: 0.04em;
 }
 
 [data-font="dyslexic"] {
   --reader-font-family: "OpenDyslexicRegular", "Lexend", var(--font-sans);
-  --reader-letter-spacing: 0.04em;
-  --reader-word-spacing: 0.14em;
 }
 
 [data-font="serif"] {
   --reader-font-family: "Literata", Georgia, "Times New Roman", serif;
+}
+
+[data-spacing="normal"] {
   --reader-letter-spacing: 0.005em;
   --reader-word-spacing: normal;
+}
+
+[data-spacing="wide"] {
+  --reader-letter-spacing: 0.03em;
+  --reader-word-spacing: 0.08em;
+}
+
+[data-spacing="extra"] {
+  --reader-letter-spacing: 0.06em;
+  --reader-word-spacing: 0.18em;
 }
 
 *,
@@ -1152,6 +1175,63 @@ input[type="range"] {
   border: 1px solid var(--border);
   font-family: inherit;
   font-size: 11px;
+}
+
+/* Режим «Чистий екран» (Zen) для РДУГ — ховає все зайве під час читання */
+.view-reader .reader-header,
+.view-reader .desktop-nav {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.view-reader.is-zen .reader-header {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+
+.view-reader.is-zen .desktop-nav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Пошук та резервна копія в бібліотеці */
+.library-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.library-backup-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.library-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.library-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.library-search-input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  font-size: 14px;
+  outline: none;
+}
+
+.library-search-input:focus {
+  border-color: var(--accent);
 }
 
 @media (max-width: 480px) {

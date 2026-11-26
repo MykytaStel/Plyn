@@ -1,10 +1,12 @@
-export type ThemeMode = 'dark' | 'paper' | 'gray';
+export type ThemeMode = 'dark' | 'paper' | 'gray' | 'mint';
 export type CardLengthPreset = 'short' | 'medium' | 'long';
 export type FontFamilyPreset = 'sans' | 'hyperlegible' | 'dyslexic' | 'serif';
+export type LetterSpacingPreset = 'normal' | 'wide' | 'extra';
 
 export interface UserSettings {
   theme: ThemeMode;
   fontFamily: FontFamilyPreset;
+  letterSpacing: LetterSpacingPreset;
   fontSize: number;
   lineHeight: number;
   anchorMode: boolean;
@@ -43,6 +45,8 @@ export interface UserProgressStats {
   anchorCardsRead: number;
   totalBookmarksCreated: number;
   timerSessionsCompleted: number;
+  ttsCardsListened: number;
+  zenModeUsed: number;
   unlockedIds: string[];
   unlockedAt: Record<string, number>;
   updatedAt: number;
@@ -54,6 +58,13 @@ export interface AchievementDefinition {
   description: string;
   target: number;
   getProgress: (stats: UserProgressStats) => number;
+}
+
+export interface PlynBackupPayload {
+  schemaVersion: 1;
+  exportedAt: number;
+  documents: PlynDocument[];
+  stats: UserProgressStats | null;
 }
 
 export type AnchorToken =
