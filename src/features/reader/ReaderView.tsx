@@ -6,6 +6,7 @@ import {
   ChevronUp,
   EyeOff,
   Lightbulb,
+  ListTree,
   MoreHorizontal,
   SlidersHorizontal,
   Square,
@@ -173,6 +174,8 @@ export function ReaderView() {
     : Math.round(((currentIndex + 1) / Math.max(1, total)) * 100);
 
   const bookmarkOffsets = activeDoc.bookmarkOffsets ?? [];
+  const chapters = activeDoc.chapters ?? [];
+  const hasContents = chapters.length > 0;
   const isCurrentBookmarked = Boolean(
     currentCard &&
       bookmarkOffsets.some(
@@ -299,18 +302,24 @@ export function ReaderView() {
             />
           </button>
 
-          {bookmarkOffsets.length > 0 && (
+          {(bookmarkOffsets.length > 0 || hasContents) && (
             <button
               className="icon-btn icon-btn-badge reader-secondary"
               type="button"
-              aria-label={`${t.bookmarksList}, ${bookmarkOffsets.length}`}
-              title={t.bookmarksListHint}
+              aria-label={
+                hasContents
+                  ? bookmarkOffsets.length > 0
+                    ? `${t.contentsList}, ${bookmarkOffsets.length}`
+                    : t.contentsList
+                  : `${t.bookmarksList}, ${bookmarkOffsets.length}`
+              }
+              title={hasContents ? t.contentsList : t.bookmarksListHint}
               onClick={() => {
                 setShowScrubber(false);
                 setSheet('bookmarks');
               }}
             >
-              {bookmarkOffsets.length}
+              {bookmarkOffsets.length > 0 ? bookmarkOffsets.length : <ListTree size={17} />}
             </button>
           )}
 
@@ -483,9 +492,13 @@ export function ReaderView() {
           bookmarkOffsets={bookmarkOffsets}
           bookmarkNotes={activeDoc.bookmarkNotes || {}}
           onSaveNote={(offset, note) => void setBookmarkNote(offset, note)}
+          chapters={chapters}
+          currentOffset={currentCard?.startOffset ?? 0}
           onSelectCard={(idx) => {
             setSheet('none');
             scrollToCard(idx);
+            // Keyboard reading goes on from the card, not from the header button.
+            requestAnimationFrame(() => feedRef.current?.focus({ preventScroll: true }));
           }}
           onClose={() => setSheet('none')}
         />
@@ -498,6 +511,7 @@ export function ReaderView() {
           anchorMode={anchorMode}
           sentenceFocus={sentenceFocus}
           bookmarksCount={bookmarkOffsets.length}
+          hasContents={hasContents}
           onSpeak={() => {
             setSheet('none');
             handleToggleSpeech();

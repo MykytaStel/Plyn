@@ -10,6 +10,8 @@ export interface StoredDoc {
   text: string;
   charOffset: number;
   bookmarkOffsets: number[];
+  author?: string;
+  chapters?: Array<{ title: string; offset: number; level: number }>;
 }
 
 interface Options {

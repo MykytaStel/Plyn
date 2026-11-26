@@ -59,6 +59,9 @@ describe('backup fixtures (spec/backups)', () => {
       for (const offset of restored!.bookmarkOffsets) {
         expect(offset).toBeLessThan(restored!.text.length);
       }
+      for (const chapter of restored!.chapters ?? []) {
+        expect(chapter.offset).toBeLessThan(restored!.text.length);
+      }
     }
 
     expect(result.importedThoughts).toBe(fixture.thoughts?.length ?? 0);

@@ -5,7 +5,7 @@ import type {
   ThoughtNote,
   UserSettings
 } from '../../core/models/types';
-import { db, getProgressStats } from './db';
+import { db, getProgressStats, sanitizeChapters } from './db';
 import {
   hasStoredSettings,
   loadUserSettings,
@@ -50,12 +50,18 @@ export function validateBackupPayload(raw: unknown): PlynBackupPayload {
     throw new PlynError('backup_unsupported');
   }
 
-  const validDocs: PlynDocument[] = (obj.documents as unknown[]).filter(
-    (d): d is PlynDocument => {
+  const validDocs: PlynDocument[] = (obj.documents as unknown[])
+    .filter((d): d is PlynDocument => {
       const doc = d as Partial<PlynDocument> | null;
       return Boolean(doc && typeof doc.id === 'string' && typeof doc.text === 'string');
-    }
-  );
+    })
+    .map((doc) => {
+      // A table of contents (0.23) is kept only if it still fits the text.
+      if (doc.chapters === undefined) return doc;
+      const { chapters, ...rest } = doc;
+      const clean = sanitizeChapters(chapters, doc.text.length);
+      return clean ? { ...rest, chapters: clean } : rest;
+    });
 
   const thoughts: ThoughtNote[] =
     version === 2 && Array.isArray(obj.thoughts)

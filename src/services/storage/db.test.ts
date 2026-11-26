@@ -9,6 +9,7 @@ import {
   recordProgressDelta,
   removeDocument,
   renameDocument,
+  sanitizeChapters,
   updateDocument
 } from './db';
 import { toLocalDateKey } from '../../core/reading/weeklyActivity';
@@ -74,6 +75,55 @@ describe('documents', () => {
 
     expect((await findDocumentByText('Same text'))?.id).toBe(doc.id);
     expect(await findDocumentByText('Same text ')).toBeUndefined();
+  });
+
+  it('keeps a book author and table of contents (0.23)', async () => {
+    const doc = await createDocument({
+      text: 'One\n\nAlpha.\n\nTwo\n\nBeta.',
+      totalCards: 2,
+      fallbackTitle: 'x',
+      author: '  Ada Example ',
+      chapters: [
+        { title: 'Two', offset: 14, level: 0 },
+        { title: 'One', offset: 0, level: 0 }
+      ]
+    });
+    const stored = await db.documents.get(doc.id);
+    expect(stored?.author).toBe('Ada Example');
+    expect(stored?.chapters?.map((c) => c.title)).toEqual(['One', 'Two']);
+  });
+
+  it('stores no author or chapters for plain text', async () => {
+    const doc = await createDocument({ text: 'abc', totalCards: 1, fallbackTitle: 'x' });
+    const stored = await db.documents.get(doc.id);
+    expect(stored && 'author' in stored).toBe(false);
+    expect(stored && 'chapters' in stored).toBe(false);
+  });
+});
+
+describe('sanitizeChapters', () => {
+  it('drops entries outside the text, without a title, or malformed', () => {
+    const result = sanitizeChapters(
+      [
+        { title: 'A', offset: 0, level: 0 },
+        { title: ' ', offset: 2, level: 0 },
+        { title: 'Past the end', offset: 50, level: 0 },
+        { title: 'Half', offset: 1.5, level: 0 },
+        null,
+        'nope',
+        { title: 'B', offset: 5, level: -3 }
+      ],
+      10
+    );
+    expect(result).toEqual([
+      { title: 'A', offset: 0, level: 0 },
+      { title: 'B', offset: 5, level: 0 }
+    ]);
+  });
+
+  it('returns nothing for fewer than two entries or a non-array', () => {
+    expect(sanitizeChapters([{ title: 'A', offset: 0, level: 0 }], 10)).toBeUndefined();
+    expect(sanitizeChapters({ title: 'A' }, 10)).toBeUndefined();
   });
 });
 

@@ -32,6 +32,15 @@ export interface ReadingCard {
   endOffset: number;
 }
 
+/** One entry of a book's table of contents. */
+export interface DocumentChapter {
+  title: string;
+  /** Character offset in the normalized text where the chapter starts. */
+  offset: number;
+  /** Nesting depth: 0 for top-level parts or chapters. */
+  level: number;
+}
+
 export interface PlynDocument {
   id: string;
   schemaVersion: 1;
@@ -48,6 +57,13 @@ export interface PlynDocument {
   bookmarkNotes?: Record<string, string>;
   /** Чи був документ уже дочитаний хоча б раз (для ачівментів без дублювання) */
   completedOnce?: boolean;
+  /** Book author from the file's metadata (EPUB, FB2). Since 0.23. */
+  author?: string;
+  /**
+   * The book's table of contents. Offsets point into the normalized text,
+   * like bookmarks, so they survive any card length. Since 0.23.
+   */
+  chapters?: DocumentChapter[];
   createdAt: number;
   updatedAt: number;
 }
