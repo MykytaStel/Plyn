@@ -1,0 +1,28 @@
+/* Every stylesheet of the app, in cascade order (IMP-09, 0.25).
+
+   tokens.css holds themes and variables; component styles live next to their
+   features. They are imported here, in the order they had in the old single
+   tokens.css, not from the components: rules of equal specificity win by
+   order, and a lazy chunk would load its CSS later and change the result.
+   Add a new file at the end, or right after the file it builds on. */
+@import 'tokens.css';
+@import 'base.css';
+@import 'controls.css';
+@import '../features/library/library.css';
+@import '../features/reader/reader.css';
+@import '../features/shared/sheets.css';
+@import '../features/achievements/achievements.css';
+@import '../features/reader/bookmarks.css';
+@import '../features/reader/zen.css';
+@import '../features/library/library-search.css';
+@import '../features/reader/sentence-focus.css';
+@import '../features/onboarding/onboarding.css';
+@import '../features/library/library-start.css';
+@import '../features/reader/bookmark-notes.css';
+@import '../features/achievements/weekly-rhythm.css';
+@import '../features/reader/card-extras.css';
+@import '../features/settings/presets.css';
+@import '../features/thoughts/thoughts.css';
+@import '../features/reader/reader-responsive.css';
+@import '../features/reader/contents.css';
+@import '../features/reader/feed-window.css';

@@ -1,0 +1,16 @@
+/* Режим «Чистий екран» (Zen) для РДУГ — ховає все зайве під час читання */
+.view-reader .reader-header,
+.view-reader .desktop-nav {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.view-reader.is-zen .reader-header {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+
+.view-reader.is-zen .desktop-nav {
+  opacity: 0;
+  pointer-events: none;
+}

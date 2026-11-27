@@ -1,0 +1,112 @@
+/* Кнопки */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.16s ease, opacity 0.16s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-strong);
+}
+
+.btn-secondary {
+  background-color: var(--surface-elevated);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--text);
+  background-color: var(--surface-elevated);
+}
+
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 13.5px;
+}
+
+.btn-lg {
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 16px;
+  border-radius: var(--radius-md);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  background-color: var(--surface-elevated);
+}
+
+.icon-btn[aria-pressed="true"] {
+  color: var(--accent);
+  background-color: var(--surface-elevated);
+  border-color: var(--border);
+}
+
+.icon-btn-text {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0 10px 0 6px;
+}
+
+.icon-btn-badge {
+  min-width: 28px;
+  padding: 0 7px;
+  background-color: var(--surface-elevated);
+  border-color: var(--border);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.anchor-icon-glyph {
+  font-size: 14.5px;
+  letter-spacing: -0.02em;
+}

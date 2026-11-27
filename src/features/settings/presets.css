@@ -1,0 +1,27 @@
+/* Пресети в 1 тап та 2-колонковий сегмент */
+.presets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.preset-btn {
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.preset-btn:hover {
+  border-color: var(--accent);
+  background-color: var(--surface-elevated);
+}
+
+.segmented-2 {
+  grid-template-columns: repeat(2, 1fr);
+}

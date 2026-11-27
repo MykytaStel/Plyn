@@ -1,0 +1,6 @@
+/* Stands in for the cards outside the rendered window (0.25): exactly the
+   height of that many slides, so scroll positions stay card × viewport. */
+.feed-spacer {
+  height: calc(var(--slides, 0) * 100dvh);
+  pointer-events: none;
+}

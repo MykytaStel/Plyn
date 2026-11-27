@@ -1,0 +1,31 @@
+/* Ширина колонки для комфорту на MacBook */
+[data-width="narrow"] .card-body {
+  max-width: 440px;
+}
+
+/* Попередній контекст картки */
+.card-context {
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  opacity: 0.72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* М'яка підкладка-лінійка під активним реченням (дислексія) */
+.sentence-segment.is-focused {
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: 6px;
+  padding: 1px 4px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.readable-word {
+  cursor: pointer;
+}
