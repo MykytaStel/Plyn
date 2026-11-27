@@ -71,6 +71,65 @@ export function pdfFixture(): { name: string; mimeType: string; buffer: Buffer }
   return { name: PDF_FILE_NAME, mimeType: 'application/pdf', buffer: Buffer.from(body, 'latin1') };
 }
 
+/** Serializes PDF objects (1-based, in order) with a correct xref table. */
+function buildPdf(objects: string[]): Buffer {
+  let body = '%PDF-1.4\n';
+  const offsets: number[] = [];
+  objects.forEach((obj, i) => {
+    offsets.push(body.length);
+    body += `${i + 1} 0 obj\n${obj}\nendobj\n`;
+  });
+  const xrefAt = body.length;
+  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const off of offsets) body += `${String(off).padStart(10, '0')} 00000 n \n`;
+  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefAt}\n%%EOF\n`;
+  return Buffer.from(body, 'latin1');
+}
+
+export const OUTLINED_PDF_NAME = 'quiet-book.pdf';
+export const OUTLINED_PDF_IMPRINT = 'ISBN 000-0-00-000000-0. Imprint Press, 2025.';
+export const OUTLINED_PDF_CHAPTERS = ['Chapter One', 'Chapter Two'];
+
+/**
+ * A three-page PDF with its own outline (0.25): an imprint page, then two
+ * chapters, each with a large heading and body text.
+ */
+export function outlinedPdfFixture(): { name: string; mimeType: string; buffer: Buffer } {
+  const pageStream = (lines: Array<[number, string]>) =>
+    lines
+      .map(([size, text], i) => `BT /F1 ${size} Tf 72 ${720 - i * 30} Td (${text}) Tj ET`)
+      .join('\n');
+  const streams = [
+    pageStream([[12, OUTLINED_PDF_IMPRINT]]),
+    pageStream([
+      [20, OUTLINED_PDF_CHAPTERS[0]],
+      [12, 'The first chapter begins in a calm room.'],
+      [12, 'It goes on for a while, quietly.']
+    ]),
+    pageStream([
+      [20, OUTLINED_PDF_CHAPTERS[1]],
+      [12, 'The second chapter opens by the sea.'],
+      [12, 'Nothing hurries here either.']
+    ])
+  ];
+  // 1 catalog, 2 pages, 3-5 page, 6-8 contents, 9 font, 10 outlines, 11-12 items.
+  const page = (contents: number) =>
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${contents} 0 R /Resources << /Font << /F1 9 0 R >> >> >>`;
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R /Outlines 10 0 R /PageMode /UseOutlines >>',
+    '<< /Type /Pages /Kids [3 0 R 4 0 R 5 0 R] /Count 3 >>',
+    page(6),
+    page(7),
+    page(8),
+    ...streams.map((st) => `<< /Length ${st.length} >>\nstream\n${st}\nendstream`),
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    '<< /Type /Outlines /First 11 0 R /Last 12 0 R /Count 2 >>',
+    `<< /Title (${OUTLINED_PDF_CHAPTERS[0]}) /Parent 10 0 R /Next 12 0 R /Dest [4 0 R /XYZ null null null] >>`,
+    `<< /Title (${OUTLINED_PDF_CHAPTERS[1]}) /Parent 10 0 R /Prev 11 0 R /Dest [5 0 R /XYZ null null null] >>`
+  ];
+  return { name: OUTLINED_PDF_NAME, mimeType: 'application/pdf', buffer: buildPdf(objects) };
+}
+
 /** A golden-file book from spec/parsers (self-written, 0.23). */
 export function specBook(name: string): { name: string; mimeType: string; buffer: Buffer } {
   const path = fileURLToPath(new URL(`../../spec/parsers/${name}`, import.meta.url));

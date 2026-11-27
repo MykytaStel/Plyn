@@ -238,15 +238,36 @@ function stripHeadersFootersAndPageNumbers(
   });
 }
 
+/** Where each page's text begins in the reconstructed text (0.25). */
+export interface PdfPageStart {
+  pageNumber: number;
+  /** Offset of the first paragraph that starts on this page. */
+  offset: number;
+}
+
+export interface ReconstructedPdf {
+  text: string;
+  /** In page order; pages where no paragraph starts are left out. */
+  pageStarts: PdfPageStart[];
+}
+
 /**
  * Reconstructs clean paragraphs from positioned pdf.js page items.
  */
 export function reconstructPdfText(pages: PdfPageItems[]): string {
+  return reconstructPdfDocument(pages).text;
+}
+
+/**
+ * Like `reconstructPdfText`, and also where every page starts, so the PDF's
+ * own table of contents (page numbers) can point into the text (0.25).
+ */
+export function reconstructPdfDocument(pages: PdfPageItems[]): ReconstructedPdf {
   const rawPageLines = pages.map((page) => groupItemsIntoLines(page.items));
   const cleanedPages = stripHeadersFootersAndPageNumbers(rawPageLines);
 
   const allLines = cleanedPages.flat();
-  if (allLines.length === 0) return '';
+  if (allLines.length === 0) return { text: '', pageStarts: [] };
 
   const bodyFontSize =
     median(allLines.map((l) => l.fontSize).filter((s) => s > 0)) || 12;
@@ -288,11 +309,17 @@ export function reconstructPdfText(pages: PdfPageItems[]): string {
       ? sortedGaps[Math.floor(sortedGaps.length * 0.25)]
       : bodyFontSize * 1.3;
 
-  const paragraphs: string[] = [];
+  /** Paragraphs with the page each one started on. */
+  const paragraphs: Array<{ text: string; page: number }> = [];
   let currentParagraph = '';
+  let currentPage = 0;
+  const pushParagraph = (text: string, page: number) => {
+    paragraphs.push({ text, page });
+  };
 
   for (let pIdx = 0; pIdx < cleanedPages.length; pIdx += 1) {
     const lines = cleanedPages[pIdx];
+    const pageNumber = pages[pIdx].pageNumber;
     if (lines.length === 0) continue;
 
     for (let i = 0; i < lines.length; i += 1) {
@@ -301,8 +328,9 @@ export function reconstructPdfText(pages: PdfPageItems[]): string {
 
       if (!currentParagraph) {
         currentParagraph = line.text;
+        currentPage = pageNumber;
         if (isHeading) {
-          paragraphs.push(currentParagraph);
+          pushParagraph(currentParagraph, currentPage);
           currentParagraph = '';
         }
         continue;
@@ -320,10 +348,11 @@ export function reconstructPdfText(pages: PdfPageItems[]): string {
         if (shouldContinueAcrossPage) {
           currentParagraph = joinParagraphLines(currentParagraph, line.text);
         } else {
-          paragraphs.push(currentParagraph);
+          pushParagraph(currentParagraph, currentPage);
           currentParagraph = line.text;
+          currentPage = pageNumber;
           if (isHeading) {
-            paragraphs.push(currentParagraph);
+            pushParagraph(currentParagraph, currentPage);
             currentParagraph = '';
           }
         }
@@ -348,10 +377,11 @@ export function reconstructPdfText(pages: PdfPageItems[]): string {
         (prevLooksShort && prevEndedSentence);
 
       if (startNewParagraph) {
-        paragraphs.push(currentParagraph);
+        pushParagraph(currentParagraph, currentPage);
         currentParagraph = line.text;
+        currentPage = pageNumber;
         if (isHeading) {
-          paragraphs.push(currentParagraph);
+          pushParagraph(currentParagraph, currentPage);
           currentParagraph = '';
         }
       } else {
@@ -361,11 +391,22 @@ export function reconstructPdfText(pages: PdfPageItems[]): string {
   }
 
   if (currentParagraph) {
-    paragraphs.push(currentParagraph);
+    pushParagraph(currentParagraph, currentPage);
   }
 
-  return paragraphs
-    .map((p) => p.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
-    .join('\n\n');
+  const kept = paragraphs
+    .map((p) => ({ text: p.text.replace(/\s+/g, ' ').trim(), page: p.page }))
+    .filter((p) => p.text);
+
+  const pageStarts: PdfPageStart[] = [];
+  let offset = 0;
+  for (const paragraph of kept) {
+    const last = pageStarts[pageStarts.length - 1];
+    if (!last || paragraph.page > last.pageNumber) {
+      pageStarts.push({ pageNumber: paragraph.page, offset });
+    }
+    offset += paragraph.text.length + 2;
+  }
+
+  return { text: kept.map((p) => p.text).join('\n\n'), pageStarts };
 }
