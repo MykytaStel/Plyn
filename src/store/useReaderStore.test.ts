@@ -141,6 +141,8 @@ describe('closeReader session thoughts (0.27)', () => {
     await useReaderStore.getState().closeReader();
     expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
 
+    // The thought above must be older than the next session, not in the same millisecond.
+    await new Promise((r) => setTimeout(r, 5));
     await open();
     await useReaderStore.getState().closeReader({ early: true });
     expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
