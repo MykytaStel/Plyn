@@ -179,3 +179,40 @@ export async function openSettingsSection(
     .click();
   await expect(page.getByRole('dialog', { name: title })).toBeVisible();
 }
+
+/**
+ * Saves a file the way this device does (`services/files/saveFile`): a download
+ * on a desktop, the share sheet on a touch device that has one (stubbed, so the
+ * test reads the file it was given). Returns the file's name and text.
+ */
+export async function savedFile(
+  page: Page,
+  save: () => Promise<void>
+): Promise<{ name: string; text: string }> {
+  const shares = await page.evaluate(
+    () => matchMedia('(pointer: coarse)').matches && typeof navigator.share === 'function'
+  );
+  if (!shares) {
+    const [download] = await Promise.all([page.waitForEvent('download'), save()]);
+    const chunks: Buffer[] = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+    return { name: download.suggestedFilename(), text: Buffer.concat(chunks).toString('utf8') };
+  }
+  await page.evaluate(() => {
+    const w = window as unknown as { __sharedFile?: Promise<{ name: string; text: string }> };
+    Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: (data: { files: File[] }) => {
+        const file = data.files[0];
+        w.__sharedFile = file.text().then((text) => ({ name: file.name, text }));
+        return Promise.resolve();
+      }
+    });
+  });
+  await save();
+  await page.waitForFunction(() => Boolean((window as unknown as { __sharedFile?: unknown }).__sharedFile));
+  return page.evaluate(
+    () => (window as unknown as { __sharedFile: Promise<{ name: string; text: string }> }).__sharedFile
+  );
+}

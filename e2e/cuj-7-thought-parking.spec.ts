@@ -5,6 +5,7 @@ import {
   expectStoredOffset,
   nextCard,
   reader,
+  savedFile,
   startReading,
   test,
   uk,
@@ -79,12 +80,10 @@ test('CUJ-7: the Done screen offers this reading’s thoughts and they export to
   await expect(thoughts.getByRole('heading', { name: uk.thoughts.thisSession })).toBeVisible();
   await expect(thoughts.getByText(THOUGHT)).toBeVisible();
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
+  const file = await savedFile(page, () =>
     thoughts.getByRole('button', { name: uk.thoughts.export }).click()
-  ]);
-  expect(download.suggestedFilename()).toMatch(/^plyn-thoughts-\d{4}-\d{2}-\d{2}\.md$/);
-  const chunks: Buffer[] = [];
-  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-  expect(Buffer.concat(chunks).toString('utf8')).toContain(THOUGHT);
+  );
+  expect(file.name).toMatch(/^plyn-thoughts-\d{4}-\d{2}-\d{2}\.md$/);
+  expect(file.text).toContain(THOUGHT);
+  await expect(thoughts.getByRole('status')).toHaveText(uk.thoughts.exported);
 });
