@@ -212,11 +212,12 @@ export function ReaderView() {
         n: timeLeft.value
       })
     : '';
-  const counterLabel = timeLeft
-    ? `${currentIndex + 1} / ${total}. ${i18n.format(
-        endIndex < total ? t.timeLeft.toChapterEnd : t.timeLeft.toTextEnd,
-        { time: plainTime }
-      )}`
+  // The button's name is its visible text (WCAG 2.5.3); the plain-words
+  // sentence is its description.
+  const timeLeftSentence = timeLeft
+    ? i18n.format(endIndex < total ? t.timeLeft.toChapterEnd : t.timeLeft.toTextEnd, {
+        time: plainTime
+      })
     : undefined;
 
   const progressPercent = isDoneVisible
@@ -288,7 +289,7 @@ export function ReaderView() {
             type="button"
             className="counter-btn"
             aria-expanded={showScrubber}
-            aria-label={counterLabel}
+            aria-describedby={timeLeftSentence ? 'counter-time-left' : undefined}
             title={t.counterHint}
             onClick={() => setShowScrubber((v) => !v)}
           >
@@ -297,6 +298,11 @@ export function ReaderView() {
             </span>
             {timeLeft && <span className="counter-eta">· {timeLeftText}</span>}
           </button>
+          {timeLeftSentence && (
+            <span id="counter-time-left" className="sr-only">
+              {timeLeftSentence}
+            </span>
+          )}
           {microGoalTarget && !microGoalCompleted && (
             <span className="timer-pill" title={t.goalHint}>
               {i18n.format(t.goal, { count: microGoalCount, target: microGoalTarget })}

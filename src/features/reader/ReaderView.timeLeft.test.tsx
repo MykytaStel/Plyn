@@ -38,6 +38,11 @@ function open(settings: Partial<typeof DEFAULT_SETTINGS>, chapterAtCard?: number
   return cards;
 }
 
+function describedBy(el: HTMLElement) {
+  const id = el.getAttribute('aria-describedby');
+  return id ? document.getElementById(id)?.textContent : undefined;
+}
+
 beforeEach(() => {
   vi.stubGlobal(
     'IntersectionObserver',
@@ -60,12 +65,14 @@ describe('reader header time left', () => {
   it('shows the time left and names it without a tilde', () => {
     const total = open({ showTimeLeft: true }).length;
     render(<ReaderView />);
-    const name = `1 / ${total}. ${format(uk.reader.timeLeft.toTextEnd, {
+    const description = format(uk.reader.timeLeft.toTextEnd, {
       time: format(uk.reader.timeLeft.minPlain, { n: 5 })
-    })}`;
-    const counter = screen.getByRole('button', { name });
+    });
+    const counter = screen.getByRole('button', { name: new RegExp(`^1 / ${total}`) });
     expect(counter.textContent).toMatch(/~5 хв/);
-    expect(name).not.toContain('~');
+    expect(counter.getAttribute('aria-label')).toBeNull();
+    expect(describedBy(counter)).toBe(description);
+    expect(description).not.toContain('~');
   });
 
   it('names the chapter end when a chapter follows', () => {
@@ -73,10 +80,12 @@ describe('reader header time left', () => {
     render(<ReaderView />);
     const words = cards.slice(0, 3).reduce((n, c) => n + c.text.split(/\s+/).length, 0);
     const minutes = Math.ceil(words / 180);
-    const name = `1 / ${cards.length}. ${format(uk.reader.timeLeft.toChapterEnd, {
+    const description = format(uk.reader.timeLeft.toChapterEnd, {
       time: format(uk.reader.timeLeft.minPlain, { n: minutes })
-    })}`;
-    expect(screen.getByRole('button', { name })).toBeTruthy();
+    });
+    expect(
+      describedBy(screen.getByRole('button', { name: new RegExp(`^1 / ${cards.length}`) }))
+    ).toBe(description);
   });
 
   it('shows only the counter when showTimeLeft is off', () => {
@@ -84,5 +93,6 @@ describe('reader header time left', () => {
     render(<ReaderView />);
     const counter = screen.getByTitle(uk.reader.counterHint);
     expect(counter.textContent).toBe(`1 / ${total}`);
+    expect(counter.getAttribute('aria-describedby')).toBeNull();
   });
 });
