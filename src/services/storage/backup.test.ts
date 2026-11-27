@@ -1,7 +1,12 @@
+import 'fake-indexeddb/auto';
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlynError } from '../../core/errors';
-import { validateBackupPayload } from './backup';
+import type { UserProgressStats } from '../../core/models/types';
+import fixture027 from '../../../spec/backups/v2-0.27.json';
+import fixture026 from '../../../spec/backups/v2-0.26.json';
+import { importLibraryBackup, validateBackupPayload } from './backup';
+import { db, getProgressStats } from './db';
 
 describe('backup validation', () => {
   it('accepts valid schemaVersion 1 backup payload', () => {
@@ -107,5 +112,70 @@ describe('backup validation (property)', () => {
       ),
       { seed: 1900, numRuns: 300 }
     );
+  });
+});
+
+describe('backup reading pace (0.27)', () => {
+  let store: Map<string, string>;
+  beforeEach(async () => {
+    await db.delete();
+    await db.open();
+    store = new Map<string, string>();
+    vi.stubGlobal('window', {
+      localStorage: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => void store.set(k, v),
+        removeItem: (k: string) => void store.delete(k)
+      }
+    });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function seedPace(pace: { wordsPerMinute: number; samples: number }) {
+    const current = await getProgressStats();
+    await db.stats.put({ ...current, readingPace: pace });
+  }
+
+  function withPace(pace: { wordsPerMinute: number; samples: number }) {
+    return {
+      ...structuredClone(fixture027),
+      stats: { ...(fixture027.stats as unknown as UserProgressStats), readingPace: pace }
+    };
+  }
+
+  it('imports v2-0.27 fixture', async () => {
+    const result = await importLibraryBackup(structuredClone(fixture027));
+    expect((await getProgressStats()).readingPace).toEqual({ wordsPerMinute: 210, samples: 40 });
+    expect(result.appliedSettings?.syllableHints).toBe(true);
+    expect(result.appliedSettings?.showTimeLeft).toBe(false);
+  });
+
+  it('keeps the pace with more samples', async () => {
+    await seedPace({ wordsPerMinute: 150, samples: 60 });
+    await importLibraryBackup(withPace({ wordsPerMinute: 210, samples: 40 }));
+    expect((await getProgressStats()).readingPace).toEqual({ wordsPerMinute: 150, samples: 60 });
+
+    await seedPace({ wordsPerMinute: 210, samples: 40 });
+    await importLibraryBackup(withPace({ wordsPerMinute: 150, samples: 60 }));
+    expect((await getProgressStats()).readingPace).toEqual({ wordsPerMinute: 150, samples: 60 });
+  });
+
+  it('the 0.26 fixture (no stats) leaves local pace untouched', async () => {
+    await seedPace({ wordsPerMinute: 180, samples: 12 });
+    expect(fixture026.stats).toBeNull();
+    await importLibraryBackup(structuredClone(fixture026));
+    expect((await getProgressStats()).readingPace).toEqual({ wordsPerMinute: 180, samples: 12 });
+  });
+
+  it('0.26-shaped stats (no readingPace key) leave local pace untouched', async () => {
+    await seedPace({ wordsPerMinute: 180, samples: 12 });
+    // Stats as 0.26 wrote them: every field but the pace, which arrived in 0.27.
+    const stats026: UserProgressStats = structuredClone(fixture027.stats as unknown as UserProgressStats);
+    delete stats026.readingPace;
+    expect('readingPace' in stats026).toBe(false);
+    await importLibraryBackup({ ...structuredClone(fixture026), stats: stats026 });
+    const local = await getProgressStats();
+    expect(local.readingPace).toEqual({ wordsPerMinute: 180, samples: 12 });
+    expect(local.totalCardsRead).toBeGreaterThanOrEqual(stats026.totalCardsRead);
   });
 });

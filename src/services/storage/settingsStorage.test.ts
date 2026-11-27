@@ -132,3 +132,31 @@ describe('listening settings (0.26)', () => {
     expect(mergeSettings(prev, { ttsWordHighlight: true }).ttsVoices).toEqual({ uk: 'a', en: 'b' });
   });
 });
+
+describe('settings 0.27 fields', () => {
+  let store: Map<string, string>;
+  beforeEach(() => {
+    store = installLocalStorage();
+  });
+  afterEach(() => {
+    delete (globalThis as unknown as { window?: unknown }).window;
+  });
+
+  it('loads 0.26 settings with 0.27 defaults', () => {
+    store.set(KEY, JSON.stringify({ theme: 'paper', ttsWordHighlight: true }));
+    const s = loadUserSettings();
+    expect(s.syllableHints).toBe(false);
+    expect(s.showTimeLeft).toBe(true);
+    expect(s.theme).toBe('paper');
+  });
+
+  it('keeps the new fields through merge and parse', () => {
+    const merged = mergeSettings(DEFAULT_SETTINGS, { syllableHints: true, showTimeLeft: false });
+    expect(merged.syllableHints).toBe(true);
+    expect(merged.showTimeLeft).toBe(false);
+    const parsed = parseSettings({ syllableHints: true, showTimeLeft: false });
+    expect(parsed?.syllableHints).toBe(true);
+    expect(parsed?.showTimeLeft).toBe(false);
+    expect(parseSettings({ syllableHints: 'x' })?.syllableHints).toBe(false);
+  });
+});

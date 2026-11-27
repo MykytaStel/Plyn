@@ -20,6 +20,13 @@ describe('UndoToast', () => {
     expect(onUndo).toHaveBeenCalledOnce();
   });
 
+  it('leaves focus alone with focusAction false', () => {
+    render(
+      <UndoToast message="x" undoLabel="View" focusAction={false} onUndo={() => {}} onExpire={() => {}} />
+    );
+    expect(document.activeElement).not.toBe(screen.getByRole('button', { name: 'View' }));
+  });
+
   it('expires after its time', () => {
     vi.useFakeTimers();
     const onExpire = vi.fn();

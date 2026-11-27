@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
 import type { DocumentMeta } from '../../core/models/types';
-import { minutesForWords } from '../../core/reading/readingStats';
+import { minutesForWordsAt, toTimeLeft } from '../../core/reading/timeLeft';
 import { useI18n } from '../../i18n';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface LibraryCardProps {
   doc: DocumentMeta;
+  /** The reader's own pace, from the library (one live query for every card). */
+  wordsPerMinute: number;
   onOpen: (doc: DocumentMeta) => void;
   onRename: (id: string, newTitle: string) => void;
   onDelete: (id: string) => void;
@@ -13,12 +16,14 @@ interface LibraryCardProps {
 
 export function LibraryCard({
   doc,
+  wordsPerMinute,
   onOpen,
   onRename,
   onDelete
 }: LibraryCardProps) {
   const i18n = useI18n();
   const t = i18n.m.libraryCard;
+  const showTimeLeft = useSettingsStore((st) => st.showTimeLeft);
   const [isEditing, setIsEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(doc.title);
 
@@ -26,7 +31,17 @@ export function LibraryCard({
   const current = Math.min(doc.currentIndex || 0, total - 1);
   const percent = Math.round(((current + 1) / total) * 100);
   const bookmarksCount = doc.bookmarkOffsets?.length ?? 0;
-  const estMinutes = minutesForWords(doc.wordCount ?? 0);
+  const words = doc.wordCount ?? 0;
+  const remainingWords =
+    doc.textLength > 0
+      ? Math.round(words * (1 - Math.min(1, Math.max(0, doc.charOffset / doc.textLength))))
+      : words;
+  // completedOnce is sticky: a text being read again is not finished.
+  const finished = Boolean(doc.completedOnce) && current >= total - 1;
+  const timeLeft =
+    showTimeLeft && !finished
+      ? toTimeLeft(minutesForWordsAt(remainingWords, wordsPerMinute))
+      : null;
 
   const commitRename = () => {
     const trimmed = draftTitle.trim();
@@ -127,8 +142,9 @@ export function LibraryCard({
             percent
           })}
         </span>
-        {estMinutes > 0 && (
-          <span>· {i18n.format(i18n.m.common.minutesApprox, { minutes: estMinutes })}</span>
+        {finished && <span>· {t.finished}</span>}
+        {timeLeft && (
+          <span>· {i18n.format(i18n.m.reader.timeLeft[timeLeft.unit], { n: timeLeft.value })}</span>
         )}
         {bookmarksCount > 0 && (
           <span>· {i18n.format(t.bookmarks, { count: i18n.number(bookmarksCount) })}</span>

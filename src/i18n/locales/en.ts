@@ -42,6 +42,11 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     mainLabel: 'Add text and library',
     thoughtsLabel: 'Thought Parking',
     thoughtsHint: 'Parked thoughts',
+    sessionThoughts: {
+      one: '{count} thought from this reading',
+      other: '{count} thoughts from this reading'
+    },
+    sessionThoughtsView: 'View',
     helpLabel: 'How to use Plyn',
     helpHint: 'Quick start',
     heroTitle: 'Read at your own pace',
@@ -52,7 +57,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     expandEditor: 'Add text, .pdf, .epub or a link',
     urlLoad: 'Load',
     titleLabel: 'Title (optional)',
-    titlePlaceholder: 'Title (optional — we’ll make one up)',
+    titlePlaceholder: 'For example: Chapter 3',
     textLabel: 'Text to read',
     textPlaceholder: 'Paste an article, your notes or a book chapter...',
     fromClipboard: 'Paste',
@@ -64,10 +69,6 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     },
     start: 'Start reading',
     libraryTitle: 'My library',
-    backup: 'Backup',
-    backupHint: 'Save texts, bookmarks, thoughts and settings in one file',
-    import: 'Import',
-    importHint: 'Restore from a JSON backup',
     filterLabel: 'Library filter',
     filters: {
       all: 'All',
@@ -126,7 +127,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     delete: 'Delete {title}',
     deleteHint: 'Remove from library',
     progress: 'Card {current} of {total} · {percent}%',
-    bookmarks: 'Bookmarks: {count}'
+    bookmarks: 'Bookmarks: {count}',
+    finished: 'Finished'
   },
   reader: {
     tools: {
@@ -147,6 +149,14 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     progressHint: 'Tap to jump between cards',
     back: 'Back to library',
     library: 'Library',
+    timeLeft: {
+      min: '~{n} min',
+      hour: '~{n} h',
+      minPlain: '{n} min',
+      hourPlain: '{n} h',
+      toChapterEnd: 'About {time} left in this chapter',
+      toTextEnd: 'About {time} left in this text'
+    },
     counterHint: 'Jump between cards',
     done: 'Done',
     goalHint: 'Goal for this session',
@@ -185,6 +195,11 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
         one: 'You read {count} card at a calm pace.',
         other: 'You read {count} cards at a calm pace.'
       },
+      thoughts: {
+        one: 'You parked {count} thought',
+        other: 'You parked {count} thoughts'
+      },
+      viewThoughts: 'View',
       restart: 'Read again',
       backToLibrary: 'Back to library'
     },
@@ -224,18 +239,40 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     title: 'Thought Parking',
     subtitle: 'Jot down a stray thought in 2 seconds and get back to reading',
     close: 'Close Thought Parking',
-    placeholder: 'For example: reply to that email, buy coffee...',
+    placeholder: 'What’s on your mind?',
     save: 'Save',
     empty: 'Nothing here yet. When a stray thought pops up while you read, tap the light bulb or press N.',
     during: 'While reading:',
-    delete: 'Delete thought'
+    delete: 'Delete thought',
+    thisSession: 'From this reading',
+    export: 'Save as file',
+    exportHint: 'All thoughts in one Markdown file',
+    exported: 'Thoughts saved.'
   },
   settings: {
     sections: {
-      appearance: 'Text & look',
+      appearance: 'Appearance',
       reading: 'Reading',
-      sound: 'Sound',
-      library: 'Your library'
+      aids: 'Reading aids',
+      sound: 'Sound and voice',
+      languageLibrary: 'Language and library'
+    },
+    back: 'All settings',
+    timeLeft: 'Show time left',
+    timeLeftHint: 'About how long until the end of the chapter or text, at your pace',
+    syllableHints: 'Syllables in long words',
+    syllableHintsHint: 'Gently marks the syllables of long words. The text itself doesn’t change',
+    aidsOff: 'Off',
+    backupSave: 'Save a backup',
+    backupRestore: 'Restore from a backup',
+    backupHint: 'Texts, bookmarks, thoughts and settings in one file',
+    summary: {
+      fonts: { sans: 'Fixel', hyperlegible: 'Atkinson', dyslexic: 'Dyslexia', serif: 'Literata' },
+      lengths: { short: 'Short cards', medium: 'Medium cards', long: 'Longer cards' },
+      // In-line forms: the summary raises only its first letter.
+      aids: { anchor: 'anchor', sentenceFocus: 'sentence focus', syllables: 'syllables' },
+      voiceDefault: 'browser voice',
+      voiceChosen: 'your voice'
     },
     storageUsage: 'Plyn takes about {size} on this device.',
     storageProtected: 'The browser promised to keep your library.',
@@ -381,6 +418,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
   export: {
     bookmarks: 'Bookmarks',
     card: 'Card {n}',
-    note: 'Note'
+    note: 'Note',
+    thoughts: 'Thought Parking',
+    untitled: 'Other thoughts'
   }
 };

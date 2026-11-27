@@ -1,9 +1,11 @@
 import {
+  counter,
   expect,
   expectCard,
   expectStoredOffset,
   nextCard,
   reader,
+  savedFile,
   startReading,
   test,
   uk,
@@ -50,4 +52,38 @@ test('CUJ-7: park a thought mid-text → find it in the library → return to th
   await expect(reader(page)).toBeVisible();
   await expectCard(page, 3);
   expect(await visibleCardText(page)).toBe(cardText);
+});
+
+test('CUJ-7: the Done screen offers this reading’s thoughts and they export to Markdown', async ({
+  page
+}) => {
+  await page.goto('/');
+  await startReading(page, TITLE, numberedText(8));
+  await page.keyboard.press('KeyN');
+  const sheet = page.getByRole('dialog', { name: uk.thoughts.title });
+  await sheet.getByRole('textbox').fill(THOUGHT);
+  await sheet.getByRole('textbox').press('Enter');
+  await expect(sheet.getByText(THOUGHT)).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+
+  // Read to the end: the Done card is the slide after the last text card.
+  const done = page.getByRole('heading', { name: uk.reader.doneSlide.title });
+  const { total } = await counter(page);
+  for (let i = 0; i < total - 1; i += 1) await nextCard(page);
+  await page.keyboard.press('ArrowDown');
+  await expect(done).toBeInViewport();
+  await expect(page.getByText(uk.reader.doneSlide.thoughts.one.replace('{count}', '1'))).toBeVisible();
+
+  await page.getByRole('button', { name: uk.reader.doneSlide.viewThoughts }).click();
+  const thoughts = page.getByRole('dialog', { name: uk.thoughts.title });
+  await expect(thoughts.getByRole('heading', { name: uk.thoughts.thisSession })).toBeVisible();
+  await expect(thoughts.getByText(THOUGHT)).toBeVisible();
+
+  const file = await savedFile(page, () =>
+    thoughts.getByRole('button', { name: uk.thoughts.export }).click()
+  );
+  expect(file.name).toMatch(/^plyn-thoughts-\d{4}-\d{2}-\d{2}\.md$/);
+  expect(file.text).toContain(THOUGHT);
+  await expect(thoughts.getByRole('status')).toHaveText(uk.thoughts.exported);
 });

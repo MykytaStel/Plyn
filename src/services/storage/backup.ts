@@ -2,6 +2,7 @@ import { PlynError } from '../../core/errors';
 import type {
   PlynBackupPayload,
   PlynDocument,
+  ReadingPace,
   ThoughtNote,
   UserSettings
 } from '../../core/models/types';
@@ -101,6 +102,28 @@ export interface BackupImportResult {
   appliedSettings: UserSettings | null;
 }
 
+function validPace(p: ReadingPace | undefined): ReadingPace | undefined {
+  return p &&
+    Number.isFinite(p.wordsPerMinute) &&
+    p.wordsPerMinute > 0 &&
+    Number.isFinite(p.samples) &&
+    p.samples > 0
+    ? p
+    : undefined;
+}
+
+/** The pace backed by more samples wins; ties keep the local one. */
+function morePracticedPace(
+  local: ReadingPace | undefined,
+  incoming: ReadingPace | undefined
+): ReadingPace | undefined {
+  const a = validPace(local);
+  const b = validPace(incoming);
+  if (!a) return b;
+  if (!b) return a;
+  return b.samples > a.samples ? b : a;
+}
+
 /**
  * Імпортує документи з JSON-бекапу (оновлює, якщо в бекапі новіша версія, не видаляє існуючі).
  */
@@ -137,8 +160,10 @@ export async function importLibraryBackup(raw: unknown): Promise<BackupImportRes
     const mergedUnlocked = Array.from(
       new Set([...current.unlockedIds, ...(payload.stats.unlockedIds || [])])
     );
+    const readingPace = morePracticedPace(current.readingPace, payload.stats.readingPace);
     await db.stats.put({
       ...current,
+      ...(readingPace ? { readingPace } : {}),
       totalCardsRead: Math.max(
         current.totalCardsRead,
         payload.stats.totalCardsRead || 0

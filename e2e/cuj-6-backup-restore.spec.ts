@@ -3,6 +3,8 @@ import {
   expect,
   expectStoredOffset,
   nextCard,
+  openLibrarySettingsSheet,
+  openSettingsSection,
   startReading,
   storedDocs,
   test,
@@ -51,13 +53,19 @@ async function thoughtTexts(page: Page): Promise<string[]> {
   );
 }
 
+/** Settings → Мова і бібліотека, opened from the library (0.27: backup moved here). */
+async function openLibrarySettings(page: Page): Promise<void> {
+  await openLibrarySettingsSheet(page);
+  await openSettingsSection(page, 'languageLibrary');
+}
+
 /**
  * Saves a backup the way this device does: a download on a desktop, the share
  * sheet on a phone (stubbed, so the test sees the file it was given).
  */
 async function saveBackup(page: Page): Promise<string> {
-  const library = page.getByRole('main', { name: uk.library.mainLabel });
-  const backupButton = library.getByRole('button', { name: uk.library.backup, exact: true });
+  await openLibrarySettings(page);
+  const backupButton = page.getByRole('button', { name: uk.settings.backupSave, exact: true });
   const touch = await page.evaluate(() => matchMedia('(pointer: coarse)').matches);
   if (!touch) {
     const [download] = await Promise.all([page.waitForEvent('download'), backupButton.click()]);
@@ -126,6 +134,7 @@ test('CUJ-6: backup → wipe → restore brings back texts, place, bookmarks, th
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   expect(await storedDocs(page)).toHaveLength(0);
 
+  await openLibrarySettings(page);
   await page.locator('input[type="file"][accept*="json"]').setInputFiles({
     name: 'plyn-backup.json',
     mimeType: 'application/json',

@@ -5,6 +5,7 @@ import type { DocumentChapter, ReadingCard } from '../../core/models/types';
 import { useI18n } from '../../i18n';
 import { findCardIndexByOffset } from '../../core/splitter/splitter';
 import { useDialogFocus } from '../shared/useDialogFocus';
+import { saveFile } from '../../services/files/saveFile';
 
 interface BookmarksSheetProps {
   docTitle: string;
@@ -72,13 +73,8 @@ export function BookmarksSheet({
       bookmarkNotes,
       labels: i18n.m.export
     });
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${docTitle.slice(0, 40).replace(/[^\p{L}\p{N}_-]+/gu, '-')}-bookmarks.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const name = `${docTitle.slice(0, 40).replace(/[^\p{L}\p{N}_-]+/gu, '-')}-bookmarks.md`;
+    void saveFile(new File([md], name, { type: 'text/markdown;charset=utf-8' }));
   };
 
   return (

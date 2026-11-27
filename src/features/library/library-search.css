@@ -1,14 +1,8 @@
-/* Пошук та резервна копія в бібліотеці */
+/* Пошук у бібліотеці */
 .library-header-left {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.library-backup-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .library-search {

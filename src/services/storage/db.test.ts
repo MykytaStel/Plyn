@@ -189,6 +189,23 @@ describe('recordProgressDelta', () => {
   });
 });
 
+describe('paceSample', () => {
+  it('updates readingPace atomically', async () => {
+    await Promise.all([
+      recordProgressDelta({ paceSample: { words: 30, ms: 10_000 } }),
+      recordProgressDelta({ paceSample: { words: 30, ms: 10_000 } })
+    ]);
+    const stats = await getProgressStats();
+    expect(stats.readingPace?.samples).toBe(2);
+  });
+
+  it('keeps the pace when a sample is unusable', async () => {
+    await recordProgressDelta({ paceSample: { words: 30, ms: 10_000 } });
+    await recordProgressDelta({ paceSample: { words: 30, ms: 100 } });
+    expect((await getProgressStats()).readingPace?.samples).toBe(1);
+  });
+});
+
 describe('migrateLegacyLocalSession', () => {
   const store = new Map<string, string>();
 

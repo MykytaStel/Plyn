@@ -3,7 +3,6 @@ import { titleFromFileName } from '../../core/parsers/fileName';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ChevronUp,
-  Download,
   HelpCircle,
   Lightbulb,
   Link2,
@@ -11,8 +10,7 @@ import {
   Search,
   Sparkles,
   SlidersHorizontal,
-  Trophy,
-  Upload
+  Trophy
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '../../core/achievements/achievements';
 import type { ParsedBook } from '../../core/parsers/bookText';
@@ -20,8 +18,6 @@ import { cleanMarkdown } from '../../core/parsers/markdown';
 import { decodeTextBytes } from '../../core/parsers/textEncoding';
 import { extractArticleFromUrl } from '../../services/extract/urlExtractor';
 import type { PlynDocument } from '../../core/models/types';
-import { importLibraryBackup } from '../../services/storage/backup';
-import { saveBackupFile } from '../../services/storage/backupFile';
 import { db, removeDocument, renameDocument, restoreDocument } from '../../services/storage/db';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -37,6 +33,7 @@ import { importWithRetry } from '../../services/pwa/lazyImport';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../i18n/errorMessage';
+import { effectiveWordsPerMinute } from '../../core/reading/pace';
 import { LibraryCard } from './LibraryCard';
 import { UndoToast } from './UndoToast';
 import { UpdateNotice } from './UpdateNotice';
@@ -58,6 +55,11 @@ export function LibraryView() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showThoughts, setShowThoughts] = useState(false);
+  const [sessionSince, setSessionSince] = useState<number | undefined>(undefined);
+  /** Thoughts from the last reading, offered once as a quiet toast (0.27). */
+  const [sessionToast, setSessionToast] = useState<{ count: number; since: number } | null>(
+    () => useReaderStore.getState().lastSessionThoughts
+  );
   const [showSettings, setShowSettings] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone());
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,12 +73,10 @@ export function LibraryView() {
   const [deletedDoc, setDeletedDoc] = useState<PlynDocument | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const backupInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const feedbackTimerRef = useRef<number | undefined>(undefined);
 
   const cardLength = useSettingsStore((s) => s.cardLength);
-  const updateSettings = useSettingsStore((s) => s.updateSettings);
   const startNewDocument = useReaderStore((s) => s.startNewDocument);
   const openDocument = useReaderStore((s) => s.openDocument);
 
@@ -98,14 +98,16 @@ export function LibraryView() {
         : null,
     [textQuery]
   );
+  // One live query for the stats row: the rewards count and the learned pace (0.27).
   const stats = useLiveQuery(() => db.stats.get('main'), []);
+  const wpm = effectiveWordsPerMinute(stats?.readingPace);
   const thoughtsCount = useLiveQuery(() => db.thoughts.count(), []) ?? 0;
 
   const hasLibrary = Boolean(documents && documents.length > 0);
   const isEditorVisible = !hasLibrary || showEditor;
 
   const nextUnfinishedDoc = useMemo(
-    () => documents?.find((d) => !d.completedOnce) ?? documents?.[0] ?? null,
+    () => documents?.find((d) => !d.completedOnce) ?? null,
     [documents]
   );
 
@@ -279,42 +281,11 @@ export function LibraryView() {
     }
   };
 
-  const handleExportBackup = async () => {
-    try {
-      const result = await saveBackupFile();
-      // Closing the share sheet is a choice, not something to report.
-      if (result !== 'cancelled') showFeedback(t.feedback.backupSaved);
-    } catch {
-      showFeedback(t.feedback.backupFailed);
+  useEffect(() => {
+    if (useReaderStore.getState().lastSessionThoughts) {
+      useReaderStore.getState().consumeLastSessionThoughts();
     }
-  };
-
-  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const raw = JSON.parse(await file.text()) as unknown;
-      const { importedDocs, importedThoughts, appliedSettings } =
-        await importLibraryBackup(raw);
-      // Settings were restored on a device that had none: apply them now.
-      if (appliedSettings) updateSettings(appliedSettings);
-      const texts = i18n.plural(i18n.m.common.texts, importedDocs);
-      showFeedback(
-        importedThoughts > 0
-          ? i18n.format(t.feedback.backupImportedWithThoughts, {
-              texts,
-              thoughts: i18n.plural(i18n.m.common.thoughts, importedThoughts)
-            })
-          : i18n.format(t.feedback.backupImported, { texts })
-      );
-    } catch (err) {
-      const msg =
-        errorMessage(err, i18n.m, i18n.m.errors.backup_read);
-      showFeedback(msg);
-    } finally {
-      e.target.value = '';
-    }
-  };
+  }, []);
 
   const handleDelete = async (id: string) => {
     const doc = await removeDocument(id);
@@ -390,7 +361,10 @@ export function LibraryView() {
               type="button"
               aria-label={`${t.thoughtsLabel}, ${thoughtsCount}`}
               title={t.thoughtsHint}
-              onClick={() => setShowThoughts(true)}
+              onClick={() => {
+                setSessionSince(undefined);
+                setShowThoughts(true);
+              }}
             >
               <Lightbulb size={15} />
               <span>{thoughtsCount}</span>
@@ -604,35 +578,6 @@ export function LibraryView() {
                 <span className="library-count">{documents.length}</span>
               )}
             </div>
-            <div className="library-backup-actions">
-              {documents && documents.length > 0 && (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  title={t.backupHint}
-                  onClick={() => void handleExportBackup()}
-                >
-                  <Download size={14} />
-                  <span>{t.backup}</span>
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                title={t.importHint}
-                onClick={() => backupInputRef.current?.click()}
-              >
-                <Upload size={14} />
-                <span>{t.import}</span>
-              </button>
-              <input
-                ref={backupInputRef}
-                type="file"
-                accept=".json,application/json"
-                hidden
-                onChange={handleImportBackup}
-              />
-            </div>
           </div>
 
           {documents && documents.length >= 2 && (
@@ -674,6 +619,7 @@ export function LibraryView() {
                 <LibraryCard
                   key={doc.id}
                   doc={doc}
+                  wordsPerMinute={wpm}
                   onOpen={(d) => void openDocument(d, cardLength)}
                   onRename={(id, newTitle) => void renameDocument(id, newTitle)}
                   onDelete={(id) => void handleDelete(id)}
@@ -700,6 +646,20 @@ export function LibraryView() {
         />
       )}
 
+      {sessionToast && !deletedDoc && (
+        <UndoToast
+          message={i18n.plural(t.sessionThoughts, sessionToast.count)}
+          undoLabel={t.sessionThoughtsView}
+          onUndo={() => {
+            setSessionSince(sessionToast.since);
+            setSessionToast(null);
+            setShowThoughts(true);
+          }}
+          focusAction={false}
+          onExpire={() => setSessionToast(null)}
+        />
+      )}
+
       {showAchievements && (
         <>
           <div
@@ -721,7 +681,13 @@ export function LibraryView() {
             onClick={() => setShowThoughts(false)}
             aria-hidden="true"
           />
-          <ThoughtsSheet onClose={() => setShowThoughts(false)} />
+          <ThoughtsSheet
+            sessionSince={sessionSince}
+            onClose={() => {
+              setShowThoughts(false);
+              setSessionSince(undefined);
+            }}
+          />
         </>
       )}
 

@@ -50,6 +50,13 @@ Plyn прибирає це перевантаження. Замість неск
     mainLabel: 'Ввід тексту та бібліотека',
     thoughtsLabel: 'Парковка думок',
     thoughtsHint: 'Запарковані думки',
+    sessionThoughts: {
+      one: '{count} думка з цього читання',
+      few: '{count} думки з цього читання',
+      many: '{count} думок з цього читання',
+      other: '{count} думки з цього читання'
+    },
+    sessionThoughtsView: 'Переглянути',
     helpLabel: 'Як користуватися Plyn',
     helpHint: 'Швидкий старт',
     heroTitle: 'Читай у своєму ритмі',
@@ -60,7 +67,7 @@ Plyn прибирає це перевантаження. Замість неск
     expandEditor: 'Додати текст, .pdf, .epub або URL',
     urlLoad: 'Завантажити',
     titleLabel: 'Назва тексту (необов’язково)',
-    titlePlaceholder: 'Назва (необов’язково — згенерується автоматично)',
+    titlePlaceholder: 'Наприклад: Розділ 3',
     textLabel: 'Текст для читання',
     textPlaceholder: 'Встав сюди статтю, конспект або розділ книги...',
     fromClipboard: 'З буфера',
@@ -74,10 +81,6 @@ Plyn прибирає це перевантаження. Замість неск
     },
     start: 'Почати читання',
     libraryTitle: 'Моя бібліотека',
-    backup: 'Бекап',
-    backupHint: 'Зберегти тексти, закладки, думки й налаштування в один файл',
-    import: 'Імпорт',
-    importHint: 'Відновити з JSON-бекапу',
     filterLabel: 'Фільтр бібліотеки',
     filters: {
       all: 'Усі',
@@ -136,7 +139,8 @@ Plyn прибирає це перевантаження. Замість неск
     delete: 'Видалити {title}',
     deleteHint: 'Видалити з бібліотеки',
     progress: 'Картка {current} з {total} · {percent}%',
-    bookmarks: 'Закладок: {count}'
+    bookmarks: 'Закладок: {count}',
+    finished: 'Прочитано'
   },
   reader: {
     tools: {
@@ -157,6 +161,14 @@ Plyn прибирає це перевантаження. Замість неск
     progressHint: 'Натисни для швидкого переходу по картках',
     back: 'Повернутися до бібліотеки',
     library: 'Бібліотека',
+    timeLeft: {
+      min: '~{n} хв',
+      hour: '~{n} год',
+      minPlain: '{n} хв',
+      hourPlain: '{n} год',
+      toChapterEnd: 'Приблизно {time} до кінця розділу',
+      toTextEnd: 'Приблизно {time} до кінця тексту'
+    },
     counterHint: 'Швидкий перехід по картках',
     done: 'Готово',
     goalHint: 'Мікро-ціль цієї сесії',
@@ -197,6 +209,13 @@ Plyn прибирає це перевантаження. Замість неск
         many: 'Пройдено {count} карток у спокійному темпі.',
         other: 'Пройдено {count} картки у спокійному темпі.'
       },
+      thoughts: {
+        one: 'Під час читання з’явилася {count} думка',
+        few: 'Під час читання з’явилися {count} думки',
+        many: 'Під час читання з’явилося {count} думок',
+        other: 'Під час читання з’явилося {count} думки'
+      },
+      viewThoughts: 'Переглянути',
       restart: 'Читати знову',
       backToLibrary: 'До бібліотеки'
     },
@@ -238,18 +257,41 @@ Plyn прибирає це перевантаження. Замість неск
     title: 'Парковка думок',
     subtitle: 'Запиши сторонню думку за 2 секунди й повертайся до читання',
     close: 'Закрити парковку думок',
-    placeholder: 'Наприклад: відповісти на лист, купити каву...',
+    placeholder: 'Що спало на думку?',
     save: 'Записати',
     empty: 'Тут порожньо. Коли під час читання вирине стороння думка — натисни іконку лампочки або клавішу N.',
     during: 'Під час:',
-    delete: 'Видалити думку'
+    delete: 'Видалити думку',
+    thisSession: 'З цього читання',
+    export: 'Зберегти у файл',
+    exportHint: 'Усі думки одним файлом Markdown',
+    exported: 'Думки збережено.'
   },
   settings: {
     sections: {
-      appearance: 'Текст і вигляд',
+      appearance: 'Вигляд',
       reading: 'Читання',
-      sound: 'Звук',
-      library: 'Твоя бібліотека'
+      aids: 'Підказки',
+      sound: 'Звук і голос',
+      languageLibrary: 'Мова і бібліотека'
+    },
+    back: 'Усі налаштування',
+    timeLeft: 'Показувати, скільки лишилось',
+    timeLeftHint: 'Приблизний час до кінця розділу чи тексту, у твоєму темпі',
+    syllableHints: 'Склади в довгих словах',
+    syllableHintsHint: 'Ледь помітно ділить довгі слова на склади. Сам текст не змінюється',
+    aidsOff: 'Вимкнено',
+    backupSave: 'Зберегти резервну копію',
+    backupRestore: 'Відновити з копії',
+    backupHint: 'Тексти, закладки, думки й налаштування в одному файлі',
+    // One line under each row of the first screen (0.27).
+    summary: {
+      fonts: { sans: 'Fixel', hyperlegible: 'Atkinson', dyslexic: 'Дислексія', serif: 'Literata' },
+      lengths: { short: 'Короткі картки', medium: 'Середні картки', long: 'Довші картки' },
+      // In-line forms: the summary raises only its first letter.
+      aids: { anchor: 'якір', sentenceFocus: 'фокус-речення', syllables: 'склади' },
+      voiceDefault: 'голос браузера',
+      voiceChosen: 'свій голос'
     },
     storageUsage: 'Plyn займає близько {size} на цьому пристрої.',
     storageProtected: 'Браузер пообіцяв зберігати твою бібліотеку.',
@@ -395,6 +437,8 @@ Plyn прибирає це перевантаження. Замість неск
   export: {
     bookmarks: 'Закладки',
     card: 'Картка {n}',
-    note: 'Нотатка'
+    note: 'Нотатка',
+    thoughts: 'Парковка думок',
+    untitled: 'Інші думки'
   }
 } as const;

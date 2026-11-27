@@ -1,6 +1,7 @@
 import {
   expect,
   nextCard,
+  savedFile,
   startReading,
   test,
   uk,
@@ -39,14 +40,9 @@ test('CUJ-8: bookmark with a note → export Markdown → the file has the card 
   await note.fill(NOTE);
   await note.press('Enter');
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    sheet.getByRole('button', { name: '.md' }).click()
-  ]);
-  expect(download.suggestedFilename()).toMatch(/-bookmarks\.md$/);
-  const chunks: Buffer[] = [];
-  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-  const md = Buffer.concat(chunks).toString('utf8');
+  const file = await savedFile(page, () => sheet.getByRole('button', { name: '.md' }).click());
+  expect(file.name).toMatch(/-bookmarks\.md$/);
+  const md = file.text;
 
   expect(md).toContain(TITLE);
   expect(md).toContain(cardText.split('\n')[0]);

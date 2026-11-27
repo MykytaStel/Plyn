@@ -38,8 +38,9 @@ function stubShare(impl: () => Promise<void>) {
 }
 
 describe('saveBackupFile', () => {
-  it('names the file by date', () => {
-    expect(backupFileName(new Date('2026-11-26T10:00:00Z'))).toBe('plyn-backup-2026-11-26.json');
+  it('names the file by the local date, like the thoughts file', () => {
+    expect(backupFileName(new Date(2026, 10, 26, 0, 30))).toBe('plyn-backup-2026-11-26.json');
+    expect(backupFileName(new Date(2026, 10, 26, 23, 30))).toBe('plyn-backup-2026-11-26.json');
   });
 
   it('downloads on a desktop, even if the share sheet exists', async () => {

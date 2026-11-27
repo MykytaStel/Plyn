@@ -2,6 +2,32 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [0.27.0] — 2026-11-27
+
+Reading comfort, calmer settings.
+
+### Added
+
+- A quiet "about 12 min left" next to the card counter: time to the end of the chapter, or of the text. It learns your own pace as you read (after about 20 cards; until then it assumes a calm pace). Time spent listening, in a sheet or away from the app doesn't count. Hide it in Settings → Reading. The library shows the same estimate on each text, and "Finished" on a finished one.
+- If you parked thoughts while reading, the end of the text says so and opens them under "From this reading". Leave a text early and the library offers the same link for a moment.
+- Save Thought Parking to a Markdown file. On a phone, thoughts, bookmarks and backups open the share sheet, so you can send them to Notes or Files.
+
+### Changed
+
+- Settings are calmer: presets on top, then five sections (Appearance, Reading, Aids, Sound and voice, Language and library), each with a one-line summary of what's on. A section opens on its own screen; back returns to the list.
+- Backup and restore moved from the library into Settings → Language and library. Restore is offered only from the library, not in the middle of a text.
+- The voice list looks like the other controls: the arrow stays inside, and the text is large enough that iPhone doesn't zoom in.
+- The browser no longer adds its own hyphens to card text; a word longer than the line still wraps.
+- Calmer placeholders ("For example: Chapter 3", "What’s on your mind?"), and the backup file is named by your local date.
+
+### Under the hood
+
+- Reading pace: `src/core/reading/pace.ts` (moving average, 60–600 words per minute, 20 samples before it's used) and `timeLeft.ts`; samples are written with the progress delta in one transaction. Stored as `stats.readingPace`; a backup import keeps the pace with more samples.
+- New settings `showTimeLeft` (on) and `syllableHints` (off, hidden) in `plyn_settings_v1` (defaults, no migration). Backups stay schema 2; new fixture `spec/backups/v2-0.27.json`.
+- `src/core/export/thoughtsMarkdown.ts` escapes Markdown markers so a thought stays plain text; one `saveFile` helper (`src/services/files/`) for every export.
+- Settings split into `features/settings/sections/` with summaries in `settingsSummary.ts`. New journey `e2e/cuj-16-settings.spec.ts`; axe scans every section in all four themes; new visual baselines for the first screen and the Sound section.
+- EXP-03 (syllable hints for long Ukrainian words): rules and 535 cases reviewed, splitter and three display prototypes on the `exp/03-syllable-hints` branch. Not in this release; the display is still being chosen.
+
 ## [0.26.0] — 2026-11-27
 
 Listening, upgraded.

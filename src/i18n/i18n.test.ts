@@ -129,3 +129,12 @@ describe('errorMessage', () => {
     ).toBe(m.errors.article_read);
   });
 });
+
+describe('library title field', () => {
+  it.each(['uk', 'en'] as Locale[])('%s: the placeholder is an example, not the label again', (locale) => {
+    const { library } = getMessages(locale);
+    expect(library.titlePlaceholder).not.toBe(library.titleLabel);
+    // Fits the field at 320 px.
+    expect(library.titlePlaceholder.length).toBeLessThanOrEqual(24);
+  });
+});

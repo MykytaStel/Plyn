@@ -20,6 +20,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   ttsWordHighlight: false,
   ttsVoices: {},
   cardLength: 'medium',
+  syllableHints: false,
+  showTimeLeft: true,
   language: 'uk'
 };
 
@@ -32,6 +34,8 @@ export function loadUserSettings(): UserSettings {
     if (!isLocale(merged.language)) merged.language = DEFAULT_SETTINGS.language;
     merged.ttsWordHighlight = bool(merged.ttsWordHighlight, DEFAULT_SETTINGS.ttsWordHighlight);
     merged.ttsVoices = voicePrefs(merged.ttsVoices);
+    merged.syllableHints = bool(merged.syllableHints, DEFAULT_SETTINGS.syllableHints);
+    merged.showTimeLeft = bool(merged.showTimeLeft, DEFAULT_SETTINGS.showTimeLeft);
     return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -62,6 +66,8 @@ export function mergeSettings(
     ttsWordHighlight: patch.ttsWordHighlight ?? prev.ttsWordHighlight,
     ttsVoices: patch.ttsVoices ?? prev.ttsVoices,
     cardLength: patch.cardLength ?? prev.cardLength,
+    syllableHints: patch.syllableHints ?? prev.syllableHints,
+    showTimeLeft: patch.showTimeLeft ?? prev.showTimeLeft,
     language: patch.language ?? prev.language
   };
 }
@@ -143,6 +149,8 @@ export function parseSettings(raw: unknown): UserSettings | null {
     ttsWordHighlight: bool(r.ttsWordHighlight, d.ttsWordHighlight),
     ttsVoices: voicePrefs(r.ttsVoices),
     cardLength: oneOf(CARD_LENGTHS, r.cardLength, d.cardLength),
+    syllableHints: bool(r.syllableHints, d.syllableHints),
+    showTimeLeft: bool(r.showTimeLeft, d.showTimeLeft),
     language: isLocale(r.language) ? r.language : d.language
   };
 }

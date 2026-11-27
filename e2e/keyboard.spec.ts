@@ -117,16 +117,24 @@ test('keyboard only: add a text, read, bookmark, park a thought, settings, back'
   await page.keyboard.press('Escape');
   await expect(bookmarks).toHaveCount(0);
 
-  // Settings: change card length, then close.
+  // Settings: open the Reading section, change card length, then close.
   await tabTo(page, uk.reader.settings);
   await page.keyboard.press('Enter');
   const settings = page.getByRole('dialog', { name: uk.settings.title });
   await expect(settings).toBeVisible();
+  await tabTo(page, new RegExp(`^${uk.settings.sections.reading}`));
+  await page.keyboard.press('Enter');
+  // Inside a section the dialog is named after it.
+  const section = page.getByRole('dialog', { name: uk.settings.sections.reading });
+  await expect(section).toBeVisible();
   await tabTo(page, uk.settings.lengths.long);
   await page.keyboard.press('Enter');
-  await expect(settings.getByRole('radio', { name: uk.settings.lengths.long })).toHaveAttribute('aria-checked', 'true');
+  await expect(section.getByRole('radio', { name: uk.settings.lengths.long })).toHaveAttribute('aria-checked', 'true');
+  // Escape steps back to the list of sections, a second one closes the sheet.
   await page.keyboard.press('Escape');
-  await expect(settings).toHaveCount(0);
+  await expect(settings).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   // Escape leaves the reader; the library card opens with Enter.
   await page.keyboard.press('Escape');
@@ -136,4 +144,24 @@ test('keyboard only: add a text, read, bookmark, park a thought, settings, back'
   await page.keyboard.press('Enter');
   await expect(reader(page)).toBeVisible();
   await expectCard(page, 1);
+});
+
+test('after the thoughts sheet closes, Space turns the page again', async ({ page }) => {
+  await page.goto('/');
+  await tabTo(page, uk.library.textLabel);
+  await page.keyboard.insertText(numberedText(60));
+  await tabTo(page, uk.library.start);
+  await page.keyboard.press('Enter');
+  await expect(reader(page)).toBeVisible();
+  await expectCard(page, 0);
+
+  await page.getByRole('button', { name: uk.reader.parkThought }).click();
+  const thoughts = page.getByRole('dialog', { name: uk.thoughts.title });
+  await expect(thoughts).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.keyboard.press('Space');
+  await expectCard(page, 1);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });

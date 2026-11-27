@@ -7,6 +7,8 @@ interface UndoToastProps {
   onExpire: () => void;
   /** How long Undo stays available. */
   durationMs?: number;
+  /** Move focus to the action on show. Default true; off for calm notices. */
+  focusAction?: boolean;
 }
 
 /**
@@ -18,17 +20,18 @@ export function UndoToast({
   undoLabel,
   onUndo,
   onExpire,
-  durationMs = 6000
+  durationMs = 6000,
+  focusAction = true
 }: UndoToastProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const onExpireRef = useRef(onExpire);
   onExpireRef.current = onExpire;
 
   useEffect(() => {
-    buttonRef.current?.focus();
+    if (focusAction) buttonRef.current?.focus();
     const timer = window.setTimeout(() => onExpireRef.current(), durationMs);
     return () => window.clearTimeout(timer);
-  }, [message, durationMs]);
+  }, [message, durationMs, focusAction]);
 
   return (
     <div className="undo-toast" role="status">

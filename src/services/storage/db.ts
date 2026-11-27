@@ -12,6 +12,7 @@ import type {
   ThoughtNote,
   UserProgressStats
 } from '../../core/models/types';
+import { updatePace } from '../../core/reading/pace';
 import { countWords } from '../../core/reading/readingStats';
 import { textHash } from '../../core/text/textHash';
 import { deriveTitle } from '../../core/parsers/markdown';
@@ -283,6 +284,8 @@ export interface ProgressDelta {
   timerSessionsCompleted?: number;
   ttsCardsListened?: number;
   zenModeUsed?: number;
+  /** One card's dwell: words read and milliseconds spent (0.27). */
+  paceSample?: { words: number; ms: number };
 }
 
 /**
@@ -317,7 +320,10 @@ export async function recordProgressDelta(
         ttsCardsListened:
           (current.ttsCardsListened ?? 0) + (delta.ttsCardsListened ?? 0),
         zenModeUsed: (current.zenModeUsed ?? 0) + (delta.zenModeUsed ?? 0),
-        dailyCardsRead
+        dailyCardsRead,
+        readingPace: delta.paceSample
+          ? (updatePace(current.readingPace, delta.paceSample) ?? current.readingPace)
+          : current.readingPace
       };
 
       const { nextStats, newlyUnlocked } = evaluateAchievements(updated);

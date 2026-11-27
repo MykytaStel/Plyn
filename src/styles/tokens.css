@@ -17,6 +17,8 @@
   --accent-contrast: #11161B;
   --progress-bg: rgba(255, 255, 255, 0.08);
   --backdrop: rgba(8, 10, 14, 0.62);
+  /* Select chevron: a data URL cannot read currentColor, so each theme carries its own (= --text-muted). */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%238E95A3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
 }
 
 [data-theme="paper"] {
@@ -33,6 +35,8 @@
   --accent-contrast: #FAF7F1;
   --progress-bg: rgba(45, 42, 38, 0.1);
   --backdrop: rgba(34, 30, 25, 0.38);
+  /* Select chevron: a data URL cannot read currentColor, so each theme carries its own (= --text-muted). */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%236B635A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
 }
 
 [data-theme="gray"] {
@@ -49,6 +53,8 @@
   --accent-contrast: #1C211F;
   --progress-bg: rgba(255, 255, 255, 0.09);
   --backdrop: rgba(18, 20, 22, 0.56);
+  /* Select chevron: a data URL cannot read currentColor, so each theme carries its own (= --text-muted). */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23AAB1BB' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
 }
 
 /* Пастельно-м'ятна тема — знижує візуальний стрес при дислексії (Irlen-friendly) */
@@ -66,6 +72,8 @@
   --accent-contrast: #F4FAF6;
   --progress-bg: rgba(31, 51, 42, 0.1);
   --backdrop: rgba(20, 34, 28, 0.36);
+  /* Select chevron: a data URL cannot read currentColor, so each theme carries its own (= --text-muted). */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23536B60' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
 }
 
 :root {
