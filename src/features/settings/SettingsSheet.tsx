@@ -16,6 +16,9 @@ import { LanguageLibrarySection, useStorageStatus } from './sections/LanguageLib
 import { ReadingSection } from './sections/ReadingSection';
 import { SoundSection } from './sections/SoundSection';
 
+/** Syllable hints ship only if EXP-03 passes (Task 11 may flip this). */
+const SHOW_SYLLABLES = false;
+
 /**
  * Reader-only props (brown noise, timer, card re-split) are optional: the
  * library opens the same sheet without a reading session, and those rows hide.
@@ -92,7 +95,13 @@ export function SettingsSheet({
 
   const storageLabel =
     storage.status?.usageBytes != null ? i18n.bytes(storage.status.usageBytes) : '';
-  const summaryContext = { i18n, timerMinutes, storageLabel, isReader };
+  const summaryContext = {
+    i18n,
+    timerMinutes,
+    storageLabel,
+    isReader,
+    showSyllables: SHOW_SYLLABLES
+  };
 
   const closeButton = (
     <button className="icon-btn" type="button" aria-label={t.close} onClick={onClose}>
@@ -111,7 +120,11 @@ export function SettingsSheet({
       <div className="sheet-handle" aria-hidden="true" />
 
       {section === null ? (
-        <div className="settings-screen settings-screen-list" key="list">
+        <div
+          // The list slides in only on the way back from a section, never on open.
+          className={`settings-screen settings-screen-list${lastSection.current ? ' is-returning' : ''}`}
+          key="list"
+        >
           <div className="sheet-header">
             <h2 id="settings-title">{t.title}</h2>
             {closeButton}
@@ -182,7 +195,7 @@ export function SettingsSheet({
                 onTimerSelect={onTimerSelect}
               />
             )}
-            {section === 'aids' && <AidsSection showSyllables={false} />}
+            {section === 'aids' && <AidsSection showSyllables={SHOW_SYLLABLES} />}
             {section === 'sound' && (
               <SoundSection
                 isReader={isReader}

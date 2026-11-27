@@ -13,6 +13,9 @@ import { installFakeSpeech, voice, type FakeSpeech } from '../../../test/fakeSpe
 /** A back stack over a fake history, so a test can press "back". */
 const nav = vi.hoisted(() => ({ stack: null as BackStack | null, back: () => {} }));
 vi.mock('../../services/navigation/appBackStack', () => ({ appBackStack: () => nav.stack! }));
+vi.mock('../../services/storage/backup', () => ({
+  importLibraryBackup: vi.fn(async () => ({ importedDocs: 2, importedThoughts: 0, appliedSettings: null }))
+}));
 
 beforeEach(() => {
   const listeners = new Set<() => void>();
@@ -24,7 +27,7 @@ beforeEach(() => {
   nav.back = fire;
 });
 
-function stubStorage(persisted: boolean, persistAnswer = false) {
+function stubStorage(persisted: boolean, persistAnswer = false, usage = { bytes: 3_590_000 }) {
   const state = { persisted };
   const persist = vi.fn(async () => {
     state.persisted = persistAnswer;
@@ -35,7 +38,7 @@ function stubStorage(persisted: boolean, persistAnswer = false) {
     value: {
       persisted: async () => state.persisted,
       persist,
-      estimate: async () => ({ usage: 3_590_000, quota: 1e9 })
+      estimate: async () => ({ usage: usage.bytes, quota: 1e9 })
     }
   });
   return persist;
@@ -98,6 +101,15 @@ describe('SettingsSheet first screen (0.27)', () => {
     await userEvent.click(screen.getByRole('button', { name: uk.settings.back }));
     expect(screen.queryByRole('heading', { name: S.sound })).toBeNull();
     expect(document.activeElement).toBe(row(S.sound));
+  });
+
+  it('the list slides in only on the way back, never when Settings opens', async () => {
+    const { container } = render(<SettingsSheet onClose={() => {}} />);
+    const list = () => container.querySelector('.settings-screen-list')!;
+    expect(list().classList.contains('is-returning')).toBe(false);
+    await openSection(S.sound);
+    await userEvent.click(screen.getByRole('button', { name: uk.settings.back }));
+    expect(list().classList.contains('is-returning')).toBe(true);
   });
 
   it('Escape in a section goes back; Escape on the first screen closes', async () => {
@@ -222,6 +234,22 @@ describe('SettingsSheet storage (Language and library)', () => {
 
     expect(persist).toHaveBeenCalledOnce();
     expect(await screen.findByText(uk.settings.storageProtected)).toBeTruthy();
+  });
+
+  it('a restore refreshes the usage line and the row summary', async () => {
+    const usage = { bytes: 3_590_000 };
+    stubStorage(true, true, usage);
+    render(<SettingsSheet onClose={() => {}} />);
+    await screen.findByRole('button', { name: `${S.languageLibrary}, Українська, 3,4 МБ` });
+    await openSection(S.languageLibrary);
+
+    usage.bytes = 7_340_032;
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+    await userEvent.upload(input, new File(['{}'], 'plyn-backup.json', { type: 'application/json' }));
+
+    expect(await screen.findByText(format(uk.settings.storageUsage, { size: '7 МБ' }))).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: uk.settings.back }));
+    expect(screen.getByRole('button', { name: `${S.languageLibrary}, Українська, 7 МБ` })).toBeTruthy();
   });
 
   it('stays calm when the browser says no', async () => {

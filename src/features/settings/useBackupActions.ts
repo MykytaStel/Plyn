@@ -9,9 +9,9 @@ const FEEDBACK_MS = 3600;
 
 /**
  * Save and restore a backup (moved from the library header to Settings in
- * 0.27). `feedback` is the last calm status line, cleared after a while.
+ * 0.27). `onRestored` runs after a successful restore. `feedback` is the last calm status line, cleared after a while.
  */
-export function useBackupActions() {
+export function useBackupActions({ onRestored }: { onRestored?: () => Promise<void> } = {}) {
   const [feedback, setFeedback] = useState('');
   const restoreInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<number | undefined>(undefined);
@@ -56,6 +56,8 @@ export function useBackupActions() {
             })
           : i18n.format(t.backupImported, { texts })
       );
+      // The library just grew: the usage line and the row summary follow.
+      await onRestored?.();
     } catch (err) {
       show(errorMessage(err, i18n.m, i18n.m.errors.backup_read));
     } finally {

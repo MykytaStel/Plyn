@@ -121,7 +121,7 @@
   animation: settings-in-from-end 150ms ease-out;
 }
 
-.settings-screen-list {
+.settings-screen-list.is-returning {
   animation: settings-in-from-start 150ms ease-out;
 }
 
@@ -141,7 +141,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .settings-screen-section,
-  .settings-screen-list {
+  .settings-screen-list.is-returning {
     animation: none;
   }
 }

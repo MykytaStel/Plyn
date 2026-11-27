@@ -46,7 +46,7 @@ export function LanguageLibrarySection({
   const t = i18n.m.settings;
   const { language, updateSettings } = useSettingsStore();
   const [denied, setDenied] = useState(false);
-  const backup = useBackupActions();
+  const backup = useBackupActions({ onRestored: onStorageChange });
 
   const showStorage = storage && (storage.supported || storage.usageBytes !== null);
 

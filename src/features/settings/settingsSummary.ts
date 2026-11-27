@@ -19,6 +19,8 @@ export interface SummaryContext {
   /** "72 kB", or '' while unknown or unsupported. */
   storageLabel: string;
   isReader: boolean;
+  /** Syllable hints are offered (EXP-03); a hidden option is never named. */
+  showSyllables: boolean;
 }
 
 /**
@@ -28,7 +30,7 @@ export interface SummaryContext {
 export function settingsSummary(
   section: SettingsSection,
   s: UserSettings,
-  { i18n, timerMinutes, storageLabel, isReader }: SummaryContext
+  { i18n, timerMinutes, storageLabel, isReader, showSyllables }: SummaryContext
 ): string {
   const t = i18n.m.settings;
   const parts: string[] = [];
@@ -45,7 +47,7 @@ export function settingsSummary(
     case 'aids':
       if (s.anchorMode) parts.push(t.summary.aids.anchor);
       if (s.sentenceFocus) parts.push(t.summary.aids.sentenceFocus);
-      if (s.syllableHints) parts.push(t.summary.aids.syllables);
+      if (showSyllables && s.syllableHints) parts.push(t.summary.aids.syllables);
       if (parts.length === 0) parts.push(t.aidsOff);
       break;
     case 'sound':

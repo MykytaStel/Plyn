@@ -5,7 +5,7 @@ import { uk } from '../../i18n/locales/uk';
 import { DEFAULT_SETTINGS } from '../../services/storage/settingsStorage';
 import { settingsSummary } from './settingsSummary';
 
-const ukCtx = { i18n: getI18n('uk'), timerMinutes: 0, storageLabel: '', isReader: false };
+const ukCtx = { i18n: getI18n('uk'), timerMinutes: 0, storageLabel: '', isReader: false, showSyllables: false };
 const base = { ...DEFAULT_SETTINGS };
 
 describe('settingsSummary', () => {
@@ -28,6 +28,12 @@ describe('settingsSummary', () => {
     expect(settingsSummary('aids', { ...base, anchorMode: true, sentenceFocus: true }, ukCtx)).toBe(
       `${uk.settings.summary.aids.anchor}, ${uk.settings.summary.aids.sentenceFocus}`
     );
+  });
+
+  it('aids: syllables are named only while the option is offered', () => {
+    const on = { ...base, anchorMode: false, sentenceFocus: false, syllableHints: true };
+    expect(settingsSummary('aids', on, ukCtx)).toBe(uk.settings.aidsOff);
+    expect(settingsSummary('aids', on, { ...ukCtx, showSyllables: true })).toBe(uk.settings.summary.aids.syllables);
   });
 
   it('reading: card length, and the timer only in the reader when it runs', () => {
