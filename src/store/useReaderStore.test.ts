@@ -123,9 +123,9 @@ describe('closeReader session thoughts (0.27)', () => {
 
   beforeEach(async () => {
     vi.stubGlobal('window', { clearTimeout, setTimeout });
-    return () => vi.unstubAllGlobals();
     await db.thoughts.clear();
     useReaderStore.setState({ lastSessionThoughts: null });
+    return () => vi.unstubAllGlobals();
   });
 
   it('keeps the count of thoughts parked during an early exit', async () => {
@@ -151,6 +151,17 @@ describe('closeReader session thoughts (0.27)', () => {
     await new Promise((r) => setTimeout(r, 5));
     await open();
     await useReaderStore.getState().closeReader({ early: true });
+    expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
+  });
+
+  it('still closes, with no notice, when counting thoughts fails', async () => {
+    await open();
+    const spy = vi.spyOn(db.thoughts, 'where').mockImplementation(() => {
+      throw new Error('boom');
+    });
+    await useReaderStore.getState().closeReader({ early: true });
+    spy.mockRestore();
+    expect(useReaderStore.getState().activeDoc).toBeNull();
     expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
   });
 

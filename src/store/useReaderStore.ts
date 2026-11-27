@@ -195,11 +195,15 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     }
     let lastSessionThoughts: ReaderState['lastSessionThoughts'] = null;
     if (opts?.early && activeDoc) {
-      const count = await db.thoughts
-        .where('createdAt')
-        .aboveOrEqual(sessionStartedAt)
-        .count();
-      if (count > 0) lastSessionThoughts = { count, since: sessionStartedAt };
+      try {
+        const count = await db.thoughts
+          .where('createdAt')
+          .aboveOrEqual(sessionStartedAt)
+          .count();
+        if (count > 0) lastSessionThoughts = { count, since: sessionStartedAt };
+      } catch {
+        // The notice is a nicety: leaving the reader must never fail on it.
+      }
     }
     set({
       lastSessionThoughts,

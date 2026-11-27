@@ -726,6 +726,7 @@ export function LibraryView() {
             setSessionToast(null);
             setShowThoughts(true);
           }}
+          focusAction={false}
           onExpire={() => setSessionToast(null)}
         />
       )}

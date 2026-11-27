@@ -1,10 +1,12 @@
 import 'fake-indexeddb/auto';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PlynDocument } from '../../core/models/types';
 import { uk } from '../../i18n/locales/uk';
-import { db, putDocument } from '../../services/storage/db';
+import { addThoughtNote, db, putDocument } from '../../services/storage/db';
 import { DEFAULT_SETTINGS } from '../../services/storage/settingsStorage';
+import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { LibraryView } from './LibraryView';
 
@@ -44,5 +46,28 @@ describe('LibraryView micro start', () => {
     render(<LibraryView />);
     await screen.findByText('Text 1');
     expect(screen.queryByText(uk.library.microStartLabel)).toBeNull();
+  });
+});
+
+describe('LibraryView session thoughts toast (0.27)', () => {
+  it('shows once and its action opens the sheet with the heading', async () => {
+    await db.thoughts.clear();
+    const since = Date.now();
+    await addThoughtNote('fresh thought');
+    useReaderStore.setState({ lastSessionThoughts: { count: 1, since } });
+
+    const { unmount } = render(<LibraryView />);
+    expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
+    const view = await screen.findByRole('button', { name: uk.library.sessionThoughtsView });
+    await userEvent.click(view);
+    expect(
+      await screen.findByRole('heading', { name: uk.thoughts.thisSession })
+    ).toBeTruthy();
+
+    unmount();
+    render(<LibraryView />);
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: uk.library.sessionThoughtsView })).toBeNull()
+    );
   });
 });

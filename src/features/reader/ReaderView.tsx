@@ -89,6 +89,8 @@ export function ReaderView() {
       () => db.thoughts.where('createdAt').aboveOrEqual(sessionStartedAt).count(),
       [sessionStartedAt]
     ) ?? 0;
+  /** True only when the thoughts sheet was opened from the Done slide. */
+  const [thoughtsFromDone, setThoughtsFromDone] = useState(false);
   const [sheet, setSheet] = useState<ActiveSheet>('none');
   const [showScrubber, setShowScrubber] = useState(false);
   const [zenMode, setZenMode] = useState(false);
@@ -165,6 +167,7 @@ export function ReaderView() {
 
   const openSheet = (next: Exclude<ActiveSheet, 'none'>) => {
     setShowScrubber(false);
+    setThoughtsFromDone(false);
     setSheet(next);
   };
 
@@ -492,7 +495,10 @@ export function ReaderView() {
           total={total}
           onRestart={() => scrollToCard(0)}
           sessionThoughts={sessionThoughts}
-          onViewThoughts={() => openSheet('thoughts')}
+          onViewThoughts={() => {
+            openSheet('thoughts');
+            setThoughtsFromDone(true);
+          }}
           onBackToLibrary={leaveReader}
         />
       </div>
@@ -601,7 +607,9 @@ export function ReaderView() {
       {sheet === 'thoughts' && (
         <ThoughtsSheet
           currentDocTitle={activeDoc.title}
-          sessionSince={sessionThoughts > 0 ? sessionStartedAt : undefined}
+          sessionSince={
+            thoughtsFromDone && sessionThoughts > 0 ? sessionStartedAt : undefined
+          }
           onClose={() => setSheet('none')}
         />
       )}
