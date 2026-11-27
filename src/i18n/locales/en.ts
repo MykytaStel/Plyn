@@ -69,10 +69,6 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     },
     start: 'Start reading',
     libraryTitle: 'My library',
-    backup: 'Backup',
-    backupHint: 'Save texts, bookmarks, thoughts and settings in one file',
-    import: 'Import',
-    importHint: 'Restore from a JSON backup',
     filterLabel: 'Library filter',
     filters: {
       all: 'All',
@@ -254,10 +250,27 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
   },
   settings: {
     sections: {
-      appearance: 'Text & look',
+      appearance: 'Appearance',
       reading: 'Reading',
-      sound: 'Sound',
-      library: 'Your library'
+      aids: 'Reading aids',
+      sound: 'Sound and voice',
+      languageLibrary: 'Language and library'
+    },
+    back: 'All settings',
+    timeLeft: 'Show time left',
+    timeLeftHint: 'About how long until the end of the chapter or text, at your pace',
+    syllableHints: 'Syllables in long words',
+    syllableHintsHint: 'Gently marks the syllables of long words. The text itself doesn’t change',
+    aidsOff: 'Off',
+    backupSave: 'Save a backup',
+    backupRestore: 'Restore from a backup',
+    backupHint: 'Texts, bookmarks, thoughts and settings in one file',
+    summary: {
+      fonts: { sans: 'Fixel', hyperlegible: 'Atkinson', dyslexic: 'Dyslexia', serif: 'Literata' },
+      lengths: { short: 'Short cards', medium: 'Medium cards', long: 'Longer cards' },
+      aids: { anchor: 'Anchor', sentenceFocus: 'Sentence focus', syllables: 'Syllables' },
+      voiceDefault: 'browser voice',
+      voiceChosen: 'your voice'
     },
     storageUsage: 'Plyn takes about {size} on this device.',
     storageProtected: 'The browser promised to keep your library.',

@@ -3,7 +3,6 @@ import { titleFromFileName } from '../../core/parsers/fileName';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ChevronUp,
-  Download,
   HelpCircle,
   Lightbulb,
   Link2,
@@ -11,8 +10,7 @@ import {
   Search,
   Sparkles,
   SlidersHorizontal,
-  Trophy,
-  Upload
+  Trophy
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '../../core/achievements/achievements';
 import type { ParsedBook } from '../../core/parsers/bookText';
@@ -20,8 +18,6 @@ import { cleanMarkdown } from '../../core/parsers/markdown';
 import { decodeTextBytes } from '../../core/parsers/textEncoding';
 import { extractArticleFromUrl } from '../../services/extract/urlExtractor';
 import type { PlynDocument } from '../../core/models/types';
-import { importLibraryBackup } from '../../services/storage/backup';
-import { saveBackupFile } from '../../services/storage/backupFile';
 import { db, removeDocument, renameDocument, restoreDocument } from '../../services/storage/db';
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -77,12 +73,10 @@ export function LibraryView() {
   const [deletedDoc, setDeletedDoc] = useState<PlynDocument | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const backupInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const feedbackTimerRef = useRef<number | undefined>(undefined);
 
   const cardLength = useSettingsStore((s) => s.cardLength);
-  const updateSettings = useSettingsStore((s) => s.updateSettings);
   const startNewDocument = useReaderStore((s) => s.startNewDocument);
   const openDocument = useReaderStore((s) => s.openDocument);
 
@@ -280,43 +274,6 @@ export function LibraryView() {
     } catch (err) {
       const msg =
         errorMessage(err, i18n.m, i18n.m.errors.file_read);
-      showFeedback(msg);
-    } finally {
-      e.target.value = '';
-    }
-  };
-
-  const handleExportBackup = async () => {
-    try {
-      const result = await saveBackupFile();
-      // Closing the share sheet is a choice, not something to report.
-      if (result !== 'cancelled') showFeedback(t.feedback.backupSaved);
-    } catch {
-      showFeedback(t.feedback.backupFailed);
-    }
-  };
-
-  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const raw = JSON.parse(await file.text()) as unknown;
-      const { importedDocs, importedThoughts, appliedSettings } =
-        await importLibraryBackup(raw);
-      // Settings were restored on a device that had none: apply them now.
-      if (appliedSettings) updateSettings(appliedSettings);
-      const texts = i18n.plural(i18n.m.common.texts, importedDocs);
-      showFeedback(
-        importedThoughts > 0
-          ? i18n.format(t.feedback.backupImportedWithThoughts, {
-              texts,
-              thoughts: i18n.plural(i18n.m.common.thoughts, importedThoughts)
-            })
-          : i18n.format(t.feedback.backupImported, { texts })
-      );
-    } catch (err) {
-      const msg =
-        errorMessage(err, i18n.m, i18n.m.errors.backup_read);
       showFeedback(msg);
     } finally {
       e.target.value = '';
@@ -619,35 +576,6 @@ export function LibraryView() {
               {documents && documents.length > 0 && (
                 <span className="library-count">{documents.length}</span>
               )}
-            </div>
-            <div className="library-backup-actions">
-              {documents && documents.length > 0 && (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  title={t.backupHint}
-                  onClick={() => void handleExportBackup()}
-                >
-                  <Download size={14} />
-                  <span>{t.backup}</span>
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                title={t.importHint}
-                onClick={() => backupInputRef.current?.click()}
-              >
-                <Upload size={14} />
-                <span>{t.import}</span>
-              </button>
-              <input
-                ref={backupInputRef}
-                type="file"
-                accept=".json,application/json"
-                hidden
-                onChange={handleImportBackup}
-              />
             </div>
           </div>
 

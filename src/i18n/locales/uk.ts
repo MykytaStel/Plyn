@@ -81,10 +81,6 @@ Plyn прибирає це перевантаження. Замість неск
     },
     start: 'Почати читання',
     libraryTitle: 'Моя бібліотека',
-    backup: 'Бекап',
-    backupHint: 'Зберегти тексти, закладки, думки й налаштування в один файл',
-    import: 'Імпорт',
-    importHint: 'Відновити з JSON-бекапу',
     filterLabel: 'Фільтр бібліотеки',
     filters: {
       all: 'Усі',
@@ -272,10 +268,28 @@ Plyn прибирає це перевантаження. Замість неск
   },
   settings: {
     sections: {
-      appearance: 'Текст і вигляд',
+      appearance: 'Вигляд',
       reading: 'Читання',
-      sound: 'Звук',
-      library: 'Твоя бібліотека'
+      aids: 'Підказки',
+      sound: 'Звук і голос',
+      languageLibrary: 'Мова і бібліотека'
+    },
+    back: 'Усі налаштування',
+    timeLeft: 'Показувати, скільки лишилось',
+    timeLeftHint: 'Приблизний час до кінця розділу чи тексту, у твоєму темпі',
+    syllableHints: 'Склади в довгих словах',
+    syllableHintsHint: 'Ледь помітно ділить довгі слова на склади. Сам текст не змінюється',
+    aidsOff: 'Вимкнено',
+    backupSave: 'Зберегти резервну копію',
+    backupRestore: 'Відновити з копії',
+    backupHint: 'Тексти, закладки, думки й налаштування в одному файлі',
+    // One line under each row of the first screen (0.27).
+    summary: {
+      fonts: { sans: 'Fixel', hyperlegible: 'Atkinson', dyslexic: 'Дислексія', serif: 'Literata' },
+      lengths: { short: 'Короткі картки', medium: 'Середні картки', long: 'Довші картки' },
+      aids: { anchor: 'Якір', sentenceFocus: 'Фокус-речення', syllables: 'Склади' },
+      voiceDefault: 'голос браузера',
+      voiceChosen: 'свій голос'
     },
     storageUsage: 'Plyn займає близько {size} на цьому пристрої.',
     storageProtected: 'Браузер пообіцяв зберігати твою бібліотеку.',

@@ -1,24 +1,20 @@
-import { X } from 'lucide-react';
-import type {
-  CardLengthPreset,
-  ColumnWidthPreset,
-  FontFamilyPreset,
-  LetterSpacingPreset,
-  ThemeMode,
-  TtsRatePreset
-} from '../../core/models/types';
+import { ChevronLeft, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import type { CardLengthPreset } from '../../core/models/types';
 import { READING_PRESETS } from '../../core/presets/readingPresets';
 import { useReaderStore } from '../../store/useReaderStore';
 import { APP_VERSION } from '../../appVersion';
 import { useI18n } from '../../i18n';
-import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
-import type { ContentLanguage } from '../../core/language/detectContentLanguage';
-import { isTtsSupported, speakPreview } from '../../services/speech/tts';
 import { useSettingsStore } from '../../store/useSettingsStore';
-import { StorageSection } from './StorageSection';
-import { useVoices } from './useVoices';
-import { screenWakeLock } from '../../services/screen/wakeLock';
+import { useBackLayer } from '../shared/useBackLayer';
 import { useDialogFocus } from '../shared/useDialogFocus';
+import { SettingsRow } from './SettingsRow';
+import { SETTINGS_SECTIONS, settingsSummary, type SettingsSection } from './settingsSummary';
+import { AidsSection } from './sections/AidsSection';
+import { AppearanceSection } from './sections/AppearanceSection';
+import { LanguageLibrarySection, useStorageStatus } from './sections/LanguageLibrarySection';
+import { ReadingSection } from './sections/ReadingSection';
+import { SoundSection } from './sections/SoundSection';
 
 /**
  * Reader-only props (brown noise, timer, card re-split) are optional: the
@@ -33,21 +29,12 @@ interface SettingsSheetProps {
   onClose: () => void;
 }
 
-const THEME_VALUES: ThemeMode[] = ['dark', 'paper', 'gray', 'mint'];
-const FONT_VALUES: FontFamilyPreset[] = ['sans', 'hyperlegible', 'dyslexic', 'serif'];
-const SPACING_VALUES: LetterSpacingPreset[] = ['normal', 'wide', 'extra'];
-const WIDTH_VALUES: ColumnWidthPreset[] = ['narrow', 'standard'];
-const LENGTH_VALUES: CardLengthPreset[] = ['short', 'medium', 'long'];
-
-const TTS_RATES: Array<{ value: TtsRatePreset; label: string }> = [
-  { value: 0.75, label: '0.75×' },
-  { value: 1, label: '1×' },
-  { value: 1.25, label: '1.25×' },
-  { value: 1.5, label: '1.5×' }
-];
-
-const TIMER_VALUES = [0, 5, 10, 15];
-
+/**
+ * Settings as a short list (0.27, option B): presets and five rows, each with
+ * a summary; a row opens its section in the same sheet. Back and Escape step
+ * out of a section first, then close the sheet. Every section always has
+ * content (from the library too), so all five rows always show.
+ */
 export function SettingsSheet({
   brownNoiseOn,
   onToggleBrownNoise,
@@ -59,513 +46,160 @@ export function SettingsSheet({
   const dialogRef = useDialogFocus<HTMLElement>();
   const i18n = useI18n();
   const t = i18n.m.settings;
-  const THEMES = THEME_VALUES.map((value) => ({ value, label: t.themes[value] }));
-  const FONTS = FONT_VALUES.map((value) => ({ value, label: t.fonts[value] }));
-  const SPACINGS = SPACING_VALUES.map((value) => ({ value, label: t.spacings[value] }));
-  const WIDTHS = WIDTH_VALUES.map((value) => ({ value, label: t.widths[value] }));
-  const LENGTHS = LENGTH_VALUES.map((value) => ({ value, label: t.lengths[value] }));
-  const TIMERS = TIMER_VALUES.map((value) => ({
-    value,
-    label: value === 0 ? t.timerOff : i18n.format(t.minutesShort, { minutes: value })
-  }));
-  const {
-    theme,
-    fontFamily,
-    letterSpacing,
-    columnWidth,
-    fontSize,
-    lineHeight,
-    anchorMode,
-    sentenceFocus,
-    eyeBreakReminder,
-    keepScreenOn,
-    ttsRate,
-    ttsAutoAdvance,
-    ttsWordHighlight,
-    ttsVoices,
-    cardLength,
-    language,
-    updateSettings
-  } = useSettingsStore();
-  const speechSupported = isTtsSupported();
-  const ukVoices = useVoices('uk');
-  const enVoices = useVoices('en');
-  const chooseVoice = (lang: ContentLanguage, uri: string) => {
-    const next = { ...ttsVoices };
-    if (uri) next[lang] = uri;
-    else delete next[lang];
-    updateSettings({ ttsVoices: next });
-    speakPreview(t.voiceSamples[lang], lang, uri || undefined);
-  };
-  const VOICE_SELECTS = [
-    { lang: 'uk' as const, label: t.voiceUk, voices: ukVoices },
-    { lang: 'en' as const, label: t.voiceEn, voices: enVoices }
-  ];
+  const settings = useSettingsStore();
   const timerMinutes = useReaderStore((s) => s.timerMinutes);
   const isReader = Boolean(onTimerSelect);
-  const wakeLockSupported = screenWakeLock().supported;
+  const storage = useStorageStatus();
+
+  const [section, setSection] = useState<SettingsSection | null>(null);
+  const lastSection = useRef<SettingsSection | null>(null);
+  const rowRefs = useRef<Partial<Record<SettingsSection, HTMLButtonElement | null>>>({});
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  const openSection = (next: SettingsSection) => {
+    lastSection.current = next;
+    setSection(next);
+  };
+  const backToList = () => setSection(null);
+
+  // One more back layer while a section is open: back returns to the list.
+  useBackLayer(section !== null, backToList);
+
+  // Focus: the section heading when it opens, the row it came from when it closes.
+  useEffect(() => {
+    dialogRef.current?.scrollTo?.({ top: 0 });
+    if (section) headingRef.current?.focus({ preventScroll: true });
+    else if (lastSection.current) {
+      rowRefs.current[lastSection.current]?.focus({ preventScroll: true });
+    }
+  }, [section, dialogRef]);
+
+  // Escape is the sheet's own: it never reaches the screen behind it.
+  const latest = useRef({ section, onClose });
+  useEffect(() => {
+    latest.current = { section, onClose };
+  });
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      if (latest.current.section) setSection(null);
+      else latest.current.onClose();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, []);
+
+  const storageLabel =
+    storage.status?.usageBytes != null ? i18n.bytes(storage.status.usageBytes) : '';
+  const summaryContext = { i18n, timerMinutes, storageLabel, isReader };
+
+  const closeButton = (
+    <button className="icon-btn" type="button" aria-label={t.close} onClick={onClose}>
+      <X size={20} />
+    </button>
+  );
 
   return (
     <aside
       ref={dialogRef}
-      className="bottom-sheet"
+      className="bottom-sheet settings-sheet"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="settings-title"
+      aria-labelledby={section ? 'settings-section-title' : 'settings-title'}
     >
       <div className="sheet-handle" aria-hidden="true" />
-      <div className="sheet-header">
-        <h2 id="settings-title">{t.title}</h2>
-        <button
-          className="icon-btn"
-          type="button"
-          aria-label={t.close}
-          onClick={onClose}
-        >
-          <X size={20} />
-        </button>
-      </div>
 
-      <div className="sheet-body">
-        {/* Швидкі пресети в 1 тап */}
-        <div className="setting-group">
-          <span className="setting-label">{t.presets}</span>
-          <div className="presets-grid">
-            {READING_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                className="preset-btn"
-                title={i18n.m.presets[preset.id].hint}
-                onClick={() => {
-                  updateSettings(preset.patch);
-                  onPresetApplied?.(i18n.m.presets[preset.id].label);
-                }}
-              >
-                <span className="preset-btn-title">
-                  {i18n.m.presets[preset.id].label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <section className="settings-section">
-          <h3 className="settings-section-title">{t.sections.appearance}</h3>
-          <div className="setting-group">
-            <span className="setting-label">{t.theme}</span>
-            <div
-              className="segmented segmented-4"
-              role="radiogroup"
-              aria-label={t.themeChoice}
-            >
-              {THEMES.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={theme === item.value}
-                  className={`seg-btn ${theme === item.value ? 'is-active' : ''}`}
-                  onClick={() => updateSettings({ theme: item.value })}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+      {section === null ? (
+        <div className="settings-screen settings-screen-list" key="list">
+          <div className="sheet-header">
+            <h2 id="settings-title">{t.title}</h2>
+            {closeButton}
           </div>
 
-          <div className="setting-group">
-            <span className="setting-label">{t.font}</span>
-            <div
-              className="segmented segmented-4 segmented-wrap"
-              role="radiogroup"
-              aria-label={t.fontChoice}
-            >
-              {FONTS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={fontFamily === item.value}
-                  className={`seg-btn ${fontFamily === item.value ? 'is-active' : ''}`}
-                  onClick={() => updateSettings({ fontFamily: item.value })}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="setting-group">
-            <div className="setting-label-row">
-              <label htmlFor="range-font-size" className="setting-label">
-                {t.fontSize}
-              </label>
-              <span className="setting-value">{fontSize} px</span>
-            </div>
-            <input
-              id="range-font-size"
-              type="range"
-              min={18}
-              max={34}
-              step={1}
-              value={fontSize}
-              onChange={(e) => updateSettings({ fontSize: Number(e.target.value) })}
-            />
-          </div>
-
-          <div className="setting-group">
-            <div className="setting-label-row">
-              <label htmlFor="range-line-height" className="setting-label">
-                {t.lineHeight}
-              </label>
-              <span className="setting-value">{lineHeight.toFixed(2)}</span>
-            </div>
-            <input
-              id="range-line-height"
-              type="range"
-              min={1.4}
-              max={2.2}
-              step={0.05}
-              value={lineHeight}
-              onChange={(e) =>
-                updateSettings({ lineHeight: Number(e.target.value) })
-              }
-            />
-          </div>
-
-          <div className="setting-group">
-            <span className="setting-label">{t.spacing}</span>
-            <div
-              className="segmented"
-              role="radiogroup"
-              aria-label={t.spacing}
-            >
-              {SPACINGS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={letterSpacing === item.value}
-                  className={`seg-btn ${letterSpacing === item.value ? 'is-active' : ''}`}
-                  onClick={() => updateSettings({ letterSpacing: item.value })}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="setting-group">
-            <span className="setting-label">{t.width}</span>
-            <div
-              className="segmented segmented-2"
-              role="radiogroup"
-              aria-label={t.width}
-            >
-              {WIDTHS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={columnWidth === item.value}
-                  className={`seg-btn ${columnWidth === item.value ? 'is-active' : ''}`}
-                  onClick={() => updateSettings({ columnWidth: item.value })}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="settings-section">
-          <h3 className="settings-section-title">{t.sections.reading}</h3>
-          <div className="setting-row-toggle">
-            <div>
-              <label htmlFor="toggle-anchor" className="setting-label">
-                {t.anchor}
-              </label>
-              <p className="setting-hint">
-                {t.anchorHint}
-              </p>
-            </div>
-            <label className="switch">
-              <input
-                id="toggle-anchor"
-                type="checkbox"
-                checked={anchorMode}
-                onChange={(e) => updateSettings({ anchorMode: e.target.checked })}
-              />
-              <span className="switch-slider" />
-            </label>
-          </div>
-
-          <div className="setting-row-toggle">
-            <div>
-              <label htmlFor="toggle-sentence-focus" className="setting-label">
-                {t.sentenceFocus}
-              </label>
-              <p className="setting-hint">
-                {t.sentenceFocusHint}
-              </p>
-            </div>
-            <label className="switch">
-              <input
-                id="toggle-sentence-focus"
-                type="checkbox"
-                checked={sentenceFocus}
-                onChange={(e) =>
-                  updateSettings({ sentenceFocus: e.target.checked })
-                }
-              />
-              <span className="switch-slider" />
-            </label>
-          </div>
-
-          <div className="setting-group">
-            <span className="setting-label">{t.cardLength}</span>
-            <div
-              className="segmented"
-              role="radiogroup"
-              aria-label={t.cardLength}
-            >
-              {LENGTHS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={cardLength === item.value}
-                  className={`seg-btn ${cardLength === item.value ? 'is-active' : ''}`}
-                  onClick={() =>
-                    onCardLengthChange
-                      ? onCardLengthChange(item.value)
-                      : updateSettings({ cardLength: item.value })
-                  }
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {isReader && (
+          <div className="sheet-body">
             <div className="setting-group">
-              <div className="setting-label-row">
-                <span className="setting-label">{t.timer}</span>
-                <span className="setting-hint-inline">{t.timerHint}</span>
-              </div>
-              <div
-                className="segmented segmented-4"
-                role="radiogroup"
-                aria-label={t.timer}
-              >
-                {TIMERS.map((item) => (
+              <span className="setting-label">{t.presets}</span>
+              <div className="presets-grid">
+                {READING_PRESETS.map((preset) => (
                   <button
-                    key={item.value}
+                    key={preset.id}
                     type="button"
-                    role="radio"
-                    aria-checked={timerMinutes === item.value}
-                    className={`seg-btn ${timerMinutes === item.value ? 'is-active' : ''}`}
-                    onClick={() => onTimerSelect?.(item.value)}
+                    className="preset-btn"
+                    title={i18n.m.presets[preset.id].hint}
+                    onClick={() => {
+                      settings.updateSettings(preset.patch);
+                      onPresetApplied?.(i18n.m.presets[preset.id].label);
+                    }}
                   >
-                    {item.label}
+                    <span className="preset-btn-title">{i18n.m.presets[preset.id].label}</span>
                   </button>
                 ))}
               </div>
             </div>
-          )}
 
-          <div className="setting-row-toggle">
-            <div>
-              <label htmlFor="toggle-eye-break" className="setting-label">
-                {t.eyeBreak}
-              </label>
-              <p className="setting-hint">
-                {t.eyeBreakHint}
-              </p>
-            </div>
-            <label className="switch">
-              <input
-                id="toggle-eye-break"
-                type="checkbox"
-                checked={eyeBreakReminder}
-                onChange={(e) =>
-                  updateSettings({ eyeBreakReminder: e.target.checked })
-                }
-              />
-              <span className="switch-slider" />
-            </label>
-          </div>
-          {wakeLockSupported && (
-            <div className="setting-row-toggle">
-              <div>
-                <label htmlFor="toggle-keep-screen-on" className="setting-label">
-                  {t.keepScreenOn}
-                </label>
-                <p className="setting-hint">{t.keepScreenOnHint}</p>
-              </div>
-              <label className="switch">
-                <input
-                  id="toggle-keep-screen-on"
-                  type="checkbox"
-                  checked={keepScreenOn}
-                  onChange={(e) => updateSettings({ keepScreenOn: e.target.checked })}
+            <div className="settings-rows">
+              {SETTINGS_SECTIONS.map((id) => (
+                <SettingsRow
+                  key={id}
+                  ref={(el) => {
+                    rowRefs.current[id] = el;
+                  }}
+                  title={t.sections[id]}
+                  summary={settingsSummary(id, settings, summaryContext)}
+                  onOpen={() => openSection(id)}
                 />
-                <span className="switch-slider" />
-              </label>
-            </div>
-          )}
-        </section>
-
-        <section className="settings-section">
-          <h3 className="settings-section-title">{t.sections.sound}</h3>
-          {isReader && (
-            <div className="setting-row-toggle">
-              <div>
-                <label htmlFor="toggle-brown-noise" className="setting-label">
-                  {t.brownNoise}
-                </label>
-                <p className="setting-hint">
-                  {t.brownNoiseHint}
-                </p>
-              </div>
-              <label className="switch">
-                <input
-                  id="toggle-brown-noise"
-                  type="checkbox"
-                  checked={Boolean(brownNoiseOn)}
-                  onChange={(e) => onToggleBrownNoise?.(e.target.checked)}
-                />
-                <span className="switch-slider" />
-              </label>
-            </div>
-          )}
-
-          <div className="setting-row-toggle">
-            <div>
-              <label htmlFor="toggle-tts-auto" className="setting-label">
-                {t.autoAdvance}
-              </label>
-              <p className="setting-hint">
-                {t.autoAdvanceHint}
-              </p>
-            </div>
-            <label className="switch">
-              <input
-                id="toggle-tts-auto"
-                type="checkbox"
-                checked={ttsAutoAdvance}
-                onChange={(e) =>
-                  updateSettings({ ttsAutoAdvance: e.target.checked })
-                }
-              />
-              <span className="switch-slider" />
-            </label>
-          </div>
-
-          <div className="setting-group">
-            <span className="setting-label">{t.ttsRate}</span>
-            <div
-              className="segmented segmented-4"
-              role="radiogroup"
-              aria-label={t.ttsRate}
-            >
-              {TTS_RATES.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={ttsRate === item.value}
-                  className={`seg-btn ${ttsRate === item.value ? 'is-active' : ''}`}
-                  onClick={() => updateSettings({ ttsRate: item.value })}
-                >
-                  {item.label}
-                </button>
               ))}
             </div>
-          </div>
 
-          <div className="setting-row-toggle">
-            <div>
-              <label htmlFor="toggle-tts-highlight" className="setting-label">
-                {t.wordHighlight}
-              </label>
-              <p className="setting-hint">
-                {speechSupported ? t.wordHighlightHint : t.speechUnavailable}
-              </p>
-            </div>
-            <label className="switch">
-              <input
-                id="toggle-tts-highlight"
-                type="checkbox"
-                checked={ttsWordHighlight}
-                disabled={!speechSupported}
-                onChange={(e) => updateSettings({ ttsWordHighlight: e.target.checked })}
+            <p className="app-version">{i18n.format(t.version, { version: APP_VERSION })}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="settings-screen settings-screen-section" key={section}>
+          <div className="sheet-header settings-section-header">
+            <button type="button" className="settings-back" onClick={backToList}>
+              <ChevronLeft size={18} aria-hidden="true" />
+              <span>{t.back}</span>
+            </button>
+            {closeButton}
+          </div>
+          <h2
+            id="settings-section-title"
+            className="settings-section-heading"
+            ref={headingRef}
+            tabIndex={-1}
+          >
+            {t.sections[section]}
+          </h2>
+
+          <div className="sheet-body">
+            {section === 'appearance' && <AppearanceSection />}
+            {section === 'reading' && (
+              <ReadingSection
+                isReader={isReader}
+                onCardLengthChange={onCardLengthChange}
+                onTimerSelect={onTimerSelect}
               />
-              <span className="switch-slider" />
-            </label>
+            )}
+            {section === 'aids' && <AidsSection showSyllables={false} />}
+            {section === 'sound' && (
+              <SoundSection
+                isReader={isReader}
+                brownNoiseOn={brownNoiseOn}
+                onToggleBrownNoise={onToggleBrownNoise}
+              />
+            )}
+            {section === 'languageLibrary' && (
+              <LanguageLibrarySection
+                canRestore={!isReader}
+                storage={storage.status}
+                onStorageChange={storage.refresh}
+              />
+            )}
           </div>
-
-          {VOICE_SELECTS.map(({ lang, label, voices }) => (
-            <div className="setting-group" key={lang}>
-              <label htmlFor={`select-voice-${lang}`} className="setting-label">
-                {label}
-              </label>
-              <select
-                id={`select-voice-${lang}`}
-                className="setting-select"
-                value={voices.some((v) => v.uri === ttsVoices[lang]) ? ttsVoices[lang] : ''}
-                disabled={!speechSupported}
-                onChange={(e) => chooseVoice(lang, e.target.value)}
-              >
-                <option value="">{t.voiceDefault}</option>
-                {voices.map((v) => (
-                  <option key={v.uri} value={v.uri}>
-                    {v.local ? v.name : i18n.format(t.voiceNetwork, { name: v.name })}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </section>
-
-        <section className="settings-section">
-          <h3 className="settings-section-title">{LANGUAGE_LABEL}</h3>
-          <div className="setting-group">
-            <div
-              className="segmented segmented-2"
-              role="radiogroup"
-              aria-label={LANGUAGE_LABEL}
-            >
-              {LOCALES.map((locale) => (
-                <button
-                  key={locale}
-                  type="button"
-                  role="radio"
-                  lang={locale}
-                  className={`seg-btn ${language === locale ? 'is-active' : ''}`}
-                  aria-checked={language === locale}
-                  onClick={() => updateSettings({ language: locale })}
-                >
-                  {LOCALE_NAMES[locale]}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <StorageSection />
-
-        <p className="shortcuts-hint">
-          {t.shortcuts.keyboard} <kbd>Space</kbd>/<kbd>↓</kbd> {t.shortcuts.next} ·{' '}
-          <kbd>A</kbd> {t.shortcuts.anchor} · <kbd>F</kbd> {t.shortcuts.focus} ·{' '}
-          <kbd>N</kbd> {t.shortcuts.thought} · <kbd>S</kbd> {t.shortcuts.speech} ·{' '}
-          <kbd>Z</kbd> {t.shortcuts.zen}
-        </p>
-
-        <p className="app-version">{i18n.format(t.version, { version: APP_VERSION })}</p>
-      </div>
+        </div>
+      )}
     </aside>
   );
 }
