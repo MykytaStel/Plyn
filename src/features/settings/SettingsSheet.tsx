@@ -12,8 +12,11 @@ import { useReaderStore } from '../../store/useReaderStore';
 import { APP_VERSION } from '../../appVersion';
 import { useI18n } from '../../i18n';
 import { LANGUAGE_LABEL, LOCALE_NAMES, LOCALES } from '../../i18n/locales';
+import type { ContentLanguage } from '../../core/language/detectContentLanguage';
+import { isTtsSupported, speakPreview } from '../../services/speech/tts';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { StorageSection } from './StorageSection';
+import { useVoices } from './useVoices';
 import { screenWakeLock } from '../../services/screen/wakeLock';
 import { useDialogFocus } from '../shared/useDialogFocus';
 
@@ -78,10 +81,26 @@ export function SettingsSheet({
     keepScreenOn,
     ttsRate,
     ttsAutoAdvance,
+    ttsWordHighlight,
+    ttsVoices,
     cardLength,
     language,
     updateSettings
   } = useSettingsStore();
+  const speechSupported = isTtsSupported();
+  const ukVoices = useVoices('uk');
+  const enVoices = useVoices('en');
+  const chooseVoice = (lang: ContentLanguage, uri: string) => {
+    const next = { ...ttsVoices };
+    if (uri) next[lang] = uri;
+    else delete next[lang];
+    updateSettings({ ttsVoices: next });
+    speakPreview(t.voiceSamples[lang], lang, uri || undefined);
+  };
+  const VOICE_SELECTS = [
+    { lang: 'uk' as const, label: t.voiceUk, voices: ukVoices },
+    { lang: 'en' as const, label: t.voiceEn, voices: enVoices }
+  ];
   const timerMinutes = useReaderStore((s) => s.timerMinutes);
   const isReader = Boolean(onTimerSelect);
   const wakeLockSupported = screenWakeLock().supported;
@@ -466,6 +485,49 @@ export function SettingsSheet({
               ))}
             </div>
           </div>
+
+          <div className="setting-row-toggle">
+            <div>
+              <label htmlFor="toggle-tts-highlight" className="setting-label">
+                {t.wordHighlight}
+              </label>
+              <p className="setting-hint">
+                {speechSupported ? t.wordHighlightHint : t.speechUnavailable}
+              </p>
+            </div>
+            <label className="switch">
+              <input
+                id="toggle-tts-highlight"
+                type="checkbox"
+                checked={ttsWordHighlight}
+                disabled={!speechSupported}
+                onChange={(e) => updateSettings({ ttsWordHighlight: e.target.checked })}
+              />
+              <span className="switch-slider" />
+            </label>
+          </div>
+
+          {VOICE_SELECTS.map(({ lang, label, voices }) => (
+            <div className="setting-group" key={lang}>
+              <label htmlFor={`select-voice-${lang}`} className="setting-label">
+                {label}
+              </label>
+              <select
+                id={`select-voice-${lang}`}
+                className="setting-select"
+                value={voices.some((v) => v.uri === ttsVoices[lang]) ? ttsVoices[lang] : ''}
+                disabled={!speechSupported}
+                onChange={(e) => chooseVoice(lang, e.target.value)}
+              >
+                <option value="">{t.voiceDefault}</option>
+                {voices.map((v) => (
+                  <option key={v.uri} value={v.uri}>
+                    {v.local ? v.name : i18n.format(t.voiceNetwork, { name: v.name })}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
         </section>
 
         <section className="settings-section">

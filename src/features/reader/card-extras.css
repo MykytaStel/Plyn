@@ -29,3 +29,11 @@
 .readable-word {
   cursor: pointer;
 }
+
+/* The word being read aloud (0.26): background only, no movement, no reflow. */
+.is-spoken {
+  background: var(--spoken-bg);
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}

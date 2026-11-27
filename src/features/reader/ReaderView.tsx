@@ -85,9 +85,12 @@ export function ReaderView() {
   const leaveZen = useCallback(() => setZenMode(false), []);
   const { isDoneVisible, activeSentenceIndex, scrollToCard, advanceStep, retreatStep } =
     useCardNavigation({ feedRef, sentenceFocus, anchorMode, onReachDone: leaveZen });
-  const { ttsAvailable, isSpeaking, toggleSpeech: handleToggleSpeech } = useSpeech({
-    scrollToCard
-  });
+  const {
+    ttsAvailable,
+    isSpeaking,
+    toggleSpeech: handleToggleSpeech,
+    spokenRange
+  } = useSpeech({ scrollToCard, chapters: activeDoc?.chapters, showToast });
   useKeepScreenOn(isSpeaking);
 
   const leaveReader = useCallback(() => {
@@ -434,6 +437,9 @@ export function ReaderView() {
               sentenceFocus={sentenceFocus}
               isActiveCard={isActiveCard}
               activeSentenceIndex={isActiveCard ? activeSentenceIndex : 0}
+              spokenRange={
+                isActiveCard && spokenRange?.cardIndex === idx ? spokenRange : null
+              }
             />
           );
         })}

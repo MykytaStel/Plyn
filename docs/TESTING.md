@@ -13,7 +13,8 @@ Status: draft · updated for 0.22.0 · part of the [roadmap](ROADMAP.md)
 - Findings fixed in 0.19: lost stats updates under concurrency ([IMP-04](IMPROVEMENTS.md#imp-04-atomic-progress-stats)); splitter offsets drifting when sentences had no space between them, and leading `?` / `…` being dropped (now cards are exact slices of the normalized text).
 - New in 0.21: L5 backup fixtures (`spec/backups/`), CUJ-6 (backup → wipe → restore, download on desktop and share sheet on phones), CUJ-7 (thought parking), CUJ-8 (bookmark note → Markdown) and CUJ-11 (delete → Undo), axe on the Undo toast. Vitest: 33 files, 172 tests; Playwright: 76 runs.
 - New in 0.22: L9 visual regression (`e2e/visual.spec.ts`, 48 snapshots on Chromium desktop and Pixel 7), CUJ-9 (back button), CUJ-10 (share target), Screen Wake Lock, a service worker update arriving mid-text, and the manifest icons. Unit tests for the back stack, wake lock and lazy-chunk retry; a component test for sheet focus. Vitest: 38 files, 197 tests; Playwright: 236 runs (visual and some PWA checks on Chromium only).
-- Not covered yet: TTS and audio services (stubbed out of the journeys), the error screen in a browser (component test only), Firefox.
+- New in 0.26: `tts.ts` contract tests against a fake `speechSynthesis` (`test/fakeSpeech.ts`), CUJ-15 with a stubbed voice (`e2e/support/speech.ts`), a spoken-word visual per theme.
+- Not covered yet: real voices (checked by ear on the PR preview), the audio (brown noise) service, the error screen in a browser (component test only), Firefox.
 - CI: `ci.yml` runs `checks` (lint, typecheck, tests with coverage, build) and then `e2e` (Playwright) on every pull request; `deploy.yml` reuses it, so production deploys only after both. `preview.yml` uploads a Worker version per PR and comments its URL.
 - Known lint warnings (not blocking): 7 `jsx-a11y` warnings for pointer-only click targets (progress bar, card feed, words), left for the 0.28 audit.
 
@@ -212,7 +213,7 @@ E2E (L7) covers these. Each journey is one spec file (`e2e/cuj-<n>-*.spec.ts`). 
 | CUJ-9 | Back button: sheet closes → reader closes → library stays | 0.22 ✓ |
 | CUJ-10 | Share target: open `/?title=…&text=…` → the text lands in the import box | 0.22 ✓ |
 | CUJ-11 | Delete a document → undo → it is back with its progress | 0.21 ✓ |
-| CUJ-12 | Read aloud with auto-advance across three cards (stubbed voice) | 0.26 |
+| CUJ-15 | Read aloud with auto-advance across cards, word highlight, stop at a chapter (stubbed voice) | 0.26 ✓ |
 
 ## Coverage targets
 

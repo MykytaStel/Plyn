@@ -1,6 +1,6 @@
 # Plyn roadmap: 0.19 → 0.30
 
-Status: draft · 2026-11-27 · current release: **0.25.0**
+Status: draft · 2026-11-27 · current release: **0.26.0**
 
 This is a direction, not a promise. Each release gets its own short design in `docs/superpowers/specs/` before work starts, and the owner can reorder or cut anything.
 
@@ -31,7 +31,7 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 | [0.23](#0230--books-import-well) ✓ | Books import well | yes | parser golden files | M | EXP-04 |
 | [0.24](#0240--pdfs-and-web-articles-import-well) ✓ | PDFs & web articles import well | yes | Worker & SSRF tests | L | EXP-01 |
 | [0.25](#0250--light-and-fast) ✓ | Light and fast | faster | performance budgets | M | 0.22 (visual baseline) |
-| [0.26](#0260--listening-upgraded) | Listening, upgraded | yes | TTS contract tests | M | EXP-02 |
+| [0.26](#0260--listening-upgraded) ✓ | Listening, upgraded | yes | TTS contract tests | M | EXP-02 |
 | [0.27](#0270--reading-comfort-ii) | Reading comfort II | yes | – | M | EXP-03 |
 | [0.28](#0280--accessibility-audit) | Accessibility audit | yes | manual assistive-tech runs | M | EXP-08 |
 | [0.29](#0290--trust-privacy-security-about) | Trust: privacy, security, about | a little | security tests | S–M | EXP-10 |
@@ -178,15 +178,17 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 
 ## 0.26.0 — Listening, upgraded
 
+**Status: shipped.** Design: [specs/2026-11-27-v0.26-listening-upgraded-design.md](superpowers/specs/2026-11-27-v0.26-listening-upgraded-design.md). EXP-02 decided yes (iOS Safari and Chrome, macOS Chromium). Moved on: rate steps on iOS, where the rate isn't linear (EXP-02: 26 s at 0.75, 24 s at 1, 10 s at 1.5), to 0.27 or later.
+
 **Goal:** listening helps reading: the reader can follow the spoken word with their eyes.
 
 **Experiment first:** [EXP-02 TTS word highlighting](experiments/EXP-02-tts-word-highlighting.md).
 
 **Readers get:**
 
-1. The word being spoken is highlighted, where the browser's voice supports it. Off by default, a switch in Settings.
-2. Choose a voice per content language (Ukrainian, English) in Settings.
-3. Listening continues across cards without gaps; a clear stop point at the end of a chapter.
+1. ✓ The word being spoken is highlighted, where the browser's voice supports it. Off by default, a switch in Settings.
+2. ✓ Choose a voice per content language (Ukrainian, English) in Settings.
+3. ✓ Listening continues across cards without gaps; a clear stop point at the end of a chapter.
 
 **Tests:** `services/speech/tts.ts` tested against a fake `speechSynthesis` (boundary events, cancel, session ids); E2E with a stubbed voice.
 

@@ -152,6 +152,23 @@
   background-color: var(--accent-contrast);
 }
 
+/* Voice choice (0.26): a native select, so every platform shows its own picker. */
+.setting-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.setting-select:disabled {
+  opacity: 0.5;
+}
+
 .segmented {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

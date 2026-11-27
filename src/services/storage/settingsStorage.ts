@@ -1,3 +1,4 @@
+import type { ContentLanguage } from '../../core/language/detectContentLanguage';
 import type { UserSettings } from '../../core/models/types';
 import { isLocale } from '../../i18n/locales';
 
@@ -16,6 +17,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   keepScreenOn: true,
   ttsRate: 1,
   ttsAutoAdvance: false,
+  ttsWordHighlight: false,
+  ttsVoices: {},
   cardLength: 'medium',
   language: 'uk'
 };
@@ -27,6 +30,8 @@ export function loadUserSettings(): UserSettings {
     const parsed = JSON.parse(raw) as Partial<UserSettings>;
     const merged = { ...DEFAULT_SETTINGS, ...parsed };
     if (!isLocale(merged.language)) merged.language = DEFAULT_SETTINGS.language;
+    merged.ttsWordHighlight = bool(merged.ttsWordHighlight, DEFAULT_SETTINGS.ttsWordHighlight);
+    merged.ttsVoices = voicePrefs(merged.ttsVoices);
     return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -54,6 +59,8 @@ export function mergeSettings(
     keepScreenOn: patch.keepScreenOn ?? prev.keepScreenOn,
     ttsRate: patch.ttsRate ?? prev.ttsRate,
     ttsAutoAdvance: patch.ttsAutoAdvance ?? prev.ttsAutoAdvance,
+    ttsWordHighlight: patch.ttsWordHighlight ?? prev.ttsWordHighlight,
+    ttsVoices: patch.ttsVoices ?? prev.ttsVoices,
     cardLength: patch.cardLength ?? prev.cardLength,
     language: patch.language ?? prev.language
   };
@@ -97,6 +104,21 @@ function bool(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+const VOICE_LANGUAGES: readonly ContentLanguage[] = ['uk', 'en'];
+const MAX_VOICE_ID = 512;
+
+/** Voice ids per known content language; anything else is dropped. */
+function voicePrefs(raw: unknown): UserSettings['ttsVoices'] {
+  const prefs: UserSettings['ttsVoices'] = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return prefs;
+  const r = raw as Record<string, unknown>;
+  for (const lang of VOICE_LANGUAGES) {
+    const id = r[lang];
+    if (typeof id === 'string' && id.length > 0 && id.length <= MAX_VOICE_ID) prefs[lang] = id;
+  }
+  return prefs;
+}
+
 /**
  * Settings from an untrusted source (a backup file): every field is checked,
  * anything unknown or invalid falls back to the default. Null if not an object.
@@ -118,6 +140,8 @@ export function parseSettings(raw: unknown): UserSettings | null {
     keepScreenOn: bool(r.keepScreenOn, d.keepScreenOn),
     ttsRate: oneOf(TTS_RATES, r.ttsRate, d.ttsRate),
     ttsAutoAdvance: bool(r.ttsAutoAdvance, d.ttsAutoAdvance),
+    ttsWordHighlight: bool(r.ttsWordHighlight, d.ttsWordHighlight),
+    ttsVoices: voicePrefs(r.ttsVoices),
     cardLength: oneOf(CARD_LENGTHS, r.cardLength, d.cardLength),
     language: isLocale(r.language) ? r.language : d.language
   };

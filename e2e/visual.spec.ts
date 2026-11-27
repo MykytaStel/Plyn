@@ -1,4 +1,5 @@
 import { expect, openReaderSettings, reader, startReading, test, uk } from './support/app';
+import { installStubSpeech } from './support/speech';
 
 /**
  * L6 visual regression (docs/TESTING.md): the baseline that guards CSS
@@ -49,6 +50,23 @@ for (const theme of THEMES) {
         await expect(page.getByRole('main', { name: uk.library.mainLabel })).toBeVisible();
         await settle(page);
         await expect(page).toHaveScreenshot(`library-empty-${theme}.png`);
+      });
+
+      test.describe('spoken word', () => {
+        test.use({ settings: { theme, ttsWordHighlight: true } });
+        test('reader card, spoken word', async ({ page }) => {
+          // 0.26: the highlight colour per theme, frozen on the third word.
+          await installStubSpeech(page, { wordMs: 20, pauseAfterWords: 3 });
+          await page.goto('/');
+          await startReading(page, 'Візуальна перевірка', MIXED_TEXT);
+          await page.keyboard.press('s');
+          await expect
+            .poll(() => page.evaluate(() => (window as unknown as { __speechPause: boolean }).__speechPause))
+            .toBe(true);
+          await expect(page.locator('.is-spoken')).toHaveCount(1);
+          await settle(page);
+          await expect(reader(page)).toHaveScreenshot(`reader-spoken-${theme}.png`);
+        });
       });
 
       test('reader settings sheet', async ({ page }) => {
