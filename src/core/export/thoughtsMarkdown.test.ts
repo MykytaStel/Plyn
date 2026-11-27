@@ -51,6 +51,34 @@ describe('formatThoughtsAsMarkdown', () => {
   });
 });
 
+describe('safe Markdown', () => {
+  it.each(['- x', '> q', '1. x', '2) x', '* x', '+ x', '## h'])(
+    'keeps "%s" literal on a later line, inside one list item',
+    (line) => {
+      const md = run([note('1', `first\n${line}`, 7, 'D')]);
+      const [first, second] = md.split('\n').slice(4, 6);
+      expect(first).toBe('- first');
+      expect(second.startsWith('  ')).toBe(true);
+      expect(second.trimStart()).toMatch(/^(\\|\d+\\)/);
+    }
+  );
+
+  it('escapes a marker on the first line too', () => {
+    expect(run([note('1', '- x', 7, 'D')])).toContain('- \\- x (d7)');
+    expect(run([note('1', '1. x', 7, 'D')])).toContain('- 1\\. x (d7)');
+  });
+
+  it('collapses whitespace in a heading and groups by the original title', () => {
+    const md = run([note('1', 'a', 2, 'Two\nlines'), note('2', 'b', 1, 'Two\nlines')]);
+    expect(md.match(/^## /gm)).toHaveLength(1);
+    expect(md).toContain('## Two lines\n');
+  });
+
+  it('escapes # at the edges of a heading', () => {
+    expect(run([note('1', 'a', 2, '# Title #')])).toContain('## \\# Title \\#\n');
+  });
+});
+
 describe('thoughtsFileName', () => {
   it('uses the local date with padded month and day', () => {
     expect(thoughtsFileName(new Date(2026, 0, 5, 23, 59))).toBe('plyn-thoughts-2026-01-05.md');

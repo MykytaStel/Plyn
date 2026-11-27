@@ -394,6 +394,6 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     card: 'Card {n}',
     note: 'Note',
     thoughts: 'Thought Parking',
-    untitled: 'No text'
+    untitled: 'Other thoughts'
   }
 };
