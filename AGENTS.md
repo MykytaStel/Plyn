@@ -18,12 +18,13 @@ npm run test:coverage  # tests with a coverage report in coverage/
 npm run test:e2e  # Playwright: journeys, axe, keyboard, offline, visual (builds first; must pass)
 npm run test:visual:update  # rebuild the visual snapshots on purpose, then review the images
 npm run lint      # ESLint: hooks, a11y, floating promises (must pass)
+npm run budgets   # gzip size budgets for dist/ (scripts/budgets.json); run after build
 npm run typecheck # tsc -b --noEmit
 npm run build     # tsc -b + vite build + PWA service worker (must pass)
 npm run preview   # serve the production build locally
 ```
 
-Run `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` before every commit, and `npm run test:e2e` before a PR that touches UI. CI runs all five on every pull request (e2e after the others), and every PR gets a preview URL (`.github/workflows/preview.yml`).
+Run `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` before every commit, and `npm run test:e2e` before a PR that touches UI. CI runs all five on every pull request (e2e after the others), plus `npm run budgets` and Lighthouse CI (`lighthouserc.json`) after the build, and every PR gets a preview URL (`.github/workflows/preview.yml`).
 
 ## Deployment
 
@@ -33,7 +34,7 @@ Every pull request runs `.github/workflows/ci.yml` (lint, typecheck, tests, buil
 
 - React 19, TypeScript (strict), Vite 8
 - Zustand for state (`src/store/`)
-- Dexie / IndexedDB for the library, stats and thoughts (`src/services/storage/db.ts`)
+- Dexie / IndexedDB for the library, stats and thoughts (`src/services/storage/db.ts`). Since 0.25 `documents` holds light rows (no text) and `texts` holds the text: read a whole document with `loadDocument`, write one with `putDocument`; the library list must never read `texts`.
 - `vite-plugin-pwa` (Workbox `generateSW`, prompt-style updates registered in `src/services/pwa/registerApp.ts`) for offline use and the Web Share Target
 - Cloudflare Worker (`worker/index.ts`): serves static assets and `/api/extract` (URL → article text)
 - Vitest (Node environment) for unit tests
@@ -49,7 +50,9 @@ src/
                audio (brown noise), extract (URL import client), navigation (back stack over
                history), screen (Wake Lock), pwa (updates, lazy-chunk retry), sync (future contract only).
   store/       Zustand stores: reader session and settings.
-  styles/      tokens.css (themes, CSS variables, all component styles), fonts.css (@font-face).
+  styles/      tokens.css (themes, CSS variables), base.css, controls.css, fonts.css (@font-face),
+               index.css (imports every stylesheet in cascade order). Component styles live
+               next to their features (features/*/*.css) but are imported only from index.css.
   assets/      Self-hosted fonts.
 spec/          Shared JSON fixtures (splitter cases), meant to be reused by future native apps.
 worker/        Cloudflare Worker.
@@ -61,7 +64,7 @@ Keep `src/core/` free of DOM, React and storage imports so that it stays testabl
 
 1. **Progress is a character offset, not a card index.** `PlynDocument.charOffset`, `bookmarkOffsets` and `chapters[].offset` point into the *normalized* text (`normalizeText` in `src/core/splitter/splitter.ts`). Card length can change at any time, so never persist card indices as the source of truth.
 2. **The splitter is shared behaviour.** If you change `splitTextIntoCards`, update `spec/splitter-cases.json` and keep every case green.
-3. **Dexie schema changes need a new `this.version(n)`.** Never edit an existing version's stores. Database name: `plyn_library_v2`.
+3. **Dexie schema changes need a new `this.version(n)`.** Never edit an existing version's stores. Database name: `plyn_library_v2` (now version 4). Every upgrade gets a test from each older version (`db.migration.test.ts`).
 4. **localStorage keys are versioned**: `plyn_settings_v1`, `plyn_onboarding_done_v1`, `plyn_progress_journal_v1` (last reading place, applied on start if newer than IndexedDB). Adding a field with a default is fine (loaders merge over defaults and ignore unknown fields, as with `keepScreenOn` in 0.22); renaming a field or changing its meaning means a new key plus a migration.
 5. **Backups stay compatible.** `PlynBackupPayload.schemaVersion` must be bumped and handled in `services/storage/backup.ts` when the shape changes (now 2: documents, stats, thoughts, settings; optional document fields such as `author` and `chapters` don't bump it, but get a fixture). Every version still imports: add a fixture to `spec/backups/` for a new schema and never edit an old one.
 6. **Everything works offline.** User text never leaves the device, except URL import, which sends only the URL to `/api/extract`. New assets must match the Workbox `globPatterns` in `vite.config.ts`.

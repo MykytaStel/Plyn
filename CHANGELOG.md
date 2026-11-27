@@ -2,6 +2,33 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [0.25.0] — Unreleased
+
+Light and fast.
+
+### Added
+
+- PDFs with their own table of contents get "Contents", like EPUB and FB2 books: tap a chapter to go there.
+- A new book with contents opens at its first chapter, past the title page and imprint. Nothing is cut: the title page is one swipe back.
+
+### Changed
+
+- Big books no longer lag. Moving to the next card, changing the column width or the card length is instant even in a book with 10,000 cards.
+- The library opens fast however many big books it holds, and adding a text you already have is found at once.
+- Opening a very long book or changing the card length no longer freezes the screen: the splitting runs in the background.
+- The app loads a little less code at start: EPUB and FB2 support loads when you open such a book.
+
+### Under the hood
+
+- The reader keeps only the cards around the current one in the page (about a dozen); the rest are spacers of the same height (`src/core/reading/feedWindow.ts`). A far jump (scrubber, contents, bookmarks, "start again") moves the window first, then scrolls. New journey `e2e/cuj-13-long-book.spec.ts`.
+- Dexie `version(4)` (IMP-06): texts live in a `texts` table; `documents` keeps light rows with `textHash`, `textLength` and `wordCount`. The upgrade moves every text in one transaction; tests upgrade from version 1 and 3. Duplicates are found by `textHash` (`src/core/text/textHash.ts`, cyrb53) and confirmed by comparing the text. Backups keep the text inline, unchanged (schema 2).
+- Texts of 100,000+ characters are split in a Web Worker (`src/services/splitter/`), with a main-thread fallback; the result is exactly `splitTextIntoCards`.
+- PDF outline → chapters: `reconstructPdfDocument` also returns where each page starts; `src/core/parsers/pdfOutline.ts` points each outline entry at its heading on that page, or at the page start. New journey `e2e/cuj-14-pdf-contents.spec.ts`.
+- `tokens.css` split into tokens, base, controls and per-feature files (IMP-09), imported in the old cascade order from `src/styles/index.css`; the built CSS is byte-identical.
+- CI budgets: `npm run budgets` (gzip sizes in `scripts/budgets.json`) and Lighthouse CI (`lighthouserc.json`: performance ≥ 0.9, accessibility ≥ 0.95, best practices ≥ 0.9 on a mobile profile). `e2e/perf-library.spec.ts`: 50 books of 200,000 characters render in under 300 ms with the CPU slowed 4×.
+- `dexie-react-hooks` 4.4, TypeScript 6.0 (`types` now listed in `tsconfig.json`). TypeScript 7 waits for `typescript-eslint` support.
+- 1 M-character splitter test (`splitter.large.test.ts`).
+
 ## [0.24.0] — 2026-11-27
 
 PDFs and web articles import well.

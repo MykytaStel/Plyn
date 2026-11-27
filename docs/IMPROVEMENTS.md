@@ -8,13 +8,13 @@ Things that make Plyn safer, faster or easier to change, without being features.
 |---|---|---|---|
 | [IMP-01](#imp-01-harden-apiextract) | Harden `/api/extract` | security | 0.24 ✓ |
 | [IMP-02](#imp-02-security-headers-and-csp) | Security headers and CSP | security | 0.29 |
-| [IMP-03](#imp-03-dependency-hygiene) | Dependency hygiene and major upgrades | security | 0.19 ✓ (Vitest 5, Dependabot, Node pin), 0.22 ✓ (Vite 8, PWA 2, lucide 1) → 0.25 (upgrades), 0.29 (audit gate) |
+| [IMP-03](#imp-03-dependency-hygiene) | Dependency hygiene and major upgrades | security | 0.19 ✓ (Vitest 5, Dependabot, Node pin), 0.22 ✓ (Vite 8, PWA 2, lucide 1) 0.25 ✓ (dexie-react-hooks 4, TypeScript 6; TypeScript 7 waits for typescript-eslint) → 0.29 (audit gate) |
 | [IMP-04](#imp-04-atomic-progress-stats) | Atomic progress stats | data | 0.19 ✓ |
 | [IMP-05](#imp-05-backup-v2) | Backup v2 | data | 0.21 ✓ |
-| [IMP-06](#imp-06-split-metadata-from-text) | Split metadata from text | data, performance | 0.25 |
+| [IMP-06](#imp-06-split-metadata-from-text) | Split metadata from text | data, performance | 0.25 ✓ |
 | [IMP-07](#imp-07-error-boundary) | Error boundary | data, UX | 0.21 ✓ |
 | [IMP-08](#imp-08-split-readerview) | Split `ReaderView` | code health | 0.22 ✓ |
-| [IMP-09](#imp-09-split-tokenscss) | Split `tokens.css` | code health | 0.25 |
+| [IMP-09](#imp-09-split-tokenscss) | Split `tokens.css` | code health | 0.25 ✓ |
 | [IMP-10](#imp-10-lint-and-typecheck-scripts) | Lint and typecheck scripts | code health | 0.19 ✓ |
 | [IMP-11](#imp-11-remove-expired-compatibility-code) | Remove expired compatibility code | code health | 0.19 ✓ (`error` field); legacy session: 1.0 |
 | [IMP-12](#imp-12-pull-request-workflow) | Pull request workflow | delivery | 0.19 ✓ (CI on PRs; branch protection: owner, in GitHub settings) |
