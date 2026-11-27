@@ -71,6 +71,19 @@ describe('useReadingPace', () => {
     expect(spy).toHaveBeenCalledWith({ paceSample: { words: 5, ms: 3000 } });
   });
 
+  it('restarts the dwell after a re-split', () => {
+    const { rerender } = renderHook((props) => useReadingPace(props), {
+      initialProps: { cards, currentIndex: 0, isSpeaking: false }
+    });
+    act(() => void vi.advanceTimersByTime(30_000));
+    const resplit = makeCards();
+    rerender({ cards: resplit, currentIndex: 0, isSpeaking: false });
+    act(() => void vi.advanceTimersByTime(2000));
+    rerender({ cards: resplit, currentIndex: 1, isSpeaking: false });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith({ paceSample: { words: 5, ms: 2000 } });
+  });
+
   it('returns the calm pace without learned samples', () => {
     const { result } = render({ currentIndex: 0, isSpeaking: false });
     expect(result.current).toBe(180);

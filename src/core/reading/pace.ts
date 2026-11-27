@@ -11,7 +11,8 @@ const clampWpm = (wpm: number) => Math.min(PACE_MAX_WPM, Math.max(PACE_MIN_WPM, 
 
 /**
  * Folds one card's dwell time into the running reading pace (EMA).
- * Returns undefined when the sample is unusable (no words, too short).
+ * Returns undefined when the sample is unusable (no words, too short); a
+ * non-finite sample returns `prev` unchanged.
  * A very long dwell (a pause) is capped at 3x the time expected at the current pace.
  */
 export function updatePace(

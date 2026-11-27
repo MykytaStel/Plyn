@@ -150,6 +150,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     timeLeft: {
       min: '~{n} min',
       hour: '~{n} h',
+      minPlain: '{n} min',
+      hourPlain: '{n} h',
       toChapterEnd: 'About {time} left in this chapter',
       toTextEnd: 'About {time} left in this text'
     },

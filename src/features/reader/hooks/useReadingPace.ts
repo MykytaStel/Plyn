@@ -50,7 +50,12 @@ export function useReadingPace({
   useEffect(() => {
     const prev = prevRef.current;
     prevRef.current = { index: currentIndex, cards };
-    if (prev.cards !== cards || prev.index === currentIndex) return;
+    if (prev.cards !== cards) {
+      // A re-split: the old dwell belongs to different cards.
+      startRef.current = document.visibilityState === 'visible' ? now() : null;
+      return;
+    }
+    if (prev.index === currentIndex) return;
     const started = startRef.current;
     startRef.current = document.visibilityState === 'visible' ? now() : null;
     if (started === null || speakingRef.current) return;

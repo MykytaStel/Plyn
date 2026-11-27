@@ -160,6 +160,8 @@ Plyn прибирає це перевантаження. Замість неск
     timeLeft: {
       min: '~{n} хв',
       hour: '~{n} год',
+      minPlain: '{n} хв',
+      hourPlain: '{n} год',
       toChapterEnd: 'Приблизно {time} до кінця розділу',
       toTextEnd: 'Приблизно {time} до кінця тексту'
     },

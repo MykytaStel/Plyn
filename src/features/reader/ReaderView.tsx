@@ -196,10 +196,15 @@ export function ReaderView() {
   const timeLeftText = timeLeft
     ? i18n.format(t.timeLeft[timeLeft.unit], { n: timeLeft.value })
     : '';
+  const plainTime = timeLeft
+    ? i18n.format(t.timeLeft[timeLeft.unit === 'min' ? 'minPlain' : 'hourPlain'], {
+        n: timeLeft.value
+      })
+    : '';
   const counterLabel = timeLeft
     ? `${currentIndex + 1} / ${total}. ${i18n.format(
         endIndex < total ? t.timeLeft.toChapterEnd : t.timeLeft.toTextEnd,
-        { time: timeLeftText }
+        { time: plainTime }
       )}`
     : undefined;
 
