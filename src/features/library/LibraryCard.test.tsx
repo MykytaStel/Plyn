@@ -58,9 +58,15 @@ describe('LibraryCard time left', () => {
   });
 
   it('says finished, with no time, for a finished text', () => {
-    show(meta({ completedOnce: true }));
+    show(meta({ completedOnce: true, currentIndex: 9 }));
     expect(screen.getByText(new RegExp(uk.libraryCard.finished))).toBeTruthy();
     expect(screen.queryByText(/~/)).toBeNull();
+  });
+
+  it('shows time again for a finished text that is being re-read', () => {
+    show(meta({ completedOnce: true, totalCards: 9, currentIndex: 2, charOffset: 300 }));
+    expect(screen.queryByText(new RegExp(uk.libraryCard.finished))).toBeNull();
+    expect(screen.getByText(/~\d+ (год|хв)/)).toBeTruthy();
   });
 
   it('shows no time when the reader turned it off', () => {

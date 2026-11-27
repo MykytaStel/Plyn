@@ -36,7 +36,8 @@ export function LibraryCard({
     doc.textLength > 0
       ? Math.round(words * (1 - Math.min(1, Math.max(0, doc.charOffset / doc.textLength))))
       : words;
-  const finished = Boolean(doc.completedOnce);
+  // completedOnce is sticky: a text being read again is not finished.
+  const finished = Boolean(doc.completedOnce) && current >= total - 1;
   const timeLeft =
     showTimeLeft && !finished
       ? toTimeLeft(minutesForWordsAt(remainingWords, wordsPerMinute))
