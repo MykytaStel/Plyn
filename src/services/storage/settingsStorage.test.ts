@@ -95,3 +95,40 @@ describe('parseSettings (backup files)', () => {
     expect(parseSettings([])).toBeNull();
   });
 });
+
+describe('listening settings (0.26)', () => {
+  let store: Map<string, string>;
+  beforeEach(() => {
+    store = installLocalStorage();
+  });
+  afterEach(() => {
+    delete (globalThis as unknown as { window?: unknown }).window;
+  });
+
+  it('defaults the new listening fields', () => {
+    store.set(KEY, JSON.stringify({ theme: 'paper', ttsRate: 1.25 }));
+    const s = loadUserSettings();
+    expect(s.ttsWordHighlight).toBe(false);
+    expect(s.ttsVoices).toEqual({});
+    expect(DEFAULT_SETTINGS.ttsWordHighlight).toBe(false);
+  });
+
+  it('keeps only known languages and string voice ids', () => {
+    const raw = { ttsVoices: { uk: 'a', en: 5, de: 'x' } };
+    expect(parseSettings(raw)!.ttsVoices).toEqual({ uk: 'a' });
+    store.set(KEY, JSON.stringify(raw));
+    expect(loadUserSettings().ttsVoices).toEqual({ uk: 'a' });
+  });
+
+  it('drops a voice id longer than 512 characters and a non-object', () => {
+    expect(parseSettings({ ttsVoices: { en: 'x'.repeat(513) } })!.ttsVoices).toEqual({});
+    expect(parseSettings({ ttsVoices: ['uk'] })!.ttsVoices).toEqual({});
+    expect(parseSettings({ ttsWordHighlight: 'yes' })!.ttsWordHighlight).toBe(false);
+  });
+
+  it('mergeSettings replaces ttsVoices as a whole', () => {
+    const prev = { ...DEFAULT_SETTINGS, ttsVoices: { uk: 'a', en: 'b' } };
+    expect(mergeSettings(prev, { ttsVoices: { uk: 'c' } }).ttsVoices).toEqual({ uk: 'c' });
+    expect(mergeSettings(prev, { ttsWordHighlight: true }).ttsVoices).toEqual({ uk: 'a', en: 'b' });
+  });
+});

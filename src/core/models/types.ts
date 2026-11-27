@@ -1,3 +1,5 @@
+import type { ContentLanguage } from '../language/detectContentLanguage';
+
 export type ThemeMode = 'dark' | 'paper' | 'gray' | 'mint';
 export type CardLengthPreset = 'short' | 'medium' | 'long';
 export type FontFamilyPreset = 'sans' | 'hyperlegible' | 'dyslexic' | 'serif';
@@ -21,6 +23,10 @@ export interface UserSettings {
   keepScreenOn: boolean;
   ttsRate: TtsRatePreset;
   ttsAutoAdvance: boolean;
+  /** Highlight the word being spoken, where the voice reports positions (0.26). */
+  ttsWordHighlight: boolean;
+  /** Chosen voice (voiceURI) per content language; missing = browser default (0.26). */
+  ttsVoices: Partial<Record<ContentLanguage, string>>;
   cardLength: CardLengthPreset;
   language: UiLocale;
 }
