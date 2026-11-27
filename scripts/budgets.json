@@ -1,0 +1,11 @@
+{
+  "$comment": "Gzip size budgets in KB for the production build (0.25). Checked by scripts/check-budgets.mjs in CI. Raise a budget only on purpose, with the reason in the PR.",
+  "entryJs": 150,
+  "entryCss": 18,
+  "lazyChunk": 20,
+  "named": {
+    "pdf": 145,
+    "pdf.worker.min": 400
+  },
+  "fontsTotal": 1600
+}

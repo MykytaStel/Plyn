@@ -16,3 +16,7 @@ coverage
 test-results/
 playwright-report/
 blob-report/
+
+# Lighthouse CI (0.25)
+.lighthouseci/
+lighthouse-report/

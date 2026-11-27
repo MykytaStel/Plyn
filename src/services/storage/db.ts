@@ -6,17 +6,44 @@ import {
 import type {
   AchievementDefinition,
   DocumentChapter,
+  DocumentMeta,
   PlynDocument,
+  StoredText,
   ThoughtNote,
   UserProgressStats
 } from '../../core/models/types';
+import { countWords } from '../../core/reading/readingStats';
+import { textHash } from '../../core/text/textHash';
 import { deriveTitle } from '../../core/parsers/markdown';
 import { currentI18n } from '../../i18n';
 import { toLocalDateKey } from '../../core/reading/weeklyActivity';
 import { protectLibraryQuietly } from './persistence';
 
+/** Splits a full document into the light row and its text (0.25, IMP-06). */
+export function toDocumentMeta(doc: PlynDocument): DocumentMeta {
+  const { text, ...rest } = doc;
+  return {
+    ...rest,
+    textHash: textHash(text),
+    textLength: text.length,
+    wordCount: countWords(text)
+  };
+}
+
+/** Joins a light row with its text into the shape the reader and backups use. */
+export function toPlynDocument(meta: DocumentMeta, text: string): PlynDocument {
+  const rest: Partial<DocumentMeta> = { ...meta };
+  delete rest.textHash;
+  delete rest.textLength;
+  delete rest.wordCount;
+  return { ...(rest as Omit<DocumentMeta, 'textHash' | 'textLength' | 'wordCount'>), text };
+}
+
 class PlynDatabase extends Dexie {
-  documents!: EntityTable<PlynDocument, 'id'>;
+  /** Light rows for the library list: no text (0.25). */
+  documents!: EntityTable<DocumentMeta, 'id'>;
+  /** Document texts, keyed by document id (0.25). */
+  texts!: EntityTable<StoredText, 'id'>;
   stats!: EntityTable<UserProgressStats, 'id'>;
   thoughts!: EntityTable<ThoughtNote, 'id'>;
 
@@ -34,6 +61,28 @@ class PlynDatabase extends Dexie {
       stats: 'id',
       thoughts: 'id, createdAt'
     });
+    // 0.25 (IMP-06): the text moves to its own table; the library list reads
+    // only light rows. Everything runs inside the upgrade transaction, so a
+    // failed upgrade leaves version 3 as it was.
+    this.version(4)
+      .stores({
+        documents: 'id, updatedAt, createdAt, textHash',
+        stats: 'id',
+        thoughts: 'id, createdAt',
+        texts: 'id'
+      })
+      .upgrade(async (tx) => {
+        const documents = tx.table('documents');
+        const texts = tx.table('texts');
+        const rows = (await documents.toArray()) as Array<
+          Partial<PlynDocument> & { id: string }
+        >;
+        for (const row of rows) {
+          const text = typeof row.text === 'string' ? row.text : '';
+          await texts.put({ id: row.id, text });
+          await documents.put(toDocumentMeta({ ...(row as PlynDocument), text }));
+        }
+      });
   }
 }
 
@@ -74,9 +123,42 @@ export function sanitizeChapters(
   return valid.length >= 2 ? valid : undefined;
 }
 
-/** A library document whose text is exactly `text`, if any. */
+/** The full document (with its text), or undefined. */
+export async function loadDocument(id: string): Promise<PlynDocument | undefined> {
+  return db.transaction('r', db.documents, db.texts, async () => {
+    const [meta, stored] = await Promise.all([db.documents.get(id), db.texts.get(id)]);
+    return meta ? toPlynDocument(meta, stored?.text ?? '') : undefined;
+  });
+}
+
+/** Every document with its text, oldest first (backups). */
+export async function loadAllDocuments(): Promise<PlynDocument[]> {
+  return db.transaction('r', db.documents, db.texts, async () => {
+    const metas = await db.documents.toArray();
+    const texts = await db.texts.bulkGet(metas.map((m) => m.id));
+    return metas.map((meta, i) => toPlynDocument(meta, texts[i]?.text ?? ''));
+  });
+}
+
+/** Writes a whole document: its light row and its text, together. */
+export async function putDocument(doc: PlynDocument): Promise<void> {
+  await db.transaction('rw', db.documents, db.texts, async () => {
+    await db.texts.put({ id: doc.id, text: doc.text });
+    await db.documents.put(toDocumentMeta(doc));
+  });
+}
+
+/**
+ * A library document whose text is exactly `text`, if any. Candidates come
+ * from the hash index; the text comparison makes a collision harmless.
+ */
 export async function findDocumentByText(text: string): Promise<PlynDocument | undefined> {
-  return db.documents.filter((doc) => doc.text === text).first();
+  const candidates = await db.documents.where('textHash').equals(textHash(text)).toArray();
+  for (const meta of candidates) {
+    const stored = await db.texts.get(meta.id);
+    if (stored?.text === text) return toPlynDocument(meta, stored.text);
+  }
+  return undefined;
 }
 
 export async function createDocument(input: {
@@ -110,19 +192,37 @@ export async function createDocument(input: {
   const chapters = sanitizeChapters(input.chapters, input.text.length);
   if (chapters) doc.chapters = chapters;
 
-  await db.documents.put(doc);
+  await putDocument(doc);
   // The library now has something worth keeping.
   void protectLibraryQuietly();
   return doc;
 }
 
+/**
+ * Saves progress, bookmarks and the like. The text never changes after
+ * import, so only the light row is written (no re-hashing a whole book).
+ */
 export async function updateDocument(doc: PlynDocument): Promise<PlynDocument> {
   const updated: PlynDocument = {
     ...doc,
     bookmarkOffsets: [...new Set(doc.bookmarkOffsets)].sort((a, b) => a - b),
     updatedAt: Date.now()
   };
-  await db.documents.put(updated);
+  await db.transaction('rw', db.documents, db.texts, async () => {
+    const existing = await db.documents.get(doc.id);
+    if (!existing) {
+      await putDocument(updated);
+      return;
+    }
+    const rest: Partial<PlynDocument> = { ...updated };
+    delete rest.text;
+    await db.documents.put({
+      ...(rest as Omit<PlynDocument, 'text'>),
+      textHash: existing.textHash,
+      textLength: existing.textLength,
+      wordCount: existing.wordCount
+    });
+  });
   return updated;
 }
 
@@ -132,13 +232,19 @@ export async function renameDocument(id: string, newTitle: string): Promise<void
   await db.documents.update(id, { title: trimmed, updatedAt: Date.now() });
 }
 
-export async function removeDocument(id: string): Promise<void> {
-  await db.documents.delete(id);
+/** Deletes a document and its text; returns it whole, for Undo. */
+export async function removeDocument(id: string): Promise<PlynDocument | undefined> {
+  return db.transaction('rw', db.documents, db.texts, async () => {
+    const doc = await loadDocument(id);
+    await db.documents.delete(id);
+    await db.texts.delete(id);
+    return doc;
+  });
 }
 
 /** Puts a just-deleted document back exactly as it was (Undo). */
 export async function restoreDocument(doc: PlynDocument): Promise<void> {
-  await db.documents.put(doc);
+  await putDocument(doc);
 }
 
 /**
@@ -237,8 +343,7 @@ export async function migrateLegacyLocalSession(): Promise<void> {
       return;
     }
 
-    const existing = await db.documents.toArray();
-    if (!existing.some((d) => d.text === legacy.text)) {
+    if (!(await findDocumentByText(legacy.text))) {
       await createDocument({
         text: legacy.text,
         totalCards: legacy.totalCards ?? 1,

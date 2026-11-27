@@ -90,7 +90,10 @@ export async function nextCard(page: Page, key = 'ArrowDown'): Promise<void> {
   await expectCard(page, index + 1);
 }
 
-/** Reads documents straight from IndexedDB, the source of truth for progress. */
+/**
+ * Reads documents straight from IndexedDB, the source of truth for progress.
+ * Since 0.25 the text lives in its own `texts` table; it is joined back here.
+ */
 export async function storedDocs(page: Page): Promise<StoredDoc[]> {
   return page.evaluate(
     () =>
@@ -98,13 +101,21 @@ export async function storedDocs(page: Page): Promise<StoredDoc[]> {
         const open = indexedDB.open('plyn_library_v2');
         open.onerror = () => reject(open.error);
         open.onsuccess = () => {
-          const tx = open.result.transaction('documents', 'readonly');
-          const all = tx.objectStore('documents').getAll();
-          all.onsuccess = () => {
-            open.result.close();
-            resolve(all.result as StoredDoc[]);
+          const db = open.result;
+          const hasTexts = db.objectStoreNames.contains('texts');
+          const tx = db.transaction(hasTexts ? ['documents', 'texts'] : ['documents'], 'readonly');
+          const docs = tx.objectStore('documents').getAll();
+          const texts = hasTexts ? tx.objectStore('texts').getAll() : null;
+          tx.oncomplete = () => {
+            db.close();
+            const byId = new Map(
+              ((texts?.result ?? []) as Array<{ id: string; text: string }>).map((t) => [t.id, t.text])
+            );
+            resolve(
+              (docs.result as StoredDoc[]).map((d) => ({ ...d, text: byId.get(d.id) ?? d.text }))
+            );
           };
-          all.onerror = () => reject(all.error);
+          tx.onerror = () => reject(tx.error);
         };
       })
   );

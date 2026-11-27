@@ -1,0 +1,12 @@
+/* Фокус-речення */
+.sentence-segment {
+  transition: opacity 0.2s ease;
+}
+
+.sentence-segment.is-dimmed {
+  opacity: 0.34;
+}
+
+.sentence-segment.is-focused {
+  opacity: 1;
+}

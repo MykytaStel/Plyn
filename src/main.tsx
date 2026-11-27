@@ -12,7 +12,7 @@ import '@fontsource/andika/700.css';
 import { App } from './App';
 import { AppErrorBoundary } from './features/errors/AppErrorBoundary';
 import './styles/fonts.css';
-import './styles/tokens.css';
+import './styles/index.css';
 import { registerAppServiceWorker } from './services/pwa/registerApp';
 
 registerAppServiceWorker();

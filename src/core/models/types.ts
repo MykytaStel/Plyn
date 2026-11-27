@@ -68,6 +68,25 @@ export interface PlynDocument {
   updatedAt: number;
 }
 
+/**
+ * A document as the library stores it since 0.25 (IMP-06): everything except
+ * the text, which lives in its own table, so the library list stays light.
+ */
+export interface DocumentMeta extends Omit<PlynDocument, 'text'> {
+  /** `textHash(text)`, to find a duplicate without reading every text. */
+  textHash: string;
+  /** Length of the text in characters. */
+  textLength: number;
+  /** Words in the text, for the reading-time estimate in the library. */
+  wordCount: number;
+}
+
+/** The text of one document, keyed by the document id (0.25). */
+export interface StoredText {
+  id: string;
+  text: string;
+}
+
 export interface ThoughtNote {
   id: string;
   text: string;

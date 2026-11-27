@@ -7,6 +7,7 @@ import {
   createDocument,
   db,
   getProgressStats,
+  putDocument,
   recordProgressDelta,
   updateDocument
 } from './db';
@@ -75,12 +76,12 @@ describe('backup export → import', () => {
     const older: PlynDocument = { ...doc, charOffset: 1, updatedAt: doc.updatedAt - 1000 };
     const newer: PlynDocument = { ...doc, charOffset: 9, updatedAt: doc.updatedAt + 1000 };
 
-    await db.documents.put(newer);
+    await putDocument(newer);
     const skipped = await importLibraryBackup({ schemaVersion: 1, documents: [older], stats: null });
     expect(skipped.importedDocs).toBe(0);
     expect((await db.documents.get(doc.id))?.charOffset).toBe(9);
 
-    await db.documents.put(older);
+    await putDocument(older);
     const taken = await importLibraryBackup({ schemaVersion: 1, documents: [newer], stats: null });
     expect(taken.importedDocs).toBe(1);
     expect((await db.documents.get(doc.id))?.charOffset).toBe(9);

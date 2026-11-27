@@ -1,0 +1,26 @@
+/* Нотатки до закладок та дії в заголовку шторки */
+.sheet-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bookmark-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bookmark-note-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--surface-elevated);
+  font-size: 13px;
+  outline: none;
+}
+
+.bookmark-note-input:focus {
+  border-color: var(--accent);
+}

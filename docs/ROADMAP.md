@@ -1,6 +1,6 @@
 # Plyn roadmap: 0.19 → 0.30
 
-Status: draft · 2026-11-27 · current release: **0.24.0**
+Status: draft · 2026-11-27 · current release: **0.25.0**
 
 This is a direction, not a promise. Each release gets its own short design in `docs/superpowers/specs/` before work starts, and the owner can reorder or cut anything.
 
@@ -30,7 +30,7 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 | [0.22](#0220--feels-like-an-app) ✓ | Feels like an app | yes | visual regression | M | 0.20 |
 | [0.23](#0230--books-import-well) ✓ | Books import well | yes | parser golden files | M | EXP-04 |
 | [0.24](#0240--pdfs-and-web-articles-import-well) ✓ | PDFs & web articles import well | yes | Worker & SSRF tests | L | EXP-01 |
-| [0.25](#0250--light-and-fast) | Light and fast | faster | performance budgets | M | 0.22 (visual baseline) |
+| [0.25](#0250--light-and-fast) ✓ | Light and fast | faster | performance budgets | M | 0.22 (visual baseline) |
 | [0.26](#0260--listening-upgraded) | Listening, upgraded | yes | TTS contract tests | M | EXP-02 |
 | [0.27](#0270--reading-comfort-ii) | Reading comfort II | yes | – | M | EXP-03 |
 | [0.28](#0280--accessibility-audit) | Accessibility audit | yes | manual assistive-tech runs | M | EXP-08 |
@@ -162,13 +162,15 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 
 **Work:**
 
-1. Document metadata and text live in separate tables, so the library list never loads full texts (Dexie `version(4)`, with migration) ([IMP-06](IMPROVEMENTS.md#imp-06-split-metadata-from-text)).
-2. Duplicate detection uses a content hash instead of scanning every text.
-3. Splitting very long texts runs in a Web Worker.
-4. Budgets in CI: JS and CSS size, Lighthouse performance / PWA / accessibility scores.
-5. Split `tokens.css` into tokens and per-feature files, guarded by the visual baseline from 0.22 ([IMP-09](IMPROVEMENTS.md#imp-09-split-tokenscss)).
+0. ✓ The reader renders only the cards around the current one, so a 10,000-card book scrolls, re-splits and changes column width without lag.
+1. ✓ Document metadata and text live in separate tables, so the library list never loads full texts (Dexie `version(4)`, with migration) ([IMP-06](IMPROVEMENTS.md#imp-06-split-metadata-from-text)).
+2. ✓ Duplicate detection uses a content hash instead of scanning every text.
+3. ✓ Splitting very long texts runs in a Web Worker.
+4. ✓ Budgets in CI: JS and CSS size, Lighthouse performance / accessibility / best-practices scores. Lighthouse 12 has no PWA category any more; installability and offline stay covered by the PWA journeys (`cuj-5-offline`, `pwa-icons`, `sw-update`).
+5. ✓ Split `tokens.css` into tokens and per-feature files ([IMP-09](IMPROVEMENTS.md#imp-09-split-tokenscss)). One change instead of one PR per feature: the files are imported in the old order, and the built CSS is byte-identical.
+6. ✓ PDFs with an outline get chapters, and a new book with contents opens at its first chapter (the title page stays one swipe back). No guessing which text is "front matter".
 
-**Under the hood:** upgrade `dexie-react-hooks` with the migration and TypeScript after it ([IMP-03](IMPROVEMENTS.md#imp-03-dependency-hygiene)).
+**Under the hood:** ✓ `dexie-react-hooks` 4.4 with the migration; ✓ TypeScript 6.0. TypeScript 7 waits until `typescript-eslint` supports it (its typed rules need the TypeScript API) ([IMP-03](IMPROVEMENTS.md#imp-03-dependency-hygiene)).
 
 **Tests:** migration tests v1 → v4 and v3 → v4 with fake-indexeddb; benchmark for a 1 M-character text; bundle-size and Lighthouse gates.
 

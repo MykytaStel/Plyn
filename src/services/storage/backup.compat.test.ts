@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlynDocument, ThoughtNote, UserProgressStats, UserSettings } from '../../core/models/types';
 import { importLibraryBackup } from './backup';
-import { db, getProgressStats } from './db';
+import { db, getProgressStats, loadDocument } from './db';
 import { DEFAULT_SETTINGS } from './settingsStorage';
 
 /**
@@ -52,7 +52,7 @@ describe('backup fixtures (spec/backups)', () => {
 
     expect(result.importedDocs).toBe(fixture.documents.length);
     for (const doc of fixture.documents) {
-      const restored = await db.documents.get(doc.id);
+      const restored = await loadDocument(doc.id);
       expect(restored).toEqual(doc);
       // The saved place and bookmarks still point into the same text.
       expect(restored!.charOffset).toBeLessThanOrEqual(restored!.text.length);
