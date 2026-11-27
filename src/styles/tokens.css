@@ -4,6 +4,7 @@
 
 :root,
 [data-theme="dark"] {
+  --spoken-bg: #3B4F5C;
   --bg: #16181D;
   --surface: #1F2229;
   --surface-elevated: #272B34;
@@ -19,6 +20,7 @@
 }
 
 [data-theme="paper"] {
+  --spoken-bg: #DDCB9C;
   --bg: #F4EFE6;
   --surface: #FAF7F1;
   --surface-elevated: #EFE9DD;
@@ -34,6 +36,7 @@
 }
 
 [data-theme="gray"] {
+  --spoken-bg: #55665F;
   --bg: #2C2F33;
   --surface: #35393F;
   --surface-elevated: #3E434A;
@@ -50,6 +53,7 @@
 
 /* Пастельно-м'ятна тема — знижує візуальний стрес при дислексії (Irlen-friendly) */
 [data-theme="mint"] {
+  --spoken-bg: #B3D4C1;
   --bg: #E6EFEA;
   --surface: #F1F6F3;
   --surface-elevated: #DCE8E1;
