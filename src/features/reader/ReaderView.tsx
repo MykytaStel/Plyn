@@ -511,7 +511,7 @@ export function ReaderView() {
 
       {toast && (
         <div
-          className={`reader-toast ${toast.isAchievement ? 'is-achievement' : ''}`}
+          className={`reader-toast ${toast.isAchievement ? 'is-achievement' : ''} ${isDoneVisible ? 'is-top' : ''}`}
           role="status"
           aria-live="polite"
         >
