@@ -28,6 +28,10 @@ export interface UserSettings {
   /** Chosen voice (voiceURI) per content language; missing = browser default (0.26). */
   ttsVoices: Partial<Record<ContentLanguage, string>>;
   cardLength: CardLengthPreset;
+  /** Soft syllable breaks inside long words (0.27). */
+  syllableHints: boolean;
+  /** Show the estimated time left in the reader (0.27). */
+  showTimeLeft: boolean;
   language: UiLocale;
 }
 
@@ -100,6 +104,12 @@ export interface ThoughtNote {
   createdAt: number;
 }
 
+/** Learned reading speed: words per minute averaged over `samples` cards (0.27). */
+export interface ReadingPace {
+  wordsPerMinute: number;
+  samples: number;
+}
+
 export interface UserProgressStats {
   id: 'main';
   totalCardsRead: number;
@@ -111,6 +121,7 @@ export interface UserProgressStats {
   zenModeUsed: number;
   /** Кількість прочитаних карток по днях (ключ: YYYY-MM-DD) для спокійного 7-денного огляду */
   dailyCardsRead?: Record<string, number>;
+  readingPace?: ReadingPace;
   unlockedIds: string[];
   unlockedAt: Record<string, number>;
   updatedAt: number;
