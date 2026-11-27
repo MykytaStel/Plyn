@@ -57,7 +57,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     expandEditor: 'Add text, .pdf, .epub or a link',
     urlLoad: 'Load',
     titleLabel: 'Title (optional)',
-    titlePlaceholder: 'Title (optional)',
+    titlePlaceholder: 'For example: Chapter 3',
     textLabel: 'Text to read',
     textPlaceholder: 'Paste an article, your notes or a book chapter...',
     fromClipboard: 'Paste',

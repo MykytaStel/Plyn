@@ -67,7 +67,7 @@ Plyn прибирає це перевантаження. Замість неск
     expandEditor: 'Додати текст, .pdf, .epub або URL',
     urlLoad: 'Завантажити',
     titleLabel: 'Назва тексту (необов’язково)',
-    titlePlaceholder: 'Назва (необов’язково)',
+    titlePlaceholder: 'Наприклад: Розділ 3',
     textLabel: 'Текст для читання',
     textPlaceholder: 'Встав сюди статтю, конспект або розділ книги...',
     fromClipboard: 'З буфера',
