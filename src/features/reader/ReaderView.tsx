@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type CSSProperties } from 'react';
 import {
   Bookmark,
   ChevronDown,
@@ -30,6 +30,7 @@ import type { ReaderToggle } from './shortcuts';
 import { CardSlide } from './CardSlide';
 import { DoneSlide } from './DoneSlide';
 import { useCardNavigation } from './hooks/useCardNavigation';
+import { feedWindow as getFeedWindow } from '../../core/reading/feedWindow';
 import { useFocusTimer } from './hooks/useFocusTimer';
 import { useReaderKeyboard } from './hooks/useReaderKeyboard';
 import { useReaderNotices } from './hooks/useReaderNotices';
@@ -39,7 +40,6 @@ import { useKeepScreenOn } from './hooks/useKeepScreenOn';
 import { useBackLayer } from '../shared/useBackLayer';
 
 type ActiveSheet = 'none' | 'settings' | 'bookmarks' | 'thoughts' | 'tools';
-const RENDER_WINDOW_RADIUS = 5;
 
 function getPreviousTailSnippet(prevText?: string): string | undefined {
   if (!prevText) return undefined;
@@ -164,6 +164,8 @@ export function ReaderView() {
   if (!activeDoc) return null;
 
   const total = cards.length;
+  // Only the cards near the current one are in the DOM (0.25).
+  const feedWindow = getFeedWindow(currentIndex, total);
   const currentCard = cards[currentIndex];
   const remainingMins = isDoneVisible
     ? 0
@@ -186,8 +188,9 @@ export function ReaderView() {
 
   const handleCardLengthChange = (preset: CardLengthPreset) => {
     updateSettings({ cardLength: preset });
-    const nextIdx = recalculateCards(preset);
-    requestAnimationFrame(() => scrollToCard(nextIdx, 'instant'));
+    void recalculateCards(preset).then((nextIdx) =>
+      requestAnimationFrame(() => scrollToCard(nextIdx, 'instant'))
+    );
   };
 
   const handleTimerSelect = (minutes: number) => {
@@ -409,23 +412,38 @@ export function ReaderView() {
           }
         }}
       >
-        {cards.map((card, idx) => (
-          <CardSlide
-            key={`${card.index}-${card.startOffset}`}
-            card={card}
-            previousSnippet={
-              idx > 0 ? getPreviousTailSnippet(cards[idx - 1]?.text) : undefined
-            }
-            total={total}
-            anchorMode={anchorMode}
-            sentenceFocus={sentenceFocus}
-            isActiveCard={card.index === currentIndex}
-            activeSentenceIndex={activeSentenceIndex}
-            isWithinWindow={
-              Math.abs(card.index - currentIndex) <= RENDER_WINDOW_RADIUS
-            }
+        {feedWindow.start > 0 && (
+          <div
+            className="feed-spacer"
+            aria-hidden="true"
+            style={{ '--slides': feedWindow.start } as CSSProperties}
           />
-        ))}
+        )}
+        {cards.slice(feedWindow.start, feedWindow.end + 1).map((card) => {
+          const idx = card.index;
+          const isActiveCard = idx === currentIndex;
+          return (
+            <CardSlide
+              key={idx}
+              card={card}
+              previousSnippet={
+                idx > 0 ? getPreviousTailSnippet(cards[idx - 1]?.text) : undefined
+              }
+              total={total}
+              anchorMode={anchorMode}
+              sentenceFocus={sentenceFocus}
+              isActiveCard={isActiveCard}
+              activeSentenceIndex={isActiveCard ? activeSentenceIndex : 0}
+            />
+          );
+        })}
+        {feedWindow.end < total - 1 && (
+          <div
+            className="feed-spacer"
+            aria-hidden="true"
+            style={{ '--slides': total - 1 - feedWindow.end } as CSSProperties}
+          />
+        )}
         <DoneSlide
           total={total}
           onRestart={() => scrollToCard(0)}

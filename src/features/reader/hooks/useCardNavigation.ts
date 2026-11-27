@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react
 import type { ReadingCard } from '../../../core/models/types';
 import { splitCardIntoSentences } from '../../../core/splitter/sentences';
 import { useReaderStore } from '../../../store/useReaderStore';
+import { feedWindow, isOutsideFeedWindow } from '../../../core/reading/feedWindow';
 
 interface Options {
   feedRef: RefObject<HTMLDivElement | null>;
@@ -36,6 +37,7 @@ export function useCardNavigation({
   const setCurrentIndex = useReaderStore((s) => s.setCurrentIndex);
   const markDocumentCompleted = useReaderStore((s) => s.markDocumentCompleted);
 
+  const { start: windowStart, end: windowEnd } = feedWindow(currentIndex, cards.length);
   const [activeSentenceIndex, setActiveSentenceIndex] = useState(0);
   const [isDoneVisible, setIsDoneVisible] = useState(false);
 
@@ -49,11 +51,25 @@ export function useCardNavigation({
     (index: number, behavior: ScrollBehavior = 'smooth') => {
       const feed = feedRef.current;
       if (!feed) return;
-      const slides = feed.querySelectorAll('.card-slide');
-      const clamped = Math.min(Math.max(0, index), slides.length - 1);
-      slides[clamped]?.scrollIntoView({ behavior, block: 'start' });
+      const state = useReaderStore.getState();
+      const total = state.cards.length;
+      // `total` is the done slide after the last card.
+      const target = Math.min(Math.max(0, index), total);
+      const scroll = (how: ScrollBehavior) => {
+        const height = feed.clientHeight || window.innerHeight;
+        feed.scrollTo({ top: target * height, behavior: how });
+      };
+      // A card outside the rendered window is only a spacer yet: move the
+      // window there first, then jump once its slide exists, so scroll snap
+      // has the slide to land on.
+      if (target < total && isOutsideFeedWindow(target, state.currentIndex)) {
+        state.setCurrentIndex(target, anchorMode);
+        requestAnimationFrame(() => scroll('instant'));
+        return;
+      }
+      scroll(behavior);
     },
-    [feedRef]
+    [feedRef, anchorMode]
   );
 
   const getVisibleSlideIndex = useCallback(() => {
@@ -109,7 +125,9 @@ export function useCardNavigation({
             void markDocumentCompleted();
           } else {
             setIsDoneVisible(false);
-            setCurrentIndex(idx, anchorMode);
+            if (idx !== useReaderStore.getState().currentIndex) {
+              setCurrentIndex(idx, anchorMode);
+            }
           }
         }
       },
@@ -118,7 +136,8 @@ export function useCardNavigation({
 
     feed.querySelectorAll('.card-slide').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [feedRef, cards, anchorMode, setCurrentIndex, markDocumentCompleted, onReachDone]);
+    // The slides in the DOM change with the window, so observe them again.
+  }, [feedRef, cards, windowStart, windowEnd, anchorMode, setCurrentIndex, markDocumentCompleted, onReachDone]);
 
   return { isDoneVisible, activeSentenceIndex, scrollToCard, advanceStep, retreatStep };
 }
