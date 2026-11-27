@@ -25,3 +25,25 @@ describe('ThoughtsSheet export', () => {
     expect(await screen.findByRole('button', { name: uk.thoughts.export })).toBeTruthy();
   });
 });
+
+describe('ThoughtsSheet session section (0.27)', () => {
+  it('puts this reading above older thoughts when sessionSince is set', async () => {
+    await addThoughtNote('older thought');
+    await new Promise((r) => setTimeout(r, 5));
+    const since = Date.now();
+    await addThoughtNote('fresh thought');
+    render(<ThoughtsSheet sessionSince={since} onClose={() => {}} />);
+    const heading = await screen.findByRole('heading', { name: uk.thoughts.thisSession });
+    const fresh = screen.getByText('fresh thought');
+    const older = screen.getByText('older thought');
+    expect(heading.compareDocumentPosition(fresh) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(fresh.compareDocumentPosition(older) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('has no such heading without the prop', async () => {
+    await addThoughtNote('a thought');
+    render(<ThoughtsSheet onClose={() => {}} />);
+    await screen.findByText('a thought');
+    expect(screen.queryByRole('heading', { name: uk.thoughts.thisSession })).toBeNull();
+  });
+});

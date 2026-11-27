@@ -28,6 +28,8 @@ import {
 import { useReaderStore } from '../../store/useReaderStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { SettingsSheet } from '../settings/SettingsSheet';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../../services/storage/db';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { BookmarksSheet } from './BookmarksSheet';
 import { ReaderToolsSheet } from './ReaderToolsSheet';
@@ -70,6 +72,7 @@ export function ReaderView() {
   const microGoalCount = useReaderStore((s) => s.microGoalCount);
   const microGoalCompleted = useReaderStore((s) => s.microGoalCompleted);
   const closeReader = useReaderStore((s) => s.closeReader);
+  const sessionStartedAt = useReaderStore((s) => s.sessionStartedAt);
   const recalculateCards = useReaderStore((s) => s.recalculateCards);
   const toggleBookmarkAtCurrent = useReaderStore((s) => s.toggleBookmarkAtCurrent);
   const setBookmarkNote = useReaderStore((s) => s.setBookmarkNote);
@@ -81,6 +84,11 @@ export function ReaderView() {
   const showTimeLeft = useSettingsStore((s) => s.showTimeLeft);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
+  const sessionThoughts =
+    useLiveQuery(
+      () => db.thoughts.where('createdAt').aboveOrEqual(sessionStartedAt).count(),
+      [sessionStartedAt]
+    ) ?? 0;
   const [sheet, setSheet] = useState<ActiveSheet>('none');
   const [showScrubber, setShowScrubber] = useState(false);
   const [zenMode, setZenMode] = useState(false);
@@ -111,8 +119,8 @@ export function ReaderView() {
 
   const leaveReader = useCallback(() => {
     stopBrownNoise();
-    void closeReader();
-  }, [closeReader]);
+    void closeReader({ early: !isDoneVisible });
+  }, [closeReader, isDoneVisible]);
 
   // Back closes an open sheet first, then returns to the library (0.22).
   useBackLayer(true, leaveReader);
@@ -483,6 +491,8 @@ export function ReaderView() {
         <DoneSlide
           total={total}
           onRestart={() => scrollToCard(0)}
+          sessionThoughts={sessionThoughts}
+          onViewThoughts={() => openSheet('thoughts')}
           onBackToLibrary={leaveReader}
         />
       </div>
@@ -591,6 +601,7 @@ export function ReaderView() {
       {sheet === 'thoughts' && (
         <ThoughtsSheet
           currentDocTitle={activeDoc.title}
+          sessionSince={sessionThoughts > 0 ? sessionStartedAt : undefined}
           onClose={() => setSheet('none')}
         />
       )}

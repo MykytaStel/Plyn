@@ -59,6 +59,11 @@ export function LibraryView() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showThoughts, setShowThoughts] = useState(false);
+  const [sessionSince, setSessionSince] = useState<number | undefined>(undefined);
+  /** Thoughts from the last reading, offered once as a quiet toast (0.27). */
+  const [sessionToast, setSessionToast] = useState<{ count: number; since: number } | null>(
+    () => useReaderStore.getState().lastSessionThoughts
+  );
   const [showSettings, setShowSettings] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone());
   const [searchQuery, setSearchQuery] = useState('');
@@ -318,6 +323,12 @@ export function LibraryView() {
     }
   };
 
+  useEffect(() => {
+    if (useReaderStore.getState().lastSessionThoughts) {
+      useReaderStore.getState().consumeLastSessionThoughts();
+    }
+  }, []);
+
   const handleDelete = async (id: string) => {
     const doc = await removeDocument(id);
     if (!doc) return;
@@ -392,7 +403,10 @@ export function LibraryView() {
               type="button"
               aria-label={`${t.thoughtsLabel}, ${thoughtsCount}`}
               title={t.thoughtsHint}
-              onClick={() => setShowThoughts(true)}
+              onClick={() => {
+                setSessionSince(undefined);
+                setShowThoughts(true);
+              }}
             >
               <Lightbulb size={15} />
               <span>{thoughtsCount}</span>
@@ -703,6 +717,19 @@ export function LibraryView() {
         />
       )}
 
+      {sessionToast && !deletedDoc && (
+        <UndoToast
+          message={i18n.plural(t.sessionThoughts, sessionToast.count)}
+          undoLabel={t.sessionThoughtsView}
+          onUndo={() => {
+            setSessionSince(sessionToast.since);
+            setSessionToast(null);
+            setShowThoughts(true);
+          }}
+          onExpire={() => setSessionToast(null)}
+        />
+      )}
+
       {showAchievements && (
         <>
           <div
@@ -724,7 +751,13 @@ export function LibraryView() {
             onClick={() => setShowThoughts(false)}
             aria-hidden="true"
           />
-          <ThoughtsSheet onClose={() => setShowThoughts(false)} />
+          <ThoughtsSheet
+            sessionSince={sessionSince}
+            onClose={() => {
+              setShowThoughts(false);
+              setSessionSince(undefined);
+            }}
+          />
         </>
       )}
 

@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../services/storage/db';
+import { addThoughtNote, db } from '../services/storage/db';
 import { useReaderStore } from './useReaderStore';
 
 beforeEach(async () => {
@@ -114,5 +114,49 @@ describe('a swipe followed quickly by a bookmark or note', () => {
     const stored = await db.documents.get(useReaderStore.getState().activeDoc!.id);
     expect(stored?.bookmarkNotes).toEqual({ '0': 'note' });
     expect(stored?.charOffset).toBe(useReaderStore.getState().cards[2].startOffset);
+  });
+});
+
+describe('closeReader session thoughts (0.27)', () => {
+  const open = () =>
+    useReaderStore.getState().startNewDocument('', 'One. Two.\n\nThree.', 'short');
+
+  beforeEach(async () => {
+    vi.stubGlobal('window', { clearTimeout, setTimeout });
+    return () => vi.unstubAllGlobals();
+    await db.thoughts.clear();
+    useReaderStore.setState({ lastSessionThoughts: null });
+  });
+
+  it('keeps the count of thoughts parked during an early exit', async () => {
+    await open();
+    await addThoughtNote('buy coffee');
+    await useReaderStore.getState().closeReader({ early: true });
+    expect(useReaderStore.getState().lastSessionThoughts?.count).toBe(1);
+  });
+
+  it('keeps nothing without early, or with no thoughts', async () => {
+    await open();
+    await addThoughtNote('buy coffee');
+    await useReaderStore.getState().closeReader();
+    expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
+
+    await open();
+    await useReaderStore.getState().closeReader({ early: true });
+    expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
+  });
+
+  it('ignores thoughts parked before the session began', async () => {
+    await addThoughtNote('old');
+    await new Promise((r) => setTimeout(r, 5));
+    await open();
+    await useReaderStore.getState().closeReader({ early: true });
+    expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
+  });
+
+  it('consumeLastSessionThoughts clears it', async () => {
+    useReaderStore.setState({ lastSessionThoughts: { count: 2, since: 1 } });
+    useReaderStore.getState().consumeLastSessionThoughts();
+    expect(useReaderStore.getState().lastSessionThoughts).toBeNull();
   });
 });

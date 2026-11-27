@@ -11,6 +11,7 @@ import { findCardIndexByOffset } from '../core/splitter/splitter';
 import { splitCards } from '../services/splitter/splitCards';
 import {
   createDocument,
+  db,
   findDocumentByText,
   loadDocument,
   recordProgressDelta,
@@ -33,6 +34,10 @@ interface ReaderState {
   microGoalCount: number;
   microGoalCompleted: boolean;
   recentUnlocks: AchievementDefinition[];
+  /** When this reading session began (ms); thoughts parked since then belong to it. */
+  sessionStartedAt: number;
+  /** Thoughts from a session left before the end, shown once in the library. */
+  lastSessionThoughts: { count: number; since: number } | null;
 
   /** Opens a library entry; a light row gets its text loaded first (0.25). */
   openDocument: (
@@ -46,7 +51,8 @@ interface ReaderState {
     lengthPreset: CardLengthPreset,
     book?: { author?: string; chapters?: DocumentChapter[] }
   ) => Promise<void>;
-  closeReader: () => Promise<void>;
+  closeReader: (opts?: { early?: boolean }) => Promise<void>;
+  consumeLastSessionThoughts: () => void;
   setCurrentIndex: (index: number, anchorMode: boolean) => void;
   markDocumentCompleted: () => Promise<void>;
   /** Re-splits the open text; resolves to the card that holds the place. */
@@ -98,6 +104,8 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   microGoalCount: 0,
   microGoalCompleted: false,
   recentUnlocks: [],
+  sessionStartedAt: 0,
+  lastSessionThoughts: null,
 
   openDocument: async (entry, lengthPreset, microGoalTarget = null) => {
     const doc = 'text' in entry ? entry : await loadDocument(entry.id);
@@ -117,6 +125,7 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
 
     set({
       activeDoc: syncedDoc,
+      sessionStartedAt: Date.now(),
       cards,
       currentIndex: startIdx,
       microGoalTarget,
@@ -167,6 +176,7 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
 
     set({
       activeDoc: doc,
+      sessionStartedAt: Date.now(),
       cards,
       currentIndex: startIdx,
       microGoalTarget: null,
@@ -175,15 +185,24 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     });
   },
 
-  closeReader: async () => {
+  closeReader: async (opts) => {
     stopSpeaking();
-    const { activeDoc } = get();
+    const { activeDoc, sessionStartedAt } = get();
     window.clearTimeout(persistTimeout);
     seenInSession.clear();
     if (activeDoc) {
       await updateDocument(activeDoc);
     }
+    let lastSessionThoughts: ReaderState['lastSessionThoughts'] = null;
+    if (opts?.early && activeDoc) {
+      const count = await db.thoughts
+        .where('createdAt')
+        .aboveOrEqual(sessionStartedAt)
+        .count();
+      if (count > 0) lastSessionThoughts = { count, since: sessionStartedAt };
+    }
     set({
+      lastSessionThoughts,
       activeDoc: null,
       cards: [],
       currentIndex: 0,
@@ -194,6 +213,8 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
       microGoalCompleted: false
     });
   },
+
+  consumeLastSessionThoughts: () => set({ lastSessionThoughts: null }),
 
   setCurrentIndex: (index, anchorMode) => {
     const { activeDoc, cards, microGoalTarget, microGoalCount, microGoalCompleted } =

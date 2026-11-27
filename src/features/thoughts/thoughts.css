@@ -49,3 +49,10 @@
   gap: 6px;
   margin-top: 14px;
 }
+
+.thoughts-group-title {
+  margin: 4px 0 2px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted, inherit);
+}

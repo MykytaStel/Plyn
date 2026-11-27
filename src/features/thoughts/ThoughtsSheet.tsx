@@ -11,15 +11,19 @@ import {
   formatThoughtsAsMarkdown,
   thoughtsFileName
 } from '../../core/export/thoughtsMarkdown';
+import type { ThoughtNote } from '../../core/models/types';
 import { useDialogFocus } from '../shared/useDialogFocus';
 
 interface ThoughtsSheetProps {
   currentDocTitle?: string;
+  /** Thoughts parked since this time (ms) are listed first, under "this reading". */
+  sessionSince?: number;
   onClose: () => void;
 }
 
 export function ThoughtsSheet({
   currentDocTitle,
+  sessionSince,
   onClose
 }: ThoughtsSheetProps) {
   const dialogRef = useDialogFocus<HTMLElement>();
@@ -29,6 +33,36 @@ export function ThoughtsSheet({
   const thoughts = useLiveQuery(
     () => db.thoughts.orderBy('createdAt').reverse().toArray(),
     []
+  );
+
+  const sessionItems =
+    sessionSince === undefined || !thoughts
+      ? []
+      : thoughts.filter((x) => x.createdAt >= sessionSince);
+  const otherItems =
+    sessionSince === undefined || !thoughts
+      ? (thoughts ?? [])
+      : thoughts.filter((x) => x.createdAt < sessionSince);
+
+  const renderItem = (item: ThoughtNote) => (
+    <div key={item.id} className="thought-item">
+      <div className="thought-item-body">
+        <p className="thought-item-text">{item.text}</p>
+        {item.docTitle && (
+          <span className="thought-item-meta">
+            {t.during} {item.docTitle}
+          </span>
+        )}
+      </div>
+      <button
+        type="button"
+        className="library-action-btn"
+        aria-label={t.delete}
+        onClick={() => void removeThoughtNote(item.id)}
+      >
+        <Trash2 size={15} />
+      </button>
+    </div>
   );
 
   const handleAdd = async () => {
@@ -110,26 +144,15 @@ export function ThoughtsSheet({
             {t.empty}
           </p>
         ) : (
-          thoughts.map((item) => (
-            <div key={item.id} className="thought-item">
-              <div className="thought-item-body">
-                <p className="thought-item-text">{item.text}</p>
-                {item.docTitle && (
-                  <span className="thought-item-meta">
-                    {t.during} {item.docTitle}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                className="library-action-btn"
-                aria-label={t.delete}
-                onClick={() => void removeThoughtNote(item.id)}
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
-          ))
+          <>
+            {sessionItems.length > 0 && (
+              <>
+                <h3 className="thoughts-group-title">{t.thisSession}</h3>
+                {sessionItems.map(renderItem)}
+              </>
+            )}
+            {otherItems.map(renderItem)}
+          </>
         )}
       </div>
 

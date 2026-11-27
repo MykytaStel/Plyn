@@ -42,6 +42,11 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     mainLabel: 'Add text and library',
     thoughtsLabel: 'Thought Parking',
     thoughtsHint: 'Parked thoughts',
+    sessionThoughts: {
+      one: '{count} thought from this reading',
+      other: '{count} thoughts from this reading'
+    },
+    sessionThoughtsView: 'View',
     helpLabel: 'How to use Plyn',
     helpHint: 'Quick start',
     heroTitle: 'Read at your own pace',
@@ -194,6 +199,11 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
         one: 'You read {count} card at a calm pace.',
         other: 'You read {count} cards at a calm pace.'
       },
+      thoughts: {
+        one: 'You parked {count} thought',
+        other: 'You parked {count} thoughts'
+      },
+      viewThoughts: 'View',
       restart: 'Read again',
       backToLibrary: 'Back to library'
     },
@@ -238,6 +248,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     empty: 'Nothing here yet. When a stray thought pops up while you read, tap the light bulb or press N.',
     during: 'While reading:',
     delete: 'Delete thought',
+    thisSession: 'From this reading',
     export: 'Save as file',
     exportHint: 'All thoughts in one Markdown file'
   },
