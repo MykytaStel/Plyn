@@ -5,10 +5,13 @@ import {
   db,
   findDocumentByText,
   getProgressStats,
+  loadAllDocuments,
+  loadDocument,
   migrateLegacyLocalSession,
   recordProgressDelta,
   removeDocument,
   renameDocument,
+  restoreDocument,
   sanitizeChapters,
   updateDocument
 } from './db';
@@ -32,7 +35,7 @@ describe('documents', () => {
     expect(doc.charOffset).toBe(0);
     expect(doc.totalCards).toBe(1);
     expect(doc.bookmarkOffsets).toEqual([]);
-    expect(await db.documents.get(doc.id)).toEqual(doc);
+    expect(await loadDocument(doc.id)).toEqual(doc);
   });
 
   it('derives the title from the first line when none is given', async () => {
@@ -63,10 +66,40 @@ describe('documents', () => {
     expect((await db.documents.get(doc.id))?.title).toBe('New name');
   });
 
-  it('removes a document', async () => {
+  it('removes a document and its text, and returns it whole for Undo', async () => {
     const doc = await createDocument({ text: 'abc', totalCards: 1, fallbackTitle: 'x' });
-    await removeDocument(doc.id);
+    const removed = await removeDocument(doc.id);
+    expect(removed).toEqual(doc);
     expect(await db.documents.get(doc.id)).toBeUndefined();
+    expect(await db.texts.get(doc.id)).toBeUndefined();
+
+    await restoreDocument(removed!);
+    expect(await loadDocument(doc.id)).toEqual(doc);
+  });
+
+  it('keeps the text out of the library rows (0.25)', async () => {
+    const doc = await createDocument({ text: 'Два слова.', totalCards: 1, fallbackTitle: 'x' });
+    const row = await db.documents.get(doc.id);
+    expect(row).not.toHaveProperty('text');
+    expect(row).toMatchObject({ textLength: 10, wordCount: 2 });
+    expect((await db.texts.get(doc.id))?.text).toBe('Два слова.');
+  });
+
+  it('saves progress without touching the text or its hash', async () => {
+    const doc = await createDocument({ text: 'Some text.', totalCards: 3, fallbackTitle: 'x' });
+    const before = await db.documents.get(doc.id);
+    await updateDocument({ ...doc, charOffset: 5, currentIndex: 2 });
+
+    const after = await db.documents.get(doc.id);
+    expect(after).toMatchObject({ charOffset: 5, currentIndex: 2, textHash: before!.textHash });
+    expect((await loadDocument(doc.id))?.text).toBe('Some text.');
+  });
+
+  it('confirms a duplicate by the text, not only by the hash', async () => {
+    const doc = await createDocument({ text: 'Same text', totalCards: 1, fallbackTitle: 'x' });
+    // Simulate a hash collision: another text under the same hash.
+    await db.texts.put({ id: doc.id, text: 'Different text' });
+    expect(await findDocumentByText('Same text')).toBeUndefined();
   });
 
   it('finds an existing document by its exact text', async () => {
@@ -180,7 +213,7 @@ describe('migrateLegacyLocalSession', () => {
     await migrateLegacyLocalSession();
     await migrateLegacyLocalSession();
 
-    const docs = await db.documents.toArray();
+    const docs = await loadAllDocuments();
     expect(docs).toHaveLength(1);
     expect(docs[0].text).toBe('Old text.');
     expect(store.has('plyn_session_v1')).toBe(false);

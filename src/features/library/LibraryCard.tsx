@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
-import type { PlynDocument } from '../../core/models/types';
-import { estimateReadingMinutes } from '../../core/reading/readingStats';
+import type { DocumentMeta } from '../../core/models/types';
+import { minutesForWords } from '../../core/reading/readingStats';
 import { useI18n } from '../../i18n';
 
 interface LibraryCardProps {
-  doc: PlynDocument;
-  onOpen: (doc: PlynDocument) => void;
+  doc: DocumentMeta;
+  onOpen: (doc: DocumentMeta) => void;
   onRename: (id: string, newTitle: string) => void;
   onDelete: (id: string) => void;
 }
@@ -26,7 +26,7 @@ export function LibraryCard({
   const current = Math.min(doc.currentIndex || 0, total - 1);
   const percent = Math.round(((current + 1) / total) * 100);
   const bookmarksCount = doc.bookmarkOffsets?.length ?? 0;
-  const estMinutes = estimateReadingMinutes(doc.text);
+  const estMinutes = minutesForWords(doc.wordCount ?? 0);
 
   const commitRename = () => {
     const trimmed = draftTitle.trim();

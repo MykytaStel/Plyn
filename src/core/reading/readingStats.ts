@@ -12,8 +12,12 @@ export function countWords(text: string): number {
  * Орієнтовний час читання тексту в хвилинах (мінімум 1 хв для непорожнього тексту).
  */
 export function estimateReadingMinutes(text: string): number {
-  const words = countWords(text);
-  if (words === 0) return 0;
+  return minutesForWords(countWords(text));
+}
+
+/** Reading time for a known word count (the library stores it, 0.25). */
+export function minutesForWords(words: number): number {
+  if (words <= 0) return 0;
   return Math.max(1, Math.ceil(words / CALM_WORDS_PER_MINUTE));
 }
 

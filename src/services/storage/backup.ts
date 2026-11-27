@@ -5,7 +5,13 @@ import type {
   ThoughtNote,
   UserSettings
 } from '../../core/models/types';
-import { db, getProgressStats, sanitizeChapters } from './db';
+import {
+  db,
+  getProgressStats,
+  loadAllDocuments,
+  putDocument,
+  sanitizeChapters
+} from './db';
 import {
   hasStoredSettings,
   loadUserSettings,
@@ -21,7 +27,8 @@ export const BACKUP_SCHEMA_VERSION = 2;
  */
 export async function exportLibraryBackup(): Promise<PlynBackupPayload> {
   const [documents, stats, thoughts] = await Promise.all([
-    db.documents.toArray(),
+    // Backups keep the text inline, as before 0.25 (invariant 5).
+    loadAllDocuments(),
     getProgressStats(),
     db.thoughts.toArray()
   ]);
@@ -104,7 +111,7 @@ export async function importLibraryBackup(raw: unknown): Promise<BackupImportRes
   for (const doc of payload.documents) {
     const existing = await db.documents.get(doc.id);
     if (!existing || (doc.updatedAt ?? 0) >= (existing.updatedAt ?? 0)) {
-      await db.documents.put(doc);
+      await putDocument(doc);
       importedDocs += 1;
     }
   }

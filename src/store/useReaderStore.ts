@@ -3,16 +3,16 @@ import type {
   AchievementDefinition,
   CardLengthPreset,
   DocumentChapter,
+  DocumentMeta,
   PlynDocument,
   ReadingCard
 } from '../core/models/types';
-import {
-  findCardIndexByOffset,
-  splitTextIntoCards
-} from '../core/splitter/splitter';
+import { findCardIndexByOffset } from '../core/splitter/splitter';
+import { splitCards } from '../services/splitter/splitCards';
 import {
   createDocument,
   findDocumentByText,
+  loadDocument,
   recordProgressDelta,
   updateDocument
 } from '../services/storage/db';
@@ -34,11 +34,12 @@ interface ReaderState {
   microGoalCompleted: boolean;
   recentUnlocks: AchievementDefinition[];
 
+  /** Opens a library entry; a light row gets its text loaded first (0.25). */
   openDocument: (
-    doc: PlynDocument,
+    doc: PlynDocument | DocumentMeta,
     lengthPreset: CardLengthPreset,
     microGoalTarget?: number | null
-  ) => void;
+  ) => Promise<void>;
   startNewDocument: (
     title: string,
     text: string,
@@ -48,7 +49,8 @@ interface ReaderState {
   closeReader: () => Promise<void>;
   setCurrentIndex: (index: number, anchorMode: boolean) => void;
   markDocumentCompleted: () => Promise<void>;
-  recalculateCards: (lengthPreset: CardLengthPreset) => number;
+  /** Re-splits the open text; resolves to the card that holds the place. */
+  recalculateCards: (lengthPreset: CardLengthPreset) => Promise<number>;
   toggleBookmarkAtCurrent: () => Promise<boolean>;
   setBookmarkNote: (offset: number, note: string) => Promise<void>;
   setFocusTimer: (minutes: number) => void;
@@ -97,8 +99,10 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   microGoalCompleted: false,
   recentUnlocks: [],
 
-  openDocument: (doc, lengthPreset, microGoalTarget = null) => {
-    const cards = splitTextIntoCards(doc.text, { lengthPreset });
+  openDocument: async (entry, lengthPreset, microGoalTarget = null) => {
+    const doc = 'text' in entry ? entry : await loadDocument(entry.id);
+    if (!doc) return;
+    const cards = await splitCards(doc.text, lengthPreset);
     if (cards.length === 0) return;
 
     seenInSession.clear();
@@ -129,17 +133,14 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     // already in the library, with its progress, instead of a duplicate.
     const existing = await findDocumentByText(trimmed);
     if (existing) {
-      get().openDocument(existing, lengthPreset);
+      await get().openDocument(existing, lengthPreset);
       return;
     }
 
-    const cards = splitTextIntoCards(trimmed, { lengthPreset });
+    const cards = await splitCards(trimmed, lengthPreset);
     if (cards.length === 0) return;
 
-    seenInSession.clear();
-    seenInSession.add(0);
-
-    const doc = await createDocument({
+    const created = await createDocument({
       title,
       text: trimmed,
       totalCards: cards.length,
@@ -148,10 +149,26 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
       chapters: book?.chapters
     });
 
+    // A book with contents opens at its first chapter, past the title page
+    // and imprint (0.25). Nothing is cut: the reader can scroll back.
+    const startOffset = created.chapters?.[0]?.offset ?? 0;
+    const startIdx = startOffset > 0 ? findCardIndexByOffset(cards, startOffset) : 0;
+    const doc: PlynDocument =
+      startIdx > 0
+        ? await updateDocument({
+            ...created,
+            charOffset: cards[startIdx].startOffset,
+            currentIndex: startIdx
+          })
+        : created;
+
+    seenInSession.clear();
+    seenInSession.add(startIdx);
+
     set({
       activeDoc: doc,
       cards,
-      currentIndex: 0,
+      currentIndex: startIdx,
       microGoalTarget: null,
       microGoalCount: 0,
       microGoalCompleted: false
@@ -242,16 +259,20 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     }
   },
 
-  recalculateCards: (lengthPreset) => {
+  recalculateCards: async (lengthPreset) => {
     const { activeDoc } = get();
     if (!activeDoc) return 0;
 
-    const cards = splitTextIntoCards(activeDoc.text, { lengthPreset });
-    if (cards.length === 0) return 0;
+    const cards = await splitCards(activeDoc.text, lengthPreset);
+    // The reader may have closed or switched texts while the worker ran.
+    const latest = get().activeDoc;
+    if (cards.length === 0 || !latest || latest.id !== activeDoc.id) {
+      return get().currentIndex;
+    }
 
-    const nextIdx = findCardIndexByOffset(cards, activeDoc.charOffset);
+    const nextIdx = findCardIndexByOffset(cards, latest.charOffset);
     const updatedDoc: PlynDocument = {
-      ...activeDoc,
+      ...latest,
       currentIndex: nextIdx,
       totalCards: cards.length
     };

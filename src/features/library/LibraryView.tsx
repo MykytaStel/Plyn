@@ -15,8 +15,6 @@ import {
   Upload
 } from 'lucide-react';
 import { ACHIEVEMENTS } from '../../core/achievements/achievements';
-import { parseEpubFile } from '../../core/parsers/epub';
-import { parseFb2File } from '../../core/parsers/fb2';
 import type { ParsedBook } from '../../core/parsers/bookText';
 import { cleanMarkdown } from '../../core/parsers/markdown';
 import { decodeTextBytes } from '../../core/parsers/textEncoding';
@@ -86,6 +84,20 @@ export function LibraryView() {
     () => db.documents.orderBy('updatedAt').reverse().toArray(),
     []
   );
+  // Full-text search reads the texts table only while there is a query; the
+  // list itself never loads a text (0.25, IMP-06).
+  const textQuery = searchQuery.trim().toLowerCase();
+  const textMatches = useLiveQuery(
+    async () =>
+      textQuery
+        ? new Set(
+            await db.texts
+              .filter((t) => t.text.toLowerCase().includes(textQuery))
+              .primaryKeys()
+          )
+        : null,
+    [textQuery]
+  );
   const stats = useLiveQuery(() => db.stats.get('main'), []);
   const thoughtsCount = useLiveQuery(() => db.thoughts.count(), []) ?? 0;
 
@@ -111,10 +123,10 @@ export function LibraryView() {
       return (
         doc.title.toLowerCase().includes(q) ||
         (doc.author?.toLowerCase().includes(q) ?? false) ||
-        doc.text.toLowerCase().includes(q)
+        (textMatches?.has(doc.id) ?? false)
       );
     });
-  }, [documents, searchQuery, filter]);
+  }, [documents, searchQuery, filter, textMatches]);
 
   const showFeedback = (msg: string) => {
     setFeedback(msg);
@@ -219,7 +231,10 @@ export function LibraryView() {
       const isFb2 = lower.endsWith('.fb2') || lower.endsWith('.zip');
       if (lower.endsWith('.epub') || isFb2) {
         showFeedback(isFb2 ? t.feedback.fb2Loading : t.feedback.epubLoading);
-        const parsed = isFb2 ? await parseFb2File(file) : await parseEpubFile(file);
+        // Book parsers and the unzip library load only when a book is opened (0.25).
+        const parsed = isFb2
+          ? await (await importWithRetry(() => import('../../core/parsers/fb2'))).parseFb2File(file)
+          : await (await importWithRetry(() => import('../../core/parsers/epub'))).parseEpubFile(file);
         setTitle(parsed.title);
         setText(parsed.text);
         setImportedBook(parsed);
@@ -232,6 +247,8 @@ export function LibraryView() {
         const parsed = await parsePdfFile(file);
         setTitle(parsed.title);
         setText(parsed.text);
+        // A PDF with its own contents behaves like a book (0.25).
+        if (parsed.chapters) setImportedBook(parsed);
         showFeedback(
           i18n.format(t.feedback.pdfLoaded, { title: parsed.title })
         );
@@ -300,9 +317,8 @@ export function LibraryView() {
   };
 
   const handleDelete = async (id: string) => {
-    const doc = documents?.find((d) => d.id === id);
+    const doc = await removeDocument(id);
     if (!doc) return;
-    await removeDocument(id);
     setDeletedDoc(doc);
   };
 
@@ -434,7 +450,7 @@ export function LibraryView() {
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              onClick={() => openDocument(nextUnfinishedDoc, cardLength, 5)}
+              onClick={() => void openDocument(nextUnfinishedDoc, cardLength, 5)}
             >
               {t.microStartAction}
             </button>
@@ -658,7 +674,7 @@ export function LibraryView() {
                 <LibraryCard
                   key={doc.id}
                   doc={doc}
-                  onOpen={(d) => openDocument(d, cardLength)}
+                  onOpen={(d) => void openDocument(d, cardLength)}
                   onRename={(id, newTitle) => void renameDocument(id, newTitle)}
                   onDelete={(id) => void handleDelete(id)}
                 />

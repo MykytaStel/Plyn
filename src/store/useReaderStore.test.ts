@@ -26,10 +26,49 @@ describe('startNewDocument', () => {
     expect(state.currentIndex).toBe(state.cards.length - 1);
   });
 
+  it('opens a new book at its first chapter, keeping the title page (0.25)', async () => {
+    const imprint = 'ISBN 978-0-00-000000-0. Publisher, 2025.';
+    const text = `${imprint}\n\nChapter one\n\nThe story starts here. It goes on.`;
+    const chapterOffset = text.indexOf('Chapter one');
+    await useReaderStore.getState().startNewDocument('Book', text, 'short', {
+      chapters: [
+        { title: 'Chapter one', offset: chapterOffset, level: 0 },
+        { title: 'Later', offset: text.indexOf('The story'), level: 0 }
+      ]
+    });
+
+    const state = useReaderStore.getState();
+    expect(state.cards[0].text).toContain('ISBN');
+    expect(state.cards[state.currentIndex].text).toBe('Chapter one');
+    expect(state.activeDoc?.charOffset).toBe(chapterOffset);
+    expect((await db.documents.get(state.activeDoc!.id))?.charOffset).toBe(chapterOffset);
+  });
+
+  it('starts plain text at the beginning', async () => {
+    await useReaderStore.getState().startNewDocument('', 'One. Two.\n\nThree.', 'short');
+    expect(useReaderStore.getState().currentIndex).toBe(0);
+  });
+
   it('ignores empty text', async () => {
     await useReaderStore.getState().startNewDocument('', '   ', 'medium');
     expect(await db.documents.count()).toBe(0);
     expect(useReaderStore.getState().activeDoc).toBeNull();
+  });
+});
+
+describe('openDocument', () => {
+  it('loads the text of a library row before splitting (0.25)', async () => {
+    await useReaderStore.getState().startNewDocument('', 'First one. Second one.\n\nThird.', 'short');
+    const id = useReaderStore.getState().activeDoc!.id;
+    useReaderStore.setState({ activeDoc: null, cards: [], currentIndex: 0 });
+
+    const row = (await db.documents.get(id))!;
+    expect(row).not.toHaveProperty('text');
+    await useReaderStore.getState().openDocument(row, 'short');
+
+    const state = useReaderStore.getState();
+    expect(state.activeDoc?.text).toBe('First one. Second one.\n\nThird.');
+    expect(state.cards.length).toBeGreaterThan(1);
   });
 });
 
