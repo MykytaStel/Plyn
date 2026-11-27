@@ -1,0 +1,209 @@
+<!doctype html>
+<!--
+  EXP-02 probe: does speechSynthesis fire word-level `boundary` events with a
+  correct charIndex for Ukrainian and English? Throwaway page, not part of the app.
+  Open it locally, or on a phone over the LAN:  npx vite experiments/exp-02 --host
+-->
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EXP-02 · TTS boundary probe</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 44rem; margin: 0 auto; padding: 1rem; }
+  fieldset { border: 1px solid #ccc; border-radius: 8px; margin: 0 0 1rem; }
+  label { margin-right: 1rem; white-space: nowrap; }
+  select, button, textarea { font: inherit; }
+  button { padding: .4rem .9rem; margin: .2rem .3rem .2rem 0; }
+  #card { font-size: 1.25rem; line-height: 1.7; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; min-height: 6rem; }
+  mark { background: #ffe08a; color: inherit; border-radius: 3px; }
+  #summary { background: #f4f4f4; padding: .8rem; border-radius: 8px; white-space: pre-wrap; font: 13px/1.4 ui-monospace, monospace; }
+  #log { max-height: 18rem; overflow: auto; font: 12px/1.4 ui-monospace, monospace; border: 1px solid #eee; padding: .5rem; }
+  .bad { color: #b00020; }
+</style>
+</head>
+<body>
+<h1>EXP-02 · TTS boundary probe</h1>
+
+<fieldset>
+  <legend>Setup</legend>
+  <p>
+    <label><input type="radio" name="text" value="uk" checked> Українська</label>
+    <label><input type="radio" name="text" value="en"> English</label>
+  </p>
+  <p><label>Voice <select id="voice"></select></label></p>
+  <p>Rate:
+    <label><input type="radio" name="rate" value="0.75"> 0.75</label>
+    <label><input type="radio" name="rate" value="1" checked> 1</label>
+    <label><input type="radio" name="rate" value="1.25"> 1.25</label>
+    <label><input type="radio" name="rate" value="1.5"> 1.5</label>
+  </p>
+  <button id="speak">▶ Speak</button>
+  <button id="stop">■ Stop</button>
+</fieldset>
+
+<div id="card" aria-live="off"></div>
+
+<fieldset>
+  <legend>Your judgement (after listening)</legend>
+  <p>Highlight vs voice at the end of the card:
+    <label><input type="radio" name="lag" value="in sync"> in sync</label>
+    <label><input type="radio" name="lag" value="< 1 word"> &lt; 1 word behind</label>
+    <label><input type="radio" name="lag" value="> 1 word"> &gt; 1 word behind</label>
+    <label><input type="radio" name="lag" value="no highlight"> no highlight</label>
+  </p>
+  <p><label>Notes <input id="notes" size="40"></label></p>
+  <button id="copy">Copy result row</button> <span id="copied"></span>
+</fieldset>
+
+<h2>Summary</h2>
+<div id="summary">Not run yet.</div>
+<h2>Events</h2>
+<div id="log"></div>
+
+<script>
+const TEXTS = {
+  // Self-written, ~300 characters each. Apostrophe, і ї є ґ, a number and a dash on purpose.
+  uk: "Ранок був тихий, і над річкою ще висів туман. Марія взяла ґумові чоботи, бо стежка до млина завжди мокра. Вона йшла повільно — їй хотілося почути, як прокидається ліс. За двадцять хвилин сонце пробилося крізь гілля, і м'яке світло лягло на воду. Це був її улюблений час дня, коли все здається простим.",
+  en: "The morning was quiet, and mist still hung over the river. Maria took her rubber boots, because the path to the old mill is always wet. She walked slowly — she wanted to hear the forest wake up. After twenty minutes the sun broke through the branches, and soft light fell on the water. It was her favourite time of day."
+};
+const LANG = { uk: "uk", en: "en" };
+const $ = (id) => document.getElementById(id);
+const pick = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+const synth = window.speechSynthesis;
+
+let run = null; // current run state
+let session = 0;
+
+function wordStarts(text) {
+  const starts = new Set();
+  for (const m of text.matchAll(/[\p{L}\p{N}'’ʼ-]+/gu)) starts.add(m.index);
+  return starts;
+}
+function wordCount(text) { return wordStarts(text).size; }
+function wordAt(text, i, len) {
+  if (len > 0) return text.slice(i, i + len);
+  const m = text.slice(i).match(/^[\p{L}\p{N}'’ʼ-]+/u);
+  return m ? m[0] : text.slice(i, i + 12);
+}
+
+function renderCard(text, start = -1, len = 0) {
+  const card = $("card");
+  card.lang = pick("text");
+  card.textContent = "";
+  if (start < 0) { card.textContent = text; return; }
+  if (!len) len = wordAt(text, start, 0).length;
+  card.append(text.slice(0, start));
+  const mark = document.createElement("mark");
+  mark.textContent = text.slice(start, start + len);
+  card.append(mark, text.slice(start + len));
+}
+
+function fillVoices() {
+  const lang = LANG[pick("text")];
+  const sel = $("voice");
+  const prev = sel.value;
+  const voices = synth.getVoices().filter((v) => v.lang.toLowerCase().startsWith(lang));
+  sel.textContent = "";
+  const def = new Option(`(browser default for ${lang})`, "");
+  sel.append(def);
+  for (const v of voices) sel.append(new Option(`${v.name} · ${v.lang}${v.localService ? "" : " · network"}`, v.voiceURI));
+  if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
+}
+
+function log(line, bad = false) {
+  const div = document.createElement("div");
+  div.textContent = line;
+  if (bad) div.className = "bad";
+  $("log").append(div);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+function summarize() {
+  if (!run) return;
+  const r = run;
+  const words = r.events.filter((e) => e.name === "word");
+  const sentences = r.events.filter((e) => e.name === "sentence");
+  const onStart = words.filter((e) => r.starts.has(e.charIndex)).length;
+  const first = r.events[0];
+  const lastWord = words[words.length - 1];
+  r.result = {
+    ua: navigator.userAgent,
+    text: r.lang,
+    voice: r.voiceName,
+    local: r.voiceLocal,
+    rate: r.rate,
+    words: r.wordCount,
+    wordEvents: words.length,
+    sentenceEvents: sentences.length,
+    onWordStart: words.length ? `${onStart}/${words.length}` : "–",
+    hasCharLength: words.some((e) => e.charLength > 0),
+    firstEventMs: first ? Math.round(first.t) : null,
+    lastWordAt: lastWord ? `${lastWord.charIndex}/${r.text.length}` : "–",
+    totalMs: r.endT ? Math.round(r.endT) : null,
+    ended: r.ended
+  };
+  $("summary").textContent = JSON.stringify(r.result, null, 2);
+}
+
+function speak() {
+  synth.cancel();
+  session += 1;
+  const mine = session;
+  const lang = pick("text");
+  const text = TEXTS[lang];
+  const rate = Number(pick("rate"));
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = LANG[lang];
+  u.rate = rate;
+  const voice = synth.getVoices().find((v) => v.voiceURI === $("voice").value);
+  if (voice) u.voice = voice;
+
+  $("log").textContent = "";
+  renderCard(text);
+  run = {
+    lang, text, rate, starts: wordStarts(text), wordCount: wordCount(text),
+    voiceName: voice ? voice.name : "(default)", voiceLocal: voice ? voice.localService : null,
+    events: [], t0: 0, endT: 0, ended: false
+  };
+
+  u.onstart = () => { if (mine !== session) return; run.t0 = performance.now(); log("start"); };
+  u.onboundary = (e) => {
+    if (mine !== session) return;
+    const t = performance.now() - run.t0;
+    run.events.push({ name: e.name, charIndex: e.charIndex, charLength: e.charLength ?? 0, t });
+    const ok = e.name !== "word" || run.starts.has(e.charIndex);
+    log(`${t.toFixed(0).padStart(6)} ms  ${e.name.padEnd(8)} @${String(e.charIndex).padStart(3)} len ${e.charLength ?? "?"}  “${wordAt(text, e.charIndex, e.charLength ?? 0)}”`, !ok);
+    if (e.name === "word") renderCard(text, e.charIndex, e.charLength ?? 0);
+    summarize();
+  };
+  u.onend = () => { if (mine !== session) return; run.endT = performance.now() - run.t0; run.ended = true; log("end"); summarize(); };
+  u.onerror = (e) => { if (mine !== session) return; log(`error: ${e.error}`, true); summarize(); };
+  // Runtime detection rule from EXP-02: no event within 1 s of start → hide highlight.
+  setTimeout(() => {
+    if (mine === session && run.t0 && !run.events.length) log("no boundary event within 1 s of start → the app would hide the highlight", true);
+  }, 1000 + 300);
+  synth.speak(u);
+  summarize();
+}
+
+$("speak").onclick = speak;
+$("stop").onclick = () => { session += 1; synth.cancel(); log("stopped"); };
+for (const el of document.querySelectorAll('input[name="text"]')) el.onchange = () => { fillVoices(); renderCard(TEXTS[pick("text")]); };
+$("copy").onclick = async () => {
+  if (!run?.result) { $("copied").textContent = "Run it first."; return; }
+  const row = { ...run.result, lag: pick("lag") ?? "?", notes: $("notes").value };
+  const txt = JSON.stringify(row);
+  try { await navigator.clipboard.writeText(txt); $("copied").textContent = "Copied."; }
+  catch { prompt("Copy this:", txt); }
+};
+if (!("speechSynthesis" in window)) {
+  $("summary").textContent = "speechSynthesis is not available in this browser.";
+} else {
+  fillVoices();
+  synth.onvoiceschanged = fillVoices;
+}
+renderCard(TEXTS.uk);
+</script>
+</body>
+</html>
