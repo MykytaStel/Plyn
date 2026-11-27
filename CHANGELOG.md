@@ -2,7 +2,7 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [0.25.0] — Unreleased
+## [0.25.0] — 2026-11-27
 
 Light and fast.
 
