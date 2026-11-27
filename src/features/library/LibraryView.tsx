@@ -33,7 +33,7 @@ import { importWithRetry } from '../../services/pwa/lazyImport';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../i18n/errorMessage';
-import { useEffectiveWpm } from '../reader/hooks/useReadingPace';
+import { effectiveWordsPerMinute } from '../../core/reading/pace';
 import { LibraryCard } from './LibraryCard';
 import { UndoToast } from './UndoToast';
 import { UpdateNotice } from './UpdateNotice';
@@ -80,7 +80,6 @@ export function LibraryView() {
   const startNewDocument = useReaderStore((s) => s.startNewDocument);
   const openDocument = useReaderStore((s) => s.openDocument);
 
-  const wpm = useEffectiveWpm();
   const documents = useLiveQuery(
     () => db.documents.orderBy('updatedAt').reverse().toArray(),
     []
@@ -99,7 +98,9 @@ export function LibraryView() {
         : null,
     [textQuery]
   );
+  // One live query for the stats row: the rewards count and the learned pace (0.27).
   const stats = useLiveQuery(() => db.stats.get('main'), []);
+  const wpm = effectiveWordsPerMinute(stats?.readingPace);
   const thoughtsCount = useLiveQuery(() => db.thoughts.count(), []) ?? 0;
 
   const hasLibrary = Boolean(documents && documents.length > 0);
