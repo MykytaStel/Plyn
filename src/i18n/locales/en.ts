@@ -126,7 +126,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     delete: 'Delete {title}',
     deleteHint: 'Remove from library',
     progress: 'Card {current} of {total} · {percent}%',
-    bookmarks: 'Bookmarks: {count}'
+    bookmarks: 'Bookmarks: {count}',
+    finished: 'Finished'
   },
   reader: {
     tools: {

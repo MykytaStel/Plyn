@@ -136,7 +136,8 @@ Plyn прибирає це перевантаження. Замість неск
     delete: 'Видалити {title}',
     deleteHint: 'Видалити з бібліотеки',
     progress: 'Картка {current} з {total} · {percent}%',
-    bookmarks: 'Закладок: {count}'
+    bookmarks: 'Закладок: {count}',
+    finished: 'Прочитано'
   },
   reader: {
     tools: {

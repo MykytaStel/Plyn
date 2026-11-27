@@ -37,6 +37,7 @@ import { importWithRetry } from '../../services/pwa/lazyImport';
 import { ThoughtsSheet } from '../thoughts/ThoughtsSheet';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../i18n/errorMessage';
+import { useEffectiveWpm } from '../reader/hooks/useReadingPace';
 import { LibraryCard } from './LibraryCard';
 import { UndoToast } from './UndoToast';
 import { UpdateNotice } from './UpdateNotice';
@@ -80,6 +81,7 @@ export function LibraryView() {
   const startNewDocument = useReaderStore((s) => s.startNewDocument);
   const openDocument = useReaderStore((s) => s.openDocument);
 
+  const wpm = useEffectiveWpm();
   const documents = useLiveQuery(
     () => db.documents.orderBy('updatedAt').reverse().toArray(),
     []
@@ -105,7 +107,7 @@ export function LibraryView() {
   const isEditorVisible = !hasLibrary || showEditor;
 
   const nextUnfinishedDoc = useMemo(
-    () => documents?.find((d) => !d.completedOnce) ?? documents?.[0] ?? null,
+    () => documents?.find((d) => !d.completedOnce) ?? null,
     [documents]
   );
 
@@ -674,6 +676,7 @@ export function LibraryView() {
                 <LibraryCard
                   key={doc.id}
                   doc={doc}
+                  wordsPerMinute={wpm}
                   onOpen={(d) => void openDocument(d, cardLength)}
                   onRename={(id, newTitle) => void renameDocument(id, newTitle)}
                   onDelete={(id) => void handleDelete(id)}
