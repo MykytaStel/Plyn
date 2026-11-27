@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useI18n } from '../../i18n';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Download, Plus, Trash2, X } from 'lucide-react';
 import {
   addThoughtNote,
   db,
   removeThoughtNote
 } from '../../services/storage/db';
+import {
+  formatThoughtsAsMarkdown,
+  thoughtsFileName
+} from '../../core/export/thoughtsMarkdown';
 import { useDialogFocus } from '../shared/useDialogFocus';
 
 interface ThoughtsSheetProps {
@@ -19,7 +23,8 @@ export function ThoughtsSheet({
   onClose
 }: ThoughtsSheetProps) {
   const dialogRef = useDialogFocus<HTMLElement>();
-  const t = useI18n().m.thoughts;
+  const i18n = useI18n();
+  const t = i18n.m.thoughts;
   const [draft, setDraft] = useState('');
   const thoughts = useLiveQuery(
     () => db.thoughts.orderBy('createdAt').reverse().toArray(),
@@ -30,6 +35,23 @@ export function ThoughtsSheet({
     if (!draft.trim()) return;
     await addThoughtNote(draft, currentDocTitle);
     setDraft('');
+  };
+
+  const handleExport = () => {
+    if (!thoughts || thoughts.length === 0) return;
+    const dateFormat = new Intl.DateTimeFormat(i18n.locale, { dateStyle: 'medium' });
+    const md = formatThoughtsAsMarkdown({
+      thoughts,
+      labels: { title: i18n.m.export.thoughts, untitled: i18n.m.export.untitled },
+      formatDate: (ms) => dateFormat.format(new Date(ms))
+    });
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = thoughtsFileName(new Date());
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -110,6 +132,16 @@ export function ThoughtsSheet({
           ))
         )}
       </div>
+
+      {thoughts && thoughts.length > 0 && (
+        <div className="thoughts-export">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handleExport}>
+            <Download size={15} />
+            <span>{t.export}</span>
+          </button>
+          <p className="setting-hint">{t.exportHint}</p>
+        </div>
+      )}
     </aside>
   );
 }

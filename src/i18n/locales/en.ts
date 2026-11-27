@@ -237,7 +237,9 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     save: 'Save',
     empty: 'Nothing here yet. When a stray thought pops up while you read, tap the light bulb or press N.',
     during: 'While reading:',
-    delete: 'Delete thought'
+    delete: 'Delete thought',
+    export: 'Save as file',
+    exportHint: 'All thoughts in one Markdown file'
   },
   settings: {
     sections: {
@@ -390,6 +392,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
   export: {
     bookmarks: 'Bookmarks',
     card: 'Card {n}',
-    note: 'Note'
+    note: 'Note',
+    thoughts: 'Thought Parking',
+    untitled: 'No text'
   }
 };
