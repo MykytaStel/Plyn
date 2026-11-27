@@ -32,7 +32,12 @@ const TERMINAL_PUNCT = /[.!?…»”)"']\s*$/;
 
 const LOWERCASE_START = /^[a-zа-яіїєґ]/;
 
-/** Known Ukrainian and English compound prefixes where a line-end hyphen is part of the word. */
+/**
+ * Prefixes that are always written with a hyphen, so a line-end hyphen after them
+ * is part of the word. Prefixes that are usually written together in Ukrainian
+ * (мікро, міні, макро, пів, веб) or that start many plain words (екс, re, pre, co, post)
+ * are deliberately absent: a hyphen after them at a line end is almost always a break.
+ */
 const COMPOUND_PREFIXES = new Set([
   'науково',
   'суспільно',
@@ -44,31 +49,23 @@ const COMPOUND_PREFIXES = new Set([
   'військово',
   'державно',
   'інтернет',
-  'веб',
   'онлайн',
   'офлайн',
   'віце',
-  'екс',
-  'міні',
-  'макро',
-  'мікро',
-  'пів',
-  'по',
   'будь',
   'казна',
   'хтозна',
   'self',
   'well',
   'non',
-  'pre',
-  'post',
   'anti',
-  'co',
-  're',
   'multi',
   'cross',
   'e'
 ]);
+
+/** "по-" stays hyphenated only for adverbs like по-українськи, по-моєму, по-перше. */
+const PO_ADVERB_TAIL = /^(?:перше|друге|третє|четверте|п['’]?яте|[а-яіїєґ'’]*(?:ськи|цьки|зьки|ому|єму))(?![а-яіїєґ])/i;
 
 function median(values: number[]): number {
   if (values.length === 0) return 0;
@@ -164,7 +161,10 @@ export function joinParagraphLines(prev: string, next: string): string {
   const hyphenMatch = /([A-Za-zА-Яа-яІіЇїЄєҐґ]+)[-\u2010]$/.exec(left);
   if (hyphenMatch && LOWERCASE_START.test(right)) {
     const stem = hyphenMatch[1].toLowerCase();
-    if (COMPOUND_PREFIXES.has(stem)) {
+    if (
+      COMPOUND_PREFIXES.has(stem) ||
+      (stem === 'по' && PO_ADVERB_TAIL.test(right))
+    ) {
       return `${left}${right}`;
     }
     return `${left.slice(0, -1)}${right}`;

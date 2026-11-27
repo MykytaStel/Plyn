@@ -45,3 +45,28 @@ describe('pdfLayout (EXP-01 golden cases)', () => {
     expect(elapsedMs).toBeLessThan(1500);
   });
 });
+
+describe('joinParagraphLines: ordinary words that start like a prefix', () => {
+  it.each([
+    ['по-', 'чаток', 'початок'],
+    ['пів-', 'денний', 'південний'],
+    ['мікро-', 'скоп', 'мікроскоп'],
+    ['екс-', 'перт', 'експерт'],
+    ['веб-', 'сайт', 'вебсайт'],
+    ['re-', 'port', 'report'],
+    ['pre-', 'vious', 'previous']
+  ])('%s + %s → %s', (left, right, expected) => {
+    expect(joinParagraphLines(left, right)).toBe(expected);
+  });
+
+  it.each([
+    ['по-', 'українськи', 'по-українськи'],
+    ['по-', 'моєму', 'по-моєму'],
+    ['по-', 'перше', 'по-перше'],
+    ['віце-', 'прем’єр', 'віце-прем’єр'],
+    ['будь-', 'який', 'будь-який'],
+    ['e-', 'mail', 'e-mail']
+  ])('keeps the compound %s + %s → %s', (left, right, expected) => {
+    expect(joinParagraphLines(left, right)).toBe(expected);
+  });
+});

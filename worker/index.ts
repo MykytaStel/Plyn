@@ -197,9 +197,8 @@ const NOISE_CONTAINER_ATTR =
 const BOILERPLATE_LINE =
   /^(?:читайте також|читай також|підписуйтесь на|підписатися на|поділитися|read also|read more|related articles|share this|subscribe to|cookie policy|accept all cookies|sign in to continue|log in to read)/i;
 
-function stripNoisyBlocks(html: string): string {
-  // Strip structural chrome first
-  let out = html
+function stripStructuralChrome(html: string): string {
+  return html
     .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
     .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ')
@@ -210,15 +209,35 @@ function stripNoisyBlocks(html: string): string {
     .replace(/<aside\b[\s\S]*?<\/aside>/gi, ' ')
     .replace(/<form\b[\s\S]*?<\/form>/gi, ' ')
     .replace(/<dialog\b[\s\S]*?<\/dialog>/gi, ' ');
+}
 
-  // Remove flat div/section/ul blocks whose class or id clearly marks related/promo noise
-  out = out.replace(
-    /<(div|section|ul)\b[^>]*(?:class|id)=["']([^"']*)["'][^>]*>([\s\S]*?)<\/\1>/gi,
-    (full, _tag, attrVal: string) =>
-      NOISE_CONTAINER_ATTR.test(attrVal) ? ' ' : full
+/**
+ * Removes flat div/section/ul blocks (no nested tag of the same kind) whose
+ * class or id clearly marks related/promo noise. Nested wrappers are kept, so a
+ * matching class on an article wrapper can't swallow the text up to its first child.
+ */
+function stripNoiseContainers(html: string): string {
+  return html.replace(
+    /<(div|section|ul)\b([^>]*)>((?:(?!<\1\b)[\s\S])*?)<\/\1>/gi,
+    (full, _tag, attrs: string) => {
+      const attrVal = /\b(?:class|id)\s*=\s*["']([^"']*)["']/i.exec(attrs)?.[1];
+      return attrVal && NOISE_CONTAINER_ATTR.test(attrVal) ? ' ' : full;
+    }
   );
+}
 
-  return out;
+function collectParagraphs(cleaned: string): string[] {
+  const paragraphs: string[] = [];
+  const blockRegex = /<(p|h1|h2|h3|blockquote|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = blockRegex.exec(cleaned)) !== null) {
+    const rawText = match[2].replace(/<[^>]+>/g, ' ');
+    const text = decodeHtmlEntities(rawText).replace(/\s+/g, ' ').trim();
+    if (text.length >= 25 && !BOILERPLATE_LINE.test(text)) {
+      paragraphs.push(text);
+    }
+  }
+  return paragraphs;
 }
 
 export function extractArticleText(html: string): string {
@@ -234,25 +253,20 @@ export function extractArticleText(html: string): string {
     scope = mainMatch[1];
   }
 
-  const cleaned = stripNoisyBlocks(scope);
+  const structural = stripStructuralChrome(scope);
+  const cleaned = stripNoiseContainers(structural);
 
-  const paragraphs: string[] = [];
-  const blockRegex = /<(p|h1|h2|h3|blockquote|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
-  let match: RegExpExecArray | null;
-
-  while ((match = blockRegex.exec(cleaned)) !== null) {
-    const rawText = match[2].replace(/<[^>]+>/g, ' ');
-    const text = decodeHtmlEntities(rawText).replace(/\s+/g, ' ').trim();
-    if (text.length >= 25 && !BOILERPLATE_LINE.test(text)) {
-      paragraphs.push(text);
-    }
+  // If the noise filter took (almost) everything, the class names lied: use the text without it.
+  let paragraphs = collectParagraphs(cleaned);
+  if (paragraphs.join('').length < 40) {
+    paragraphs = collectParagraphs(structural);
   }
 
   if (paragraphs.length > 0) {
     return paragraphs.join('\n\n');
   }
 
-  return decodeHtmlEntities(cleaned.replace(/<[^>]+>/g, ' '))
+  return decodeHtmlEntities(structural.replace(/<[^>]+>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -285,9 +299,12 @@ function trimArticleText(text: string): { text: string; truncated: boolean } {
     return { text, truncated: false };
   }
   const slice = text.slice(0, MAX_ARTICLE_CHARS);
-  const lastBreak = Math.max(slice.lastIndexOf('\n\n'), slice.lastIndexOf(' '));
-  const clean =
-    lastBreak > MAX_ARTICLE_CHARS * 0.8 ? slice.slice(0, lastBreak) : slice;
+  const minCut = MAX_ARTICLE_CHARS * 0.8;
+  const paragraphBreak = slice.lastIndexOf('\n\n');
+  const wordBreak = slice.lastIndexOf(' ');
+  const cut =
+    paragraphBreak > minCut ? paragraphBreak : wordBreak > minCut ? wordBreak : slice.length;
+  const clean = slice.slice(0, cut);
   return { text: clean.trim(), truncated: true };
 }
 

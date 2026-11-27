@@ -19,7 +19,7 @@ const YIELD_EVERY_PAGES = 10;
 
 function yieldToMainThread(): Promise<void> {
   return new Promise((resolve) => {
-    window.setTimeout(resolve, 0);
+    globalThis.setTimeout(resolve, 0);
   });
 }
 
