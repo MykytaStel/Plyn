@@ -14,6 +14,8 @@ import { wordRangeAt, type WordRange } from '../../core/speech/wordRange';
 
 /** No word event this long after `start` means the voice reports no positions. */
 export const NO_WORDS_TIMEOUT_MS = 3000;
+/** How long the first card waits for a late voice list when a voice is saved. */
+export const VOICES_WAIT_MS = 500;
 
 export interface VoiceOption {
   uri: string;
@@ -35,8 +37,59 @@ export interface SpeakOptions {
 }
 
 let currentSessionId = 0;
+/** Tells the running session it was cut off by another one (or by stop). */
+let interruptCurrent: (() => void) | null = null;
 /** Voices that sent no word positions this session, so later cards don't flash. */
 const voicesWithoutWords = new Set<string>();
+/**
+ * Utterances handed to the engine. Chromium can collect an utterance nobody
+ * references, and then its events never fire; queued cards wait a whole card.
+ */
+const pendingUtterances = new Set<SpeechSynthesisUtterance>();
+
+/** For tests: utterances still referenced. */
+export function pendingUtteranceCount(): number {
+  return pendingUtterances.size;
+}
+
+/** Starts a new session: the previous one is told it stopped. */
+function newSession(onInterrupt?: () => void): number {
+  // The old session hears first: its handler may stop things itself.
+  const previous = interruptCurrent;
+  interruptCurrent = null;
+  previous?.();
+  currentSessionId += 1;
+  interruptCurrent = onInterrupt ?? null;
+  return currentSessionId;
+}
+
+function cancelEngine(): void {
+  pendingUtterances.clear();
+  window.speechSynthesis.cancel();
+}
+
+function enqueue(utterance: SpeechSynthesisUtterance): void {
+  pendingUtterances.add(utterance);
+  window.speechSynthesis.speak(utterance);
+}
+
+/** The voice list arrives late on Chrome and iOS: wait a little for a saved voice. */
+function whenVoicesReady(voiceURI: string | undefined, run: () => void): void {
+  if (!voiceURI || window.speechSynthesis.getVoices().length > 0) {
+    run();
+    return;
+  }
+  let done = false;
+  const go = () => {
+    if (done) return;
+    done = true;
+    off();
+    clearTimeout(timer);
+    run();
+  };
+  const off = onVoicesChanged(go);
+  const timer = setTimeout(go, VOICES_WAIT_MS);
+}
 
 export function isTtsSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
@@ -69,9 +122,9 @@ export function onVoicesChanged(cb: () => void): () => void {
 }
 
 export function stopSpeaking(): void {
-  currentSessionId += 1;
+  newSession();
   if (!isTtsSupported()) return;
-  window.speechSynthesis.cancel();
+  cancelEngine();
 }
 
 function createUtterance(
@@ -115,11 +168,15 @@ function createUtterance(
   };
   utterance.onend = () => {
     clearTimer();
+    pendingUtterances.delete(utterance);
     if (live()) options.onComplete?.();
   };
   utterance.onerror = () => {
     clearTimer();
-    if (live()) options.onStop?.();
+    pendingUtterances.delete(utterance);
+    if (!live()) return;
+    if (interruptCurrent === options.onStop) interruptCurrent = null;
+    options.onStop?.();
   };
   return utterance;
 }
@@ -127,27 +184,33 @@ function createUtterance(
 /** Speaks one card, cancelling anything spoken or queued before. */
 export function speakCardText(text: string, options: SpeakOptions = {}): void {
   if (!isTtsSupported() || !text.trim()) return;
-  currentSessionId += 1;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(
-    createUtterance(text, detectContentLanguage(text), currentSessionId, options)
-  );
+  const session = newSession(options.onStop);
+  cancelEngine();
+  whenVoicesReady(options.voiceURI, () => {
+    if (session !== currentSessionId) return;
+    enqueue(createUtterance(text, detectContentLanguage(text), session, options));
+  });
 }
 
-/** Appends a card to the current session: it starts right after the one speaking. */
-export function queueCardText(text: string, options: SpeakOptions = {}): void {
-  if (!isTtsSupported() || !text.trim()) return;
-  window.speechSynthesis.speak(
-    createUtterance(text, detectContentLanguage(text), currentSessionId, options)
-  );
+/**
+ * Appends a card to the current session: it starts right after the one
+ * speaking. False if there was nothing to queue.
+ */
+export function queueCardText(text: string, options: SpeakOptions = {}): boolean {
+  if (!isTtsSupported() || !text.trim()) return false;
+  enqueue(createUtterance(text, detectContentLanguage(text), currentSessionId, options));
+  return true;
 }
 
 function speakShort(text: string, lang: ContentLanguage, voiceURI: string | undefined, rate: number): void {
   const clean = text.trim();
   if (!isTtsSupported() || !clean) return;
-  currentSessionId += 1;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(createUtterance(clean, lang, currentSessionId, { voiceURI, rate }));
+  const session = newSession();
+  cancelEngine();
+  whenVoicesReady(voiceURI, () => {
+    if (session !== currentSessionId) return;
+    enqueue(createUtterance(clean, lang, session, { voiceURI, rate }));
+  });
 }
 
 /** One hard word, quietly slower (double tap, a help for dyslexia). */

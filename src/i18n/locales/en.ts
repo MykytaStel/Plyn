@@ -202,7 +202,7 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
       zenOn: 'Clean screen — tap the card or press Z to bring the bar back',
       bookmarkAdded: 'Card bookmarked',
       bookmarkRemoved: 'Bookmark removed',
-      chapterStop: 'Chapter “{title}”. Press ▶ to keep listening',
+      chapterStop: 'New chapter: “{title}”. Turn read-aloud on again to keep listening',
       focusOn: 'Sentence focus on',
       focusOff: 'Sentence focus off',
       presetOn: '“{label}” mode on'

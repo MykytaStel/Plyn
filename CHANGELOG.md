@@ -10,12 +10,13 @@ Listening, upgraded.
 
 - The word being read aloud can be highlighted, so your eyes can follow the voice. Turn it on in Settings → Sound. It works with most system voices; with a voice that doesn't say where it is, the highlight simply stays hidden.
 - Choose a voice for Ukrainian and one for English in Settings → Sound. You hear a short sample as soon as you pick one. Voices that need the internet are marked.
-- With "Keep listening" on, listening stops at the start of a new chapter and shows its title. Press ▶ or S to keep listening.
+- With "Keep listening" on, listening stops at the start of a new chapter and shows its title. Turn read-aloud on again (or press S) to keep listening.
 
 ### Changed
 
 - "Keep listening" no longer pauses between cards: the next card starts right away, and the screen follows.
 - A double tap on a word speaks it in your chosen voice.
+- A speed, voice or highlight change while listening applies from the next card.
 
 ### Under the hood
 

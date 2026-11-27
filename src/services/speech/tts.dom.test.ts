@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { installFakeSpeech, voice, type FakeSpeech } from '../../../test/fakeSpeech';
 import {
   NO_WORDS_TIMEOUT_MS,
+  VOICES_WAIT_MS,
   listVoices,
   onVoicesChanged,
+  pendingUtteranceCount,
   queueCardText,
   speakCardText,
   speakPreview,
@@ -168,5 +170,55 @@ describe('voices', () => {
     speakPreview('Hello there.', 'en', `daniel-${voiceSeq}`);
     expect(fake.spoken[1].lang).toBe('en-US');
     expect(fake.spoken[1].voice?.voiceURI).toBe(`daniel-${voiceSeq}`);
+  });
+});
+
+describe('review fixes', () => {
+  it('tells the interrupted session it stopped when something else speaks', () => {
+    const onStop = vi.fn();
+    speakCardText(UK, { onStop });
+    speakSingleWord('тихий');
+    expect(onStop).toHaveBeenCalledTimes(1);
+    const onStop2 = vi.fn();
+    speakCardText(UK, { onStop: onStop2 });
+    stopSpeaking();
+    stopSpeaking();
+    expect(onStop2).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps utterances referenced until they end, error or get cancelled', () => {
+    speakCardText(UK);
+    queueCardText(EN);
+    expect(pendingUtteranceCount()).toBe(2);
+    fake.start();
+    fake.end();
+    expect(pendingUtteranceCount()).toBe(1);
+    stopSpeaking();
+    expect(pendingUtteranceCount()).toBe(0);
+  });
+
+  it('waits briefly for the voice list before speaking in a saved voice', () => {
+    fake.setVoices([]);
+    speakCardText(UK, { voiceURI: 'late-lesya' });
+    expect(fake.spoken).toHaveLength(0);
+    fake.setVoices([voice('late-lesya', 'uk-UA')]);
+    expect(fake.spoken).toHaveLength(1);
+    expect(fake.spoken[0].voice?.voiceURI).toBe('late-lesya');
+  });
+
+  it('speaks in the default voice when the list never arrives', () => {
+    fake.setVoices([]);
+    speakCardText(UK, { voiceURI: 'never' });
+    vi.advanceTimersByTime(VOICES_WAIT_MS);
+    expect(fake.spoken).toHaveLength(1);
+    expect(fake.spoken[0].voice).toBeNull();
+  });
+
+  it('drops a waiting card when the session is stopped', () => {
+    fake.setVoices([]);
+    speakCardText(UK, { voiceURI: 'late' });
+    stopSpeaking();
+    vi.advanceTimersByTime(VOICES_WAIT_MS);
+    expect(fake.spoken).toHaveLength(0);
   });
 });

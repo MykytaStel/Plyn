@@ -7,6 +7,7 @@ import { uk } from '../../../i18n/locales/uk';
 import { DEFAULT_SETTINGS } from '../../../services/storage/settingsStorage';
 import { useReaderStore } from '../../../store/useReaderStore';
 import { useSettingsStore } from '../../../store/useSettingsStore';
+import { speakPreview } from '../../../services/speech/tts';
 import { useSpeech } from './useSpeech';
 
 const TEXTS = ['Перша картка тут.', 'Друга картка тут.', 'Третя картка тут.', 'Fourth card here.'];
@@ -155,5 +156,95 @@ describe('useSpeech', () => {
     act(() => fake.start());
     expect(fake.spoken[0].voice?.voiceURI).toBe('lesya');
     expect(fake.spoken[1].voice?.voiceURI).toBe('daniel');
+  });
+});
+
+describe('useSpeech review fixes', () => {
+  it('a rate change applies from the next card', () => {
+    const { hook } = setup();
+    act(() => hook.result.current.toggleSpeech());
+    act(() => fake.start());
+    expect(fake.spoken[1].rate).toBe(1);
+    act(() => useSettingsStore.setState({ ttsRate: 1.5 }));
+    hook.rerender();
+    act(() => fake.end());
+    const next = fake.spoken.at(-1)!;
+    expect(next.text).toBe(TEXTS[1]);
+    expect(next.rate).toBe(1.5);
+    act(() => fake.start());
+    expect(hook.result.current.isSpeaking).toBe(true);
+  });
+
+  it('turning auto-advance off mid-card stops after this card', () => {
+    const { hook, scrollToCard } = setup();
+    act(() => hook.result.current.toggleSpeech());
+    act(() => fake.start());
+    act(() => useSettingsStore.setState({ ttsAutoAdvance: false }));
+    hook.rerender();
+    act(() => fake.end());
+    expect(hook.result.current.isSpeaking).toBe(false);
+    act(() => fake.start());
+    expect(scrollToCard).not.toHaveBeenCalled();
+  });
+
+  it('a short card does not stop listening while the feed catches up', () => {
+    const { hook } = setup();
+    act(() => hook.result.current.toggleSpeech());
+    act(() => fake.start());
+    act(() => fake.end());
+    act(() => fake.start()); // card 1, feed asked to go to 1
+    act(() => fake.end());
+    act(() => fake.start()); // card 2 before the feed reported 1
+    act(() => useReaderStore.setState({ currentIndex: 1 }));
+    hook.rerender();
+    expect(hook.result.current.isSpeaking).toBe(true);
+    act(() => useReaderStore.setState({ currentIndex: 2 }));
+    hook.rerender();
+    expect(hook.result.current.isSpeaking).toBe(true);
+    act(() => useReaderStore.setState({ currentIndex: 0 }));
+    hook.rerender();
+    expect(hook.result.current.isSpeaking).toBe(false);
+  });
+
+  it('an engine error stops the queue', () => {
+    const { hook, scrollToCard } = setup();
+    act(() => hook.result.current.toggleSpeech());
+    act(() => fake.start());
+    const queued = fake.spoken[1];
+    act(() => fake.error());
+    expect(hook.result.current.isSpeaking).toBe(false);
+    act(() => queued.onstart?.(new Event('start')));
+    expect(scrollToCard).not.toHaveBeenCalled();
+    expect(hook.result.current.isSpeaking).toBe(false);
+  });
+
+  it('a voice preview while listening ends listening cleanly', () => {
+    const { hook } = setup();
+    act(() => hook.result.current.toggleSpeech());
+    act(() => fake.start());
+    act(() => speakPreview('Привіт.', 'uk'));
+    expect(hook.result.current.isSpeaking).toBe(false);
+  });
+
+  it('stops at a chapter that starts between two cards', () => {
+    const chapters = [{ title: 'Між', offset: cards[1].endOffset, level: 0 }];
+    const { hook, showToast } = setup(chapters);
+    act(() => useReaderStore.setState({ currentIndex: 1 }));
+    hook.rerender();
+    act(() => hook.result.current.toggleSpeech());
+    act(() => fake.start());
+    expect(fake.spoken).toHaveLength(1);
+    act(() => fake.end());
+    expect(showToast).toHaveBeenCalled();
+  });
+});
+
+describe('chapter notice copy', () => {
+  it('names no control that is not on screen (the speaker button has no ▶)', async () => {
+    const { en } = await import('../../../i18n/locales/en');
+    for (const copy of [uk.reader.toasts.chapterStop, en.reader.toasts.chapterStop]) {
+      expect(copy).not.toContain('▶');
+      expect(copy).toContain('{title}');
+    }
   });
 });
