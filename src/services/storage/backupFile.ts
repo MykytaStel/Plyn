@@ -1,10 +1,12 @@
+import { toLocalDateKey } from '../../core/reading/weeklyActivity';
 import { saveFile, type SaveFileResult } from '../files/saveFile';
 import { exportLibraryBackup } from './backup';
 
 export type BackupSaveResult = SaveFileResult;
 
+/** `plyn-backup-YYYY-MM-DD.json` using the local date (the day the reader sees). */
 export function backupFileName(date = new Date()): string {
-  return `plyn-backup-${date.toISOString().slice(0, 10)}.json`;
+  return `plyn-backup-${toLocalDateKey(date)}.json`;
 }
 
 /**
