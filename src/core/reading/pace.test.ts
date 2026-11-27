@@ -43,3 +43,20 @@ describe('effectiveWordsPerMinute', () => {
     expect(effectiveWordsPerMinute({ wordsPerMinute: 5, samples: 50 })).toBe(60);
   });
 });
+
+describe('non-finite input', () => {
+  const prev = { wordsPerMinute: 200, samples: 30 };
+  it('leaves the pace unchanged for a non-finite sample', () => {
+    expect(updatePace(prev, { words: NaN, ms: 5000 })).toBe(prev);
+    expect(updatePace(prev, { words: 30, ms: Infinity })).toBe(prev);
+    expect(updatePace(undefined, { words: 30, ms: NaN })).toBeUndefined();
+  });
+  it('treats a non-finite stored pace as no pace', () => {
+    expect(effectiveWordsPerMinute({ wordsPerMinute: NaN, samples: 50 })).toBe(180);
+    expect(effectiveWordsPerMinute({ wordsPerMinute: Infinity, samples: 50 })).toBe(180);
+    expect(updatePace({ wordsPerMinute: NaN, samples: 50 }, { words: 30, ms: 10_000 })).toEqual({
+      wordsPerMinute: 180,
+      samples: 1,
+    });
+  });
+});

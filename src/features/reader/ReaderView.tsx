@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   Bookmark,
   ChevronDown,
@@ -13,7 +13,13 @@ import {
   Volume2
 } from 'lucide-react';
 import type { CardLengthPreset } from '../../core/models/types';
-import { estimateRemainingMinutes } from '../../core/reading/readingStats';
+import {
+  chapterEndFromStarts,
+  chapterStartIndices,
+  cumulativeWords,
+  minutesForWordsAt,
+  toTimeLeft
+} from '../../core/reading/timeLeft';
 import {
   isBrownNoisePlaying,
   startBrownNoise,
@@ -36,6 +42,7 @@ import { useReaderKeyboard } from './hooks/useReaderKeyboard';
 import { useReaderNotices } from './hooks/useReaderNotices';
 import { useReaderToast } from './hooks/useReaderToast';
 import { useSpeech } from './hooks/useSpeech';
+import { useReadingPace } from './hooks/useReadingPace';
 import { useKeepScreenOn } from './hooks/useKeepScreenOn';
 import { useBackLayer } from '../shared/useBackLayer';
 
@@ -71,6 +78,7 @@ export function ReaderView() {
 
   const anchorMode = useSettingsStore((s) => s.anchorMode);
   const sentenceFocus = useSettingsStore((s) => s.sentenceFocus);
+  const showTimeLeft = useSettingsStore((s) => s.showTimeLeft);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
   const [sheet, setSheet] = useState<ActiveSheet>('none');
@@ -92,6 +100,14 @@ export function ReaderView() {
     spokenRange
   } = useSpeech({ scrollToCard, chapters: activeDoc?.chapters, showToast });
   useKeepScreenOn(isSpeaking);
+  const wpm = useReadingPace({ cards, currentIndex, isSpeaking });
+  const docChapters = activeDoc?.chapters;
+  // Per-document work, so a card change does not redo O(n) (0.27).
+  const wordPrefix = useMemo(() => cumulativeWords(cards), [cards]);
+  const chapterStarts = useMemo(
+    () => chapterStartIndices(cards, docChapters ?? []),
+    [cards, docChapters]
+  );
 
   const leaveReader = useCallback(() => {
     stopBrownNoise();
@@ -170,9 +186,22 @@ export function ReaderView() {
   // Only the cards near the current one are in the DOM (0.25).
   const feedWindow = getFeedWindow(currentIndex, total);
   const currentCard = cards[currentIndex];
-  const remainingMins = isDoneVisible
-    ? 0
-    : estimateRemainingMinutes(cards, currentIndex);
+  const endIndex = chapterEndFromStarts(chapterStarts, total, currentIndex);
+  const timeLeft =
+    showTimeLeft && !isDoneVisible && currentIndex < total
+      ? toTimeLeft(
+          minutesForWordsAt(wordPrefix[endIndex] - wordPrefix[currentIndex], wpm)
+        )
+      : null;
+  const timeLeftText = timeLeft
+    ? i18n.format(t.timeLeft[timeLeft.unit], { n: timeLeft.value })
+    : '';
+  const counterLabel = timeLeft
+    ? `${currentIndex + 1} / ${total}. ${i18n.format(
+        endIndex < total ? t.timeLeft.toChapterEnd : t.timeLeft.toTextEnd,
+        { time: timeLeftText }
+      )}`
+    : undefined;
 
   const progressPercent = isDoneVisible
     ? 100
@@ -243,18 +272,14 @@ export function ReaderView() {
             type="button"
             className="counter-btn"
             aria-expanded={showScrubber}
+            aria-label={counterLabel}
             title={t.counterHint}
             onClick={() => setShowScrubber((v) => !v)}
           >
             <span>
               {isDoneVisible ? t.done : `${currentIndex + 1} / ${total}`}
             </span>
-            {!isDoneVisible && remainingMins > 0 && (
-              <span className="counter-eta">
-                ·{' '}
-                {i18n.format(i18n.m.common.minutesApprox, { minutes: remainingMins })}
-              </span>
-            )}
+            {timeLeft && <span className="counter-eta">· {timeLeftText}</span>}
           </button>
           {microGoalTarget && !microGoalCompleted && (
             <span className="timer-pill" title={t.goalHint}>

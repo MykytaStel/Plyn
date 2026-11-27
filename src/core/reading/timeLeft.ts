@@ -12,6 +12,28 @@ export function cumulativeWords(cards: ReadingCard[]): number[] {
   return out;
 }
 
+/** Sorted, de-duplicated card indices where chapters start (compute once per document). */
+export function chapterStartIndices(cards: ReadingCard[], chapters: DocumentChapter[]): number[] {
+  const starts = chapters.map((c) => findCardIndexByOffset(cards, c.offset));
+  return [...new Set(starts)].sort((a, b) => a - b);
+}
+
+/** Exclusive end of the chapter holding currentIndex, from precomputed starts. */
+export function chapterEndFromStarts(
+  starts: number[],
+  total: number,
+  currentIndex: number
+): number {
+  let lo = 0;
+  let hi = starts.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (starts[mid] > currentIndex) hi = mid;
+    else lo = mid + 1;
+  }
+  return lo < starts.length ? Math.min(starts[lo], total) : total;
+}
+
 /**
  * Exclusive card index where the current chapter ends: the first chapter start
  * that lands on a card after the current one, or cards.length.
@@ -21,12 +43,7 @@ export function chapterEndIndex(
   chapters: DocumentChapter[],
   currentIndex: number
 ): number {
-  let end = cards.length;
-  for (const chapter of chapters) {
-    const idx = findCardIndexByOffset(cards, chapter.offset);
-    if (idx > currentIndex && idx < end) end = idx;
-  }
-  return end;
+  return chapterEndFromStarts(chapterStartIndices(cards, chapters), cards.length, currentIndex);
 }
 
 export function minutesForWordsAt(words: number, wpm: number): number {

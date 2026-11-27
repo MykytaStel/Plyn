@@ -18,7 +18,11 @@ export function updatePace(
   prev: ReadingPace | undefined,
   sample: { words: number; ms: number }
 ): ReadingPace | undefined {
+  if (!Number.isFinite(sample.words) || !Number.isFinite(sample.ms)) return prev;
   if (sample.words <= 0 || sample.ms < PACE_MIN_DWELL_MS) return undefined;
+  if (prev && !(Number.isFinite(prev.wordsPerMinute) && Number.isFinite(prev.samples))) {
+    prev = undefined;
+  }
   const base = prev?.wordsPerMinute ?? CALM_WORDS_PER_MINUTE;
   const expectedMs = (sample.words / base) * 60_000;
   const ms = Math.min(sample.ms, 3 * expectedMs);
@@ -32,6 +36,8 @@ export function updatePace(
 
 /** The pace to estimate with: learned once there are enough samples, calm default otherwise. */
 export function effectiveWordsPerMinute(pace: ReadingPace | undefined): number {
-  if (!pace || pace.samples < PACE_MIN_SAMPLES) return CALM_WORDS_PER_MINUTE;
+  if (!pace || !Number.isFinite(pace.wordsPerMinute) || !(pace.samples >= PACE_MIN_SAMPLES)) {
+    return CALM_WORDS_PER_MINUTE;
+  }
   return clampWpm(pace.wordsPerMinute);
 }

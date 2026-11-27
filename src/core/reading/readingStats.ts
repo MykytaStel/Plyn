@@ -1,6 +1,3 @@
-import type { ReadingCard } from '../models/types';
-import { cumulativeWords, minutesForWordsAt } from './timeLeft';
-
 /** Спокійний темп читання для комфорту очей і РДУГ (слів за хвилину) */
 export const CALM_WORDS_PER_MINUTE = 180;
 
@@ -20,17 +17,4 @@ export function estimateReadingMinutes(text: string): number {
 export function minutesForWords(words: number): number {
   if (words <= 0) return 0;
   return Math.max(1, Math.ceil(words / CALM_WORDS_PER_MINUTE));
-}
-
-/**
- * Орієнтовний час до кінця тексту починаючи з поточної картки.
- */
-export function estimateRemainingMinutes(
-  cards: ReadingCard[],
-  currentIndex: number
-): number {
-  if (cards.length === 0 || currentIndex >= cards.length) return 0;
-  const cum = cumulativeWords(cards);
-  const words = cum[cards.length] - cum[Math.max(0, currentIndex)];
-  return minutesForWordsAt(words, CALM_WORDS_PER_MINUTE);
 }

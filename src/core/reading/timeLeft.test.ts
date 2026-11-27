@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { DocumentChapter, ReadingCard } from '../models/types';
 import {
+  chapterEndFromStarts,
   chapterEndIndex,
+  chapterStartIndices,
   cumulativeWords,
   minutesForWordsAt,
   toTimeLeft,
@@ -42,7 +44,7 @@ describe('chapterEndIndex', () => {
   it('never returns an index at or before the current card', () => {
     const chapters = [ch(cards[1].startOffset), ch(cards[1].startOffset + 1), ch(cards[2].startOffset)];
     expect(chapterEndIndex(cards, chapters, 1)).toBe(2);
-    expect(chapterEndIndex(cards, chapters.slice(0, 2), 1)).toBeGreaterThan(1);
+    expect(chapterEndIndex(cards, chapters.slice(0, 2), 1)).toBe(5);
   });
 });
 
@@ -61,5 +63,17 @@ describe('toTimeLeft', () => {
     expect(toTimeLeft(61)).toEqual({ unit: 'hour', value: 1 });
     expect(toTimeLeft(89)).toEqual({ unit: 'hour', value: 1 });
     expect(toTimeLeft(150)).toEqual({ unit: 'hour', value: 3 });
+  });
+});
+
+describe('chapterStartIndices / chapterEndFromStarts', () => {
+  const cards = mk(['aaaa', 'bbbb', 'cccc', 'dddd', 'eeee']);
+  it('gives sorted unique starts and matches chapterEndIndex', () => {
+    const chapters = [ch(cards[4].startOffset), ch(cards[2].startOffset), ch(cards[2].startOffset + 1)];
+    const starts = chapterStartIndices(cards, chapters);
+    expect(starts).toEqual([2, 4]);
+    for (let i = 0; i < cards.length; i += 1) {
+      expect(chapterEndFromStarts(starts, cards.length, i)).toBe(chapterEndIndex(cards, chapters, i));
+    }
   });
 });

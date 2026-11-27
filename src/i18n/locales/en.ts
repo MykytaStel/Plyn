@@ -147,6 +147,12 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     progressHint: 'Tap to jump between cards',
     back: 'Back to library',
     library: 'Library',
+    timeLeft: {
+      min: '~{n} min',
+      hour: '~{n} h',
+      toChapterEnd: 'About {time} left in this chapter',
+      toTextEnd: 'About {time} left in this text'
+    },
     counterHint: 'Jump between cards',
     done: 'Done',
     goalHint: 'Goal for this session',
