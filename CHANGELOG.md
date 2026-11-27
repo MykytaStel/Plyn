@@ -2,6 +2,25 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [0.24.0] — 2026-11-27
+
+PDFs and web articles import well.
+
+### Added
+
+- PDFs now rebuild real paragraphs from line positions and indents, rejoin words hyphenated across lines (`сло-` / `во`) while keeping Ukrainian and English compound words intact (`науково-технічний`, `well-known`), and drop running headers, footers and page numbers.
+- Web articles from older Ukrainian sites in Windows-1251 open without broken letters.
+- Clearer, calmer messages when a website asks for a login or requires JavaScript, or when a very long article is trimmed to its first part.
+
+### Changed
+
+- News articles import with fewer menus, sidebars and "read also" blocks mixed into the text.
+
+### Under the hood
+
+- Hardened `/api/extract` (`IMP-01`): manual redirect loop (max 5 hops) with SSRF checks on every hop (IPv4, IPv6, IPv4-mapped IPv6, numeric hosts), 10 s timeout, 2 MB streamed byte cap, and optional Workers rate-limiting binding.
+- Pure `src/core/parsers/pdfLayout.ts` with shared golden fixtures in `spec/parsers/pdf-cases.json` and Worker extraction/SSRF tests in `worker/extract.test.ts`.
+
 ## [0.23.0] — 2026-11-26
 
 Books import well.

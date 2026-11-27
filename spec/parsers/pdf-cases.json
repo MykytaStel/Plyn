@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "description": "Shared PDF layout reconstruction cases (EXP-01, 0.24) for Web and future native apps.",
+  "cases": [
+    {
+      "name": "joins hyphenated Ukrainian words while preserving real compounds",
+      "pages": [
+        {
+          "pageNumber": 1,
+          "items": [
+            {
+              "str": "Це перше речення з пере-",
+              "x": 72,
+              "y": 700,
+              "width": 220,
+              "height": 12
+            },
+            {
+              "str": "носом слова у рядку.",
+              "x": 72,
+              "y": 684,
+              "width": 200,
+              "height": 12
+            },
+            {
+              "str": "Також є науково-",
+              "x": 72,
+              "y": 668,
+              "width": 220,
+              "height": 12
+            },
+            {
+              "str": "технічний прогрес.",
+              "x": 72,
+              "y": 652,
+              "width": 170,
+              "height": 12
+            }
+          ]
+        }
+      ],
+      "expected": "Це перше речення з переносом слова у рядку. Також є науково-технічний прогрес."
+    },
+    {
+      "name": "rebuilds paragraphs from vertical gaps and first-line indents",
+      "pages": [
+        {
+          "pageNumber": 1,
+          "items": [
+            {
+              "str": "Розділ 1",
+              "x": 72,
+              "y": 740,
+              "width": 90,
+              "height": 18
+            },
+            {
+              "str": "Перший абзац починається тут і триває",
+              "x": 92,
+              "y": 710,
+              "width": 320,
+              "height": 12
+            },
+            {
+              "str": "на другому рядку до кінця думки.",
+              "x": 72,
+              "y": 694,
+              "width": 300,
+              "height": 12
+            },
+            {
+              "str": "Другий абзац починається з відступу.",
+              "x": 92,
+              "y": 678,
+              "width": 310,
+              "height": 12
+            },
+            {
+              "str": "Третій абзац відділений більшим інтервалом.",
+              "x": 72,
+              "y": 648,
+              "width": 330,
+              "height": 12
+            }
+          ]
+        }
+      ],
+      "expected": "Розділ 1\n\nПерший абзац починається тут і триває на другому рядку до кінця думки.\n\nДругий абзац починається з відступу.\n\nТретій абзац відділений більшим інтервалом."
+    },
+    {
+      "name": "drops repeated running headers, footers, page numbers and merges sentence across pages",
+      "pages": [
+        {
+          "pageNumber": 1,
+          "items": [
+            {
+              "str": "Історія дизайну · Глава 2",
+              "x": 72,
+              "y": 760,
+              "width": 180,
+              "height": 10
+            },
+            {
+              "str": "Речення починається на першій сторінці і пере-",
+              "x": 72,
+              "y": 720,
+              "width": 340,
+              "height": 12
+            },
+            {
+              "str": "1",
+              "x": 280,
+              "y": 40,
+              "width": 10,
+              "height": 10
+            }
+          ]
+        },
+        {
+          "pageNumber": 2,
+          "items": [
+            {
+              "str": "Історія дизайну · Глава 2",
+              "x": 72,
+              "y": 760,
+              "width": 180,
+              "height": 10
+            },
+            {
+              "str": "ходить на наступну без розриву.",
+              "x": 72,
+              "y": 720,
+              "width": 250,
+              "height": 12
+            },
+            {
+              "str": "2",
+              "x": 280,
+              "y": 40,
+              "width": 10,
+              "height": 10
+            }
+          ]
+        }
+      ],
+      "expected": "Речення починається на першій сторінці і переходить на наступну без розриву."
+    },
+    {
+      "name": "rejoins ordinary words split after a prefix-like start (0.24.1)",
+      "pages": [
+        {
+          "pageNumber": 1,
+          "items": [
+            {
+              "str": "На по-",
+              "x": 72,
+              "y": 700,
+              "width": 220,
+              "height": 12
+            },
+            {
+              "str": "чатку експерт сказав по-",
+              "x": 72,
+              "y": 684,
+              "width": 220,
+              "height": 12
+            },
+            {
+              "str": "українськи, що мікро-",
+              "x": 72,
+              "y": 668,
+              "width": 220,
+              "height": 12
+            },
+            {
+              "str": "скоп новий.",
+              "x": 72,
+              "y": 652,
+              "width": 90,
+              "height": 12
+            }
+          ]
+        }
+      ],
+      "expected": "На початку експерт сказав по-українськи, що мікроскоп новий."
+    }
+  ]
+}

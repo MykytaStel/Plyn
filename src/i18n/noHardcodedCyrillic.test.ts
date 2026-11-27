@@ -15,10 +15,11 @@ const SOURCES: Record<string, string> = Object.fromEntries(
   ).map(([path, text]) => [path.slice(1), text])
 );
 
-/** Content logic (sentence splitting), not UI copy. */
+/** Content logic (sentence splitting, PDF hyphenation), not UI copy. */
 const ALLOWED_FILES = new Set([
   'src/core/splitter/splitter.ts',
-  'src/core/splitter/sentences.ts'
+  'src/core/splitter/sentences.ts',
+  'src/core/parsers/pdfLayout.ts'
 ]);
 
 const CYRILLIC = /[А-Яа-яІіЇїЄєҐґ]/;
