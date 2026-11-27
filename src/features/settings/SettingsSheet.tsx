@@ -10,6 +10,7 @@ import { useBackLayer } from '../shared/useBackLayer';
 import { useDialogFocus } from '../shared/useDialogFocus';
 import { SettingsRow } from './SettingsRow';
 import { SETTINGS_SECTIONS, settingsSummary, type SettingsSection } from './settingsSummary';
+import { useVoices } from './useVoices';
 import { AidsSection } from './sections/AidsSection';
 import { AppearanceSection } from './sections/AppearanceSection';
 import { LanguageLibrarySection, useStorageStatus } from './sections/LanguageLibrarySection';
@@ -95,12 +96,15 @@ export function SettingsSheet({
 
   const storageLabel =
     storage.status?.usageBytes != null ? i18n.bytes(storage.status.usageBytes) : '';
+  const ukVoices = useVoices('uk');
+  const enVoices = useVoices('en');
   const summaryContext = {
     i18n,
     timerMinutes,
     storageLabel,
     isReader,
-    showSyllables: SHOW_SYLLABLES
+    showSyllables: SHOW_SYLLABLES,
+    voiceName: (uri: string) => [...ukVoices, ...enVoices].find((v) => v.uri === uri)?.name
   };
 
   const closeButton = (

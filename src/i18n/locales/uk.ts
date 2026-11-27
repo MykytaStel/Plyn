@@ -288,7 +288,8 @@ Plyn прибирає це перевантаження. Замість неск
     summary: {
       fonts: { sans: 'Fixel', hyperlegible: 'Atkinson', dyslexic: 'Дислексія', serif: 'Literata' },
       lengths: { short: 'Короткі картки', medium: 'Середні картки', long: 'Довші картки' },
-      aids: { anchor: 'Якір', sentenceFocus: 'Фокус-речення', syllables: 'Склади' },
+      // In-line forms: the summary raises only its first letter.
+      aids: { anchor: 'якір', sentenceFocus: 'фокус-речення', syllables: 'склади' },
       voiceDefault: 'голос браузера',
       voiceChosen: 'свій голос'
     },

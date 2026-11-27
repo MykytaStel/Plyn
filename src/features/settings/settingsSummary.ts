@@ -21,6 +21,13 @@ export interface SummaryContext {
   isReader: boolean;
   /** Syllable hints are offered (EXP-03); a hidden option is never named. */
   showSyllables: boolean;
+  /** This device's name for a voiceURI, if the voice is here. */
+  voiceName?: (uri: string) => string | undefined;
+}
+
+/** Sentence case for a summary line: only its first letter is raised. */
+export function sentenceCase(line: string, locale: string): string {
+  return line.charAt(0).toLocaleUpperCase(locale) + line.slice(1);
 }
 
 /**
@@ -30,7 +37,7 @@ export interface SummaryContext {
 export function settingsSummary(
   section: SettingsSection,
   s: UserSettings,
-  { i18n, timerMinutes, storageLabel, isReader, showSyllables }: SummaryContext
+  { i18n, timerMinutes, storageLabel, isReader, showSyllables, voiceName }: SummaryContext
 ): string {
   const t = i18n.m.settings;
   const parts: string[] = [];
@@ -50,16 +57,20 @@ export function settingsSummary(
       if (showSyllables && s.syllableHints) parts.push(t.summary.aids.syllables);
       if (parts.length === 0) parts.push(t.aidsOff);
       break;
-    case 'sound':
+    case 'sound': {
+      // Voices are chosen per content language: the UI language's choice first, else the other.
+      const other = i18n.locale === 'uk' ? 'en' : 'uk';
+      const uri = s.ttsVoices[i18n.locale] || s.ttsVoices[other];
       parts.push(
         `${s.ttsRate}×`,
-        s.ttsVoices[i18n.locale] ? t.summary.voiceChosen : t.summary.voiceDefault
+        uri ? (voiceName?.(uri) ?? t.summary.voiceChosen) : t.summary.voiceDefault
       );
       break;
+    }
     case 'languageLibrary':
       parts.push(LOCALE_NAMES[s.language]);
       if (storageLabel) parts.push(storageLabel);
       break;
   }
-  return parts.join(', ');
+  return sentenceCase(parts.join(', '), i18n.locale);
 }

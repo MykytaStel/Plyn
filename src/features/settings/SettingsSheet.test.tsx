@@ -8,6 +8,7 @@ import { uk } from '../../i18n/locales/uk';
 import { createBackStack, type BackStack } from '../../services/navigation/backStack';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { SettingsSheet } from './SettingsSheet';
+import { sentenceCase } from './settingsSummary';
 import { installFakeSpeech, voice, type FakeSpeech } from '../../../test/fakeSpeech';
 
 /** A back stack over a fake history, so a test can press "back". */
@@ -89,7 +90,7 @@ describe('SettingsSheet first screen (0.27)', () => {
     await openSection(S.aids);
     await userEvent.click(screen.getByRole('checkbox', { name: uk.settings.anchor }));
     await userEvent.click(screen.getByRole('button', { name: uk.settings.back }));
-    expect(screen.getByRole('button', { name: `${S.aids}, ${uk.settings.summary.aids.anchor}` })).toBeTruthy();
+    expect(screen.getByRole('button', { name: `${S.aids}, ${sentenceCase(uk.settings.summary.aids.anchor, 'uk')}` })).toBeTruthy();
   });
 
   it('opens a section with focus on its heading, and back returns focus to the row', async () => {

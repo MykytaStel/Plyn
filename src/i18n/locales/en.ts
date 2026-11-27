@@ -269,7 +269,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     summary: {
       fonts: { sans: 'Fixel', hyperlegible: 'Atkinson', dyslexic: 'Dyslexia', serif: 'Literata' },
       lengths: { short: 'Short cards', medium: 'Medium cards', long: 'Longer cards' },
-      aids: { anchor: 'Anchor', sentenceFocus: 'Sentence focus', syllables: 'Syllables' },
+      // In-line forms: the summary raises only its first letter.
+      aids: { anchor: 'anchor', sentenceFocus: 'sentence focus', syllables: 'syllables' },
       voiceDefault: 'browser voice',
       voiceChosen: 'your voice'
     },
