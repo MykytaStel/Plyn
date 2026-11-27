@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReadingCard } from '../../../core/models/types';
+import { cumulativeWords } from '../../../core/reading/timeLeft';
 import * as db from '../../../services/storage/db';
 import { useReadingPace } from './useReadingPace';
 
@@ -17,14 +18,19 @@ function makeCards(): ReadingCard[] {
 
 let spy: ReturnType<typeof vi.spyOn>;
 const cards = makeCards();
+const wordPrefix = cumulativeWords(cards);
 
 function setVisibility(state: 'visible' | 'hidden') {
   Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => state });
   document.dispatchEvent(new Event('visibilitychange'));
 }
 
-function render(initial: { currentIndex: number; isSpeaking: boolean }) {
-  return renderHook((props) => useReadingPace({ cards, ...props }), { initialProps: initial });
+function render(initial: { currentIndex: number; isSpeaking: boolean; paused?: boolean }) {
+  return renderHook(
+    ({ paused = false, ...props }: typeof initial) =>
+      useReadingPace({ wordPrefix, paused, ...props }),
+    { initialProps: initial }
+  );
 }
 
 beforeEach(() => {
@@ -73,15 +79,37 @@ describe('useReadingPace', () => {
 
   it('restarts the dwell after a re-split', () => {
     const { rerender } = renderHook((props) => useReadingPace(props), {
-      initialProps: { cards, currentIndex: 0, isSpeaking: false }
+      initialProps: { wordPrefix, currentIndex: 0, isSpeaking: false, paused: false }
     });
     act(() => void vi.advanceTimersByTime(30_000));
-    const resplit = makeCards();
-    rerender({ cards: resplit, currentIndex: 0, isSpeaking: false });
+    const resplit = cumulativeWords(makeCards());
+    rerender({ wordPrefix: resplit, currentIndex: 0, isSpeaking: false, paused: false });
     act(() => void vi.advanceTimersByTime(2000));
-    rerender({ cards: resplit, currentIndex: 1, isSpeaking: false });
+    rerender({ wordPrefix: resplit, currentIndex: 1, isSpeaking: false, paused: false });
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledWith({ paceSample: { words: 5, ms: 2000 } });
+  });
+
+  it('does not count time in a sheet', () => {
+    const { rerender } = render({ currentIndex: 0, isSpeaking: false });
+    act(() => void vi.advanceTimersByTime(2000));
+    rerender({ currentIndex: 0, isSpeaking: false, paused: true });
+    act(() => void vi.advanceTimersByTime(60_000));
+    rerender({ currentIndex: 0, isSpeaking: false, paused: false });
+    act(() => void vi.advanceTimersByTime(3000));
+    rerender({ currentIndex: 1, isSpeaking: false });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith({ paceSample: { words: 5, ms: 3000 } });
+  });
+
+  it('records no sample for time on the Done screen', () => {
+    const { rerender } = render({ currentIndex: 2, isSpeaking: false });
+    rerender({ currentIndex: 2, isSpeaking: false, paused: true });
+    act(() => void vi.advanceTimersByTime(60_000));
+    // Back from Done onto an earlier card, still paused, then out of the pause.
+    rerender({ currentIndex: 1, isSpeaking: false, paused: true });
+    rerender({ currentIndex: 1, isSpeaking: false, paused: false });
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('returns the calm pace without learned samples', () => {

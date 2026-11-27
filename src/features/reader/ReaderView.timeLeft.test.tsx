@@ -73,6 +73,8 @@ describe('reader header time left', () => {
     expect(counter.getAttribute('aria-label')).toBeNull();
     expect(describedBy(counter)).toBe(description);
     expect(description).not.toContain('~');
+    // Only the description: a browse cursor does not meet it as stray text.
+    expect(document.getElementById('counter-time-left')?.hidden).toBe(true);
   });
 
   it('names the chapter end when a chapter follows', () => {

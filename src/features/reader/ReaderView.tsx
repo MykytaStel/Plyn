@@ -110,10 +110,15 @@ export function ReaderView() {
     spokenRange
   } = useSpeech({ scrollToCard, chapters: activeDoc?.chapters, showToast });
   useKeepScreenOn(isSpeaking);
-  const wpm = useReadingPace({ cards, currentIndex, isSpeaking });
   const docChapters = activeDoc?.chapters;
   // Per-document work, so a card change does not redo O(n) (0.27).
   const wordPrefix = useMemo(() => cumulativeWords(cards), [cards]);
+  const wpm = useReadingPace({
+    wordPrefix,
+    currentIndex,
+    isSpeaking,
+    paused: sheet !== 'none' || isDoneVisible
+  });
   const chapterStarts = useMemo(
     () => chapterStartIndices(cards, docChapters ?? []),
     [cards, docChapters]
@@ -299,7 +304,8 @@ export function ReaderView() {
             {timeLeft && <span className="counter-eta">· {timeLeftText}</span>}
           </button>
           {timeLeftSentence && (
-            <span id="counter-time-left" className="sr-only">
+            // `hidden`: read only as the counter's description, never as stray text.
+            <span id="counter-time-left" hidden>
               {timeLeftSentence}
             </span>
           )}
