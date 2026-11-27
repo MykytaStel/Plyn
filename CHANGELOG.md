@@ -2,6 +2,28 @@
 
 What changed for readers, release by release. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [0.26.0] — 2026-11-27
+
+Listening, upgraded.
+
+### Added
+
+- The word being read aloud can be highlighted, so your eyes can follow the voice. Turn it on in Settings → Sound. It works with most system voices; with a voice that doesn't say where it is, the highlight simply stays hidden.
+- Choose a voice for Ukrainian and one for English in Settings → Sound. You hear a short sample as soon as you pick one. Voices that need the internet are marked.
+- With "Keep listening" on, listening stops at the start of a new chapter and shows its title. Press ▶ or S to keep listening.
+
+### Changed
+
+- "Keep listening" no longer pauses between cards: the next card starts right away, and the screen follows.
+- A double tap on a word speaks it in your chosen voice.
+
+### Under the hood
+
+- EXP-02 measured where browsers report the spoken word (iOS Safari and Chrome, macOS Chromium: yes, for Ukrainian). Probe page in `experiments/exp-02/`.
+- `src/services/speech/tts.ts` now owns voices, a per-card queue in one session, word ranges and the 3-second "no word positions" rule; pure helpers `src/core/speech/wordRange.ts` and `src/core/reading/chapterBoundary.ts`.
+- New settings `ttsWordHighlight` and `ttsVoices` in `plyn_settings_v1` (defaults, no migration). Backups stay schema 2; new fixture `spec/backups/v2-0.26.json`.
+- Tests against a fake `speechSynthesis` (`test/fakeSpeech.ts`), and a stubbed voice for journeys (`e2e/support/speech.ts`): new journey `e2e/cuj-15-listening.spec.ts` and a spoken-word visual per theme.
+
 ## [0.25.0] — 2026-11-27
 
 Light and fast.

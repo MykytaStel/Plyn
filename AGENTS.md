@@ -46,7 +46,7 @@ src/
   core/        Pure logic, no DOM or React. Splitter, anchor, parsers, presets, achievements, stats.
   features/    React UI by feature: library, reader (hooks in reader/hooks/), settings, onboarding,
                thoughts, achievements; shared/ holds useBackLayer and useDialogFocus.
-  services/    Side effects: storage (Dexie, localStorage, backup), speech (Web Speech TTS),
+  services/    Side effects: storage (Dexie, localStorage, backup), speech (Web Speech TTS: voices, per-card queue, word ranges; the only module touching `speechSynthesis`),
                audio (brown noise), extract (URL import client), navigation (back stack over
                history), screen (Wake Lock), pwa (updates, lazy-chunk retry), sync (future contract only).
   store/       Zustand stores: reader session and settings.
