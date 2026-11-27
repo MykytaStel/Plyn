@@ -246,7 +246,8 @@ Double-tap any tricky word to hear it read aloud. You can also import .pdf, .epu
     delete: 'Delete thought',
     thisSession: 'From this reading',
     export: 'Save as file',
-    exportHint: 'All thoughts in one Markdown file'
+    exportHint: 'All thoughts in one Markdown file',
+    exported: 'Thoughts saved.'
   },
   settings: {
     sections: {

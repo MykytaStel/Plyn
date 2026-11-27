@@ -264,7 +264,8 @@ Plyn прибирає це перевантаження. Замість неск
     delete: 'Видалити думку',
     thisSession: 'З цього читання',
     export: 'Зберегти у файл',
-    exportHint: 'Усі думки одним файлом Markdown'
+    exportHint: 'Усі думки одним файлом Markdown',
+    exported: 'Думки збережено.'
   },
   settings: {
     sections: {
