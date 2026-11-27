@@ -43,6 +43,20 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Size budgets (scripts/budgets.json)
+        run: npm run budgets
+
+      - name: Lighthouse (performance, accessibility, best practices on a mobile profile)
+        run: npx -y @lhci/cli@0.16.1 autorun
+
+      - name: Upload Lighthouse reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: lighthouse-report/
+          retention-days: 7
+
   e2e:
     needs: checks
     runs-on: ubuntu-latest
