@@ -196,6 +196,8 @@ Size is a rough guess in focused working days: **S** ≈ 1 day, **M** ≈ 2–4 
 
 ## 0.27.0 — Reading comfort II
 
+**Status: shipped.** Design: [specs/2026-11-27-v0.27-reading-comfort-ii-design.md](superpowers/specs/2026-11-27-v0.27-reading-comfort-ii-design.md). Added beyond the plan: Settings in five sections with summaries (layout B), the voice list fix and a design pass. The time-left estimate also shows in the library. Moved on: syllable hints (EXP-03 built and reviewed, display not yet chosen; the setting stays hidden) and rate steps on iOS, to 0.28 or later.
+
 **Goal:** small, optional helps for dyslexia and time blindness, without new clutter.
 
 **Experiment first:** [EXP-03 Ukrainian syllable hints](experiments/EXP-03-ukrainian-syllable-hints.md).

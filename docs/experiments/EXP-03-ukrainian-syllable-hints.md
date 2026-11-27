@@ -1,6 +1,6 @@
 # EXP-03 Ukrainian syllable hints
 
-Status: not started · Feeds: [0.27](../ROADMAP.md#0270--reading-comfort-ii) · Time box: 2 days
+Status: in progress · Feeds: [0.27](../ROADMAP.md#0270--reading-comfort-ii) · Time box: 2 days
 
 ## Question
 
@@ -38,4 +38,8 @@ Reading long words syllable by syllable is a common support technique for dyslex
 
 ## Result
 
+Interim (0.27): the rules and 535 cases are written and the owner accepted them, including the four debatable ones (doubled consonants not split, the apostrophe as й, open syllables, дж / дз never split). The splitter and three display prototypes (`?syllables=dot|gap|tone`) live on the `exp/03-syllable-hints` branch, where this file has the full result: 535 of 535 cases (consistency with the rules, not a dictionary check) and about 0.85 ms per 500-word card.
+
 ## Decision
+
+Pending: the owner picks a display, or none, after trying them on a phone. Not shipped in 0.27; the `syllableHints` setting stays hidden.
