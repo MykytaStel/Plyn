@@ -3,6 +3,7 @@ import {
   expectStoredOffset,
   nextCard,
   openReaderSettings,
+  openSettingsSection,
   startReading,
   storedDocs,
   test,
@@ -29,13 +30,16 @@ test('CUJ-3: changing card length keeps the place and the bookmark', async ({ pa
 
   for (const length of ['short', 'long', 'medium'] as const) {
     await openReaderSettings(page);
-    const settings = page.getByRole('dialog', { name: uk.settings.title });
+    await openSettingsSection(page, 'reading');
+    const settings = page.getByRole('dialog', { name: uk.settings.sections.reading });
     await settings
       .getByRole('radiogroup', { name: uk.settings.cardLength })
       .getByRole('radio', { name: uk.settings.lengths[length] })
       .click();
+    // Escape: section → first screen → closed.
     await page.keyboard.press('Escape');
-    await expect(settings).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     // The card on screen still contains the sentence we were reading.
     await expect

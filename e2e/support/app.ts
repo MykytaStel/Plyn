@@ -152,3 +152,30 @@ export async function openReaderSettings(page: Page): Promise<void> {
   }
   await expect(page.getByRole('dialog', { name: uk.settings.title })).toBeVisible();
 }
+
+export type SettingsSectionId = keyof typeof uk.settings.sections;
+
+/** The Settings button of the library header. */
+export async function openLibrarySettingsSheet(page: Page): Promise<void> {
+  const library = page.getByRole('main', { name: uk.library.mainLabel });
+  await library.getByRole('button', { name: uk.reader.settings, exact: true }).click();
+  await expect(page.getByRole('dialog', { name: uk.settings.title })).toBeVisible();
+}
+
+/**
+ * From the first screen of Settings into one section (0.27). A row's accessible
+ * name starts with the section title; the dialog is then named after it.
+ * `dict` lets a test that runs in English pass `en`.
+ */
+export async function openSettingsSection(
+  page: Page,
+  section: SettingsSectionId,
+  dict: typeof uk | typeof en = uk
+): Promise<void> {
+  const title = dict.settings.sections[section];
+  await page
+    .getByRole('dialog', { name: dict.settings.title })
+    .getByRole('button', { name: new RegExp(`^${title}`) })
+    .click();
+  await expect(page.getByRole('dialog', { name: title })).toBeVisible();
+}

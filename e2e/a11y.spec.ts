@@ -2,7 +2,10 @@ import {
   en,
   expect,
   nextCard,
+  openLibrarySettingsSheet,
   openReaderSettings,
+  openSettingsSection,
+  type SettingsSectionId,
   reader,
   startReading,
   test,
@@ -12,6 +15,7 @@ import { expectNoSeriousA11yIssues } from './support/axe';
 import { numberedText, specBook } from './support/fixtures';
 
 const THEMES = ['dark', 'paper', 'gray', 'mint'] as const;
+const SECTIONS = Object.keys(uk.settings.sections) as SettingsSectionId[];
 
 // Same DOM in every engine; Chromium desktop and the phone layout are enough.
 test.skip(({ browserName }) => browserName !== 'chromium', 'axe runs on Chromium projects');
@@ -67,6 +71,18 @@ for (const theme of THEMES) {
       await expectNoSeriousA11yIssues(page, `undo toast (${theme})`);
     });
 
+    test('settings first screen and every section (0.27)', async ({ page }) => {
+      await page.goto('/');
+      await openLibrarySettingsSheet(page);
+      await expectNoSeriousA11yIssues(page, `settings first screen (${theme})`);
+      for (const section of SECTIONS) {
+        await openSettingsSection(page, section);
+        await expectNoSeriousA11yIssues(page, `settings section ${section} (${theme})`);
+        await page.getByRole('button', { name: uk.settings.back }).click();
+        await expect(page.getByRole('dialog', { name: uk.settings.title })).toBeVisible();
+      }
+    });
+
     test('reader and its sheets', async ({ page }) => {
       await page.goto('/');
       await startReading(page, 'Доступність', numberedText(30));
@@ -77,7 +93,11 @@ for (const theme of THEMES) {
 
       await openReaderSettings(page);
       await expectNoSeriousA11yIssues(page, `reader settings (${theme})`);
+      await openSettingsSection(page, 'sound');
+      await expectNoSeriousA11yIssues(page, `reader settings, sound (${theme})`);
       await page.keyboard.press('Escape');
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
 
       await page.keyboard.press('KeyN');
       await expect(page.getByRole('dialog', { name: uk.thoughts.title })).toBeVisible();

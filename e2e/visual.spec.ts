@@ -1,4 +1,12 @@
-import { expect, openReaderSettings, reader, startReading, test, uk } from './support/app';
+import {
+  expect,
+  openLibrarySettingsSheet,
+  openSettingsSection,
+  reader,
+  startReading,
+  test,
+  uk
+} from './support/app';
 import { installStubSpeech } from './support/speech';
 
 /**
@@ -69,15 +77,26 @@ for (const theme of THEMES) {
         });
       });
 
-      test('reader settings sheet', async ({ page }) => {
+      // 0.27: Settings is a first screen of rows; Sound is the longest section.
+      // Opened from the library, which every project reaches the same way.
+      test('settings first screen', async ({ page }) => {
         await page.goto('/');
-        await startReading(page, 'Візуальна перевірка', MIXED_TEXT);
-        await openReaderSettings(page);
+        await openLibrarySettingsSheet(page);
         await settle(page);
         await expect(page.getByRole('dialog', { name: uk.settings.title })).toHaveScreenshot(
-          `reader-settings-${theme}.png`,
-          // The storage line depends on how much this browser has cached.
-          { mask: [page.locator('.storage-section')] }
+          `settings-first-${theme}.png`,
+          // The storage summary depends on how much this browser has cached.
+          { mask: [page.locator('.settings-row:last-child .settings-row-summary')] }
+        );
+      });
+
+      test('settings sound section', async ({ page }) => {
+        await page.goto('/');
+        await openLibrarySettingsSheet(page);
+        await openSettingsSection(page, 'sound');
+        await settle(page);
+        await expect(page.getByRole('dialog', { name: uk.settings.sections.sound })).toHaveScreenshot(
+          `settings-sound-${theme}.png`
         );
       });
     });

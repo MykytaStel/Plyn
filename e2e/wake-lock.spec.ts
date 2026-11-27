@@ -1,4 +1,4 @@
-import { expect, openReaderSettings, reader, startReading, test, uk } from './support/app';
+import { expect, openReaderSettings, openSettingsSection, reader, startReading, test, uk } from './support/app';
 import { numberedText } from './support/fixtures';
 
 /**
@@ -49,11 +49,13 @@ test('the Settings switch lets the screen sleep', async ({ page }) => {
   await expect.poll(() => wakeLog(page)).toBe('request');
 
   await openReaderSettings(page);
+  await openSettingsSection(page, 'reading');
   const toggle = page.getByRole('checkbox', { name: uk.settings.keepScreenOn });
   await expect(toggle).toBeChecked();
   await page.locator('label[for="toggle-keep-screen-on"]').click();
   await expect(toggle).not.toBeChecked();
   await expect.poll(() => wakeLog(page)).toBe('request,release');
+  await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
   await expect(reader(page)).toBeVisible();
 });

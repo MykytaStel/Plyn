@@ -3,6 +3,8 @@ import {
   expect,
   expectStoredOffset,
   nextCard,
+  openLibrarySettingsSheet,
+  openSettingsSection,
   startReading,
   storedDocs,
   test,
@@ -53,13 +55,8 @@ async function thoughtTexts(page: Page): Promise<string[]> {
 
 /** Settings → Мова і бібліотека, opened from the library (0.27: backup moved here). */
 async function openLibrarySettings(page: Page): Promise<void> {
-  const library = page.getByRole('main', { name: uk.library.mainLabel });
-  await library.getByRole('button', { name: uk.reader.settings, exact: true }).click();
-  const settings = page.getByRole('dialog', { name: uk.settings.title });
-  await settings
-    .getByRole('button', { name: new RegExp(`^${uk.settings.sections.languageLibrary}`) })
-    .click();
-  await expect(page.getByRole('heading', { name: uk.settings.sections.languageLibrary })).toBeVisible();
+  await openLibrarySettingsSheet(page);
+  await openSettingsSection(page, 'languageLibrary');
 }
 
 /**

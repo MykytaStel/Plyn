@@ -1,4 +1,4 @@
-import { en, expect, reader, test, uk } from './support/app';
+import { en, expect, openLibrarySettingsSheet, openSettingsSection, reader, test, uk } from './support/app';
 
 test.use({ onboarding: true });
 
@@ -24,10 +24,13 @@ test('CUJ-1: onboarding → sample → first card; UI to English and back', asyn
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
   // Switch the interface to English.
-  await page.getByRole('button', { name: uk.reader.settings, exact: true }).click();
-  const settings = page.getByRole('dialog', { name: uk.settings.title });
-  await settings.getByRole('radio', { name: 'English' }).click();
+  await openLibrarySettingsSheet(page);
+  await openSettingsSection(page, 'languageLibrary');
+  await page.getByRole('dialog', { name: uk.settings.sections.languageLibrary }).getByRole('radio', { name: 'English' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('dialog', { name: en.settings.sections.languageLibrary })).toBeVisible();
+  // Escape steps out of the section first, then closes the sheet.
+  await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog', { name: en.settings.title })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('heading', { name: en.library.libraryTitle })).toBeVisible();
@@ -40,7 +43,8 @@ test('CUJ-1: onboarding → sample → first card; UI to English and back', asyn
 
   // And back to Ukrainian.
   await page.getByRole('button', { name: en.reader.settings, exact: true }).click();
-  await page.getByRole('dialog', { name: en.settings.title }).getByRole('radio', { name: 'Українська' }).click();
+  await openSettingsSection(page, 'languageLibrary', en);
+  await page.getByRole('dialog', { name: en.settings.sections.languageLibrary }).getByRole('radio', { name: 'Українська' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'uk');
-  await expect(page.getByRole('dialog', { name: uk.settings.title })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: uk.settings.sections.languageLibrary })).toBeVisible();
 });

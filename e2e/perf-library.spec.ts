@@ -1,4 +1,4 @@
-import { expect, test, uk } from './support/app';
+import { expect, openLibrarySettingsSheet, openSettingsSection, test, uk } from './support/app';
 
 /**
  * 0.25 "done when": a library of 50 books renders in under 300 ms on a
@@ -36,6 +36,8 @@ test.skip(({ browserName }) => browserName !== 'chromium', 'CPU throttling needs
 test('a library of 50 books renders within the budget on a throttled phone', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto('/');
+  await openLibrarySettingsSheet(page);
+  await openSettingsSection(page, 'languageLibrary');
   await page.locator('input[type="file"][accept*="json"]').setInputFiles({
     name: 'plyn-backup.json',
     mimeType: 'application/json',
