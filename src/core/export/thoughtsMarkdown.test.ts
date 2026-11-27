@@ -63,6 +63,30 @@ describe('safe Markdown', () => {
     }
   );
 
+  it.each([
+    ['---', '\\---'],
+    ['***', '\\***'],
+    ['___', '\\___'],
+    ['===', '\\==='],
+    ['- - -', '\\- - -'],
+    ['* * *', '\\* * *'],
+    ['  = =', '  \\= ='],
+    ['-', '\\-'],
+    ['*', '\\*'],
+    ['+', '\\+'],
+    ['```', '\\```'],
+    ['```js', '\\```js'],
+    ['~~~', '\\~~~']
+  ])('keeps the block marker "%s" literal on a middle line', (line, escaped) => {
+    const md = run([note('1', `first\n${line}\nlast`, 7, 'D')]);
+    expect(md).toContain(`- first\n  ${escaped}\n  last (d7)`);
+  });
+
+  it('leaves ordinary dashes and backticks inside a line alone', () => {
+    const md = run([note('1', 'a -- b\n`code` here\n-- end', 7, 'D')]);
+    expect(md).toContain('- a -- b\n  `code` here\n  -- end (d7)');
+  });
+
   it('escapes a marker on the first line too', () => {
     expect(run([note('1', '- x', 7, 'D')])).toContain('- \\- x (d7)');
     expect(run([note('1', '1. x', 7, 'D')])).toContain('- 1\\. x (d7)');

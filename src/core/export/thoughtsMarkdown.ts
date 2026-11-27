@@ -35,8 +35,18 @@ export function formatThoughtsAsMarkdown(input: {
   return lines.join('\n') + '\n';
 }
 
+/**
+ * A line made only of one marker character (and spaces): a thematic break
+ * (`---`, `* * *`, `___`), a setext underline (`===`, `--`) or an empty list item (`-`).
+ */
+const MARKER_ONLY = /^(\s*)([-*_=+])((?:\s*\2)*\s*)$/;
+/** The start of a fenced code block. */
+const CODE_FENCE = /^(\s*)(`{3,}|~{3,})/;
+
 /** Keeps a line of a thought literal inside its list item. */
 function escapeBlockMarker(line: string): string {
+  if (MARKER_ONLY.test(line)) return line.replace(MARKER_ONLY, '$1\\$2$3');
+  if (CODE_FENCE.test(line)) return line.replace(CODE_FENCE, '$1\\$2');
   return line
     .replace(/^(\s*)(#|>|[-*+](?= ))/, '$1\\$2')
     .replace(/^(\s*\d+)([.)])(?= )/, '$1\\$2');
