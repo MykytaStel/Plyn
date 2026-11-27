@@ -160,12 +160,22 @@ describe('backup reading pace (0.27)', () => {
     expect((await getProgressStats()).readingPace).toEqual({ wordsPerMinute: 150, samples: 60 });
   });
 
-  it('0.26 backup leaves local pace untouched', async () => {
+  it('the 0.26 fixture (no stats) leaves local pace untouched', async () => {
     await seedPace({ wordsPerMinute: 180, samples: 12 });
-    await importLibraryBackup({
-      ...structuredClone(fixture026),
-      stats: { ...(fixture027.stats as object), readingPace: undefined }
-    });
+    expect(fixture026.stats).toBeNull();
+    await importLibraryBackup(structuredClone(fixture026));
     expect((await getProgressStats()).readingPace).toEqual({ wordsPerMinute: 180, samples: 12 });
+  });
+
+  it('0.26-shaped stats (no readingPace key) leave local pace untouched', async () => {
+    await seedPace({ wordsPerMinute: 180, samples: 12 });
+    // Stats as 0.26 wrote them: every field but the pace, which arrived in 0.27.
+    const stats026: UserProgressStats = structuredClone(fixture027.stats as unknown as UserProgressStats);
+    delete stats026.readingPace;
+    expect('readingPace' in stats026).toBe(false);
+    await importLibraryBackup({ ...structuredClone(fixture026), stats: stats026 });
+    const local = await getProgressStats();
+    expect(local.readingPace).toEqual({ wordsPerMinute: 180, samples: 12 });
+    expect(local.totalCardsRead).toBeGreaterThanOrEqual(stats026.totalCardsRead);
   });
 });
