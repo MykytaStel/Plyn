@@ -2,7 +2,8 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import pkg from '../../../package.json';
-import { format } from '../../i18n';
+import { format, plural } from '../../i18n';
+import { importLibraryBackup } from '../../services/storage/backup';
 import { en } from '../../i18n/locales/en';
 import { uk } from '../../i18n/locales/uk';
 import { createBackStack, type BackStack } from '../../services/navigation/backStack';
@@ -251,6 +252,26 @@ describe('SettingsSheet storage (Language and library)', () => {
     expect(await screen.findByText(format(uk.settings.storageUsage, { size: '7 МБ' }))).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: uk.settings.back }));
     expect(screen.getByRole('button', { name: `${S.languageLibrary}, Українська, 7 МБ` })).toBeTruthy();
+  });
+
+  it('keeps the restore message when the reader steps back mid-restore', async () => {
+    stubStorage(true, true);
+    let finish: (value: Awaited<ReturnType<typeof importLibraryBackup>>) => void = () => {};
+    vi.mocked(importLibraryBackup).mockImplementationOnce(
+      () => new Promise((resolve) => (finish = resolve))
+    );
+    render(<SettingsSheet onClose={() => {}} />);
+    await openSection(S.languageLibrary);
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+    await userEvent.upload(input, new File(['{}'], 'plyn-backup.json', { type: 'application/json' }));
+
+    await userEvent.click(screen.getByRole('button', { name: uk.settings.back }));
+    await act(async () => finish({ importedDocs: 2, importedThoughts: 0, appliedSettings: null }));
+
+    const message = format(uk.library.feedback.backupImported, {
+      texts: plural(uk.common.texts, 2, 'uk')
+    });
+    expect((await screen.findByRole('status')).textContent).toBe(message);
   });
 
   it('stays calm when the browser says no', async () => {

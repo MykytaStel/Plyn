@@ -14,6 +14,7 @@ import { useVoices } from './useVoices';
 import { AidsSection } from './sections/AidsSection';
 import { AppearanceSection } from './sections/AppearanceSection';
 import { LanguageLibrarySection, useStorageStatus } from './sections/LanguageLibrarySection';
+import { useBackupActions } from './useBackupActions';
 import { ReadingSection } from './sections/ReadingSection';
 import { SoundSection } from './sections/SoundSection';
 
@@ -54,14 +55,20 @@ export function SettingsSheet({
   const timerMinutes = useReaderStore((s) => s.timerMinutes);
   const isReader = Boolean(onTimerSelect);
   const storage = useStorageStatus();
+  // Owned by the sheet, not the section: a save or restore that ends after the
+  // reader stepped back still reports in the sheet-level status line.
+  const backup = useBackupActions({ onRestored: storage.refresh });
 
   const [section, setSection] = useState<SettingsSection | null>(null);
   const lastSection = useRef<SettingsSection | null>(null);
+  // Once a section was open, the list slides in on the way back (never on open).
+  const [visitedSection, setVisitedSection] = useState(false);
   const rowRefs = useRef<Partial<Record<SettingsSection, HTMLButtonElement | null>>>({});
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const openSection = (next: SettingsSection) => {
     lastSection.current = next;
+    setVisitedSection(true);
     setSection(next);
   };
   const backToList = () => setSection(null);
@@ -78,7 +85,11 @@ export function SettingsSheet({
     }
   }, [section, dialogRef]);
 
-  // Escape is the sheet's own: it never reaches the screen behind it.
+  // Escape is the sheet's own: it never reaches the screen behind it. The
+  // capture-phase listener swallows every Escape on purpose while the sheet is
+  // open, so the reader's and the library's Escape handlers (which close the
+  // whole sheet) never skip the step out of a section; it steps out first, then
+  // closes the sheet.
   const latest = useRef({ section, onClose });
   useEffect(() => {
     latest.current = { section, onClose };
@@ -126,7 +137,7 @@ export function SettingsSheet({
       {section === null ? (
         <div
           // The list slides in only on the way back from a section, never on open.
-          className={`settings-screen settings-screen-list${lastSection.current ? ' is-returning' : ''}`}
+          className={`settings-screen settings-screen-list${visitedSection ? ' is-returning' : ''}`}
           key="list"
         >
           <div className="sheet-header">
@@ -212,11 +223,16 @@ export function SettingsSheet({
                 canRestore={!isReader}
                 storage={storage.status}
                 onStorageChange={storage.refresh}
+                backup={backup}
               />
             )}
           </div>
         </div>
       )}
+
+      <p className="input-feedback backup-feedback settings-feedback" role="status" aria-live="polite">
+        {backup.feedback}
+      </p>
     </aside>
   );
 }

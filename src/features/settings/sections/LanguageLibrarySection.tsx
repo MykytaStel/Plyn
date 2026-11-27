@@ -8,7 +8,7 @@ import {
   type StorageStatus
 } from '../../../services/storage/persistence';
 import { useSettingsStore } from '../../../store/useSettingsStore';
-import { useBackupActions } from '../useBackupActions';
+import type { BackupActions } from '../useBackupActions';
 
 /** How much Plyn stores here and whether the browser promised to keep it (0.21). */
 export function useStorageStatus() {
@@ -31,6 +31,8 @@ interface LanguageLibrarySectionProps {
   canRestore: boolean;
   storage: StorageStatus | null;
   onStorageChange: () => Promise<void>;
+  /** Owned by the sheet, so its status line outlives this section. */
+  backup: BackupActions;
 }
 
 /**
@@ -40,13 +42,13 @@ interface LanguageLibrarySectionProps {
 export function LanguageLibrarySection({
   canRestore,
   storage,
-  onStorageChange
+  onStorageChange,
+  backup
 }: LanguageLibrarySectionProps) {
   const i18n = useI18n();
   const t = i18n.m.settings;
   const { language, updateSettings } = useSettingsStore();
   const [denied, setDenied] = useState(false);
-  const backup = useBackupActions({ onRestored: onStorageChange });
 
   const showStorage = storage && (storage.supported || storage.usageBytes !== null);
 
@@ -135,9 +137,6 @@ export function LanguageLibrarySection({
             </>
           )}
         </div>
-        <p className="input-feedback backup-feedback" role="status" aria-live="polite">
-          {backup.feedback}
-        </p>
       </div>
 
       <p className="shortcuts-hint">

@@ -11,6 +11,8 @@ const FEEDBACK_MS = 3600;
  * Save and restore a backup (moved from the library header to Settings in
  * 0.27). `onRestored` runs after a successful restore. `feedback` is the last calm status line, cleared after a while.
  */
+export type BackupActions = ReturnType<typeof useBackupActions>;
+
 export function useBackupActions({ onRestored }: { onRestored?: () => Promise<void> } = {}) {
   const [feedback, setFeedback] = useState('');
   const restoreInputRef = useRef<HTMLInputElement>(null);

@@ -105,6 +105,15 @@
   min-height: 0;
 }
 
+/* The backup status lives at sheet level (0.27): it stays in view at the bottom. */
+.settings-feedback:not(:empty) {
+  position: sticky;
+  bottom: 0;
+  margin-top: 12px;
+  padding: 8px 0;
+  background-color: var(--surface);
+}
+
 /* The keyboard hint is for devices with a mouse or trackpad only. */
 .settings-sheet .shortcuts-hint {
   display: none;
