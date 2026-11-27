@@ -20,3 +20,4 @@ blob-report/
 # Lighthouse CI (0.25)
 .lighthouseci/
 lighthouse-report/
+.superpowers/
